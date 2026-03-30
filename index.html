@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AssetVault — Professional Asset Discovery</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a0f;
+  --surface: #111118;
+  --surface2: #17171f;
+  --surface3: #1e1e28;
+  --border: #ffffff0f;
+  --border2: #ffffff18;
+  --text: #f0f0f5;
+  --text2: #9090a8;
+  --text3: #5a5a72;
+  --accent: #6c63ff;
+  --accent2: #9d5cff;
+  --accent-glow: #6c63ff33;
+  --green: #22d3a0;
+  --orange: #ff8c42;
+  --red: #ff5252;
+  --yellow: #ffd166;
+  --mono: 'DM Mono', monospace;
+  --display: 'Syne', sans-serif;
+  --card-w: 280px;
+  --radius: 10px;
+  --radius-sm: 6px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--mono);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+::selection { background: var(--accent); color: #fff; }
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--surface); }
+::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 3px; }
+
+/* ── HEADER ── */
+#header {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  display: flex; align-items: center; gap: 20px;
+  height: 56px;
+  backdrop-filter: blur(12px);
+}
+#logo {
+  font-family: var(--display);
+  font-weight: 800; font-size: 18px;
+  letter-spacing: -0.5px;
+  white-space: nowrap;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+#logo span { color: var(--text3); -webkit-text-fill-color: var(--text3); font-weight: 400; font-size: 12px; margin-left: 8px; vertical-align: middle; }
+#result-count {
+  font-size: 11px; color: var(--text3);
+  margin-left: auto;
+  white-space: nowrap;
+}
+#result-count b { color: var(--accent); font-weight: 500; }
+.hdr-btn {
+  font-family: var(--mono);
+  font-size: 11px; color: var(--text2);
+  background: var(--surface2); border: 1px solid var(--border);
+  padding: 5px 12px; border-radius: var(--radius-sm);
+  cursor: pointer; transition: all .15s; white-space: nowrap;
+}
+.hdr-btn:hover { border-color: var(--border2); color: var(--text); background: var(--surface3); }
+.hdr-btn.accent { background: var(--accent); border-color: transparent; color: #fff; }
+.hdr-btn.accent:hover { background: var(--accent2); }
+
+/* ── FILTER BAR ── */
+#filter-bar {
+  position: fixed; top: 56px; left: 0; right: 0; z-index: 99;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 24px;
+  display: flex; align-items: center; gap: 10px;
+  flex-wrap: wrap;
+}
+.filter-group { display: flex; align-items: center; gap: 6px; }
+.filter-label { font-size: 9px; color: var(--text3); text-transform: uppercase; letter-spacing: 1px; white-space: nowrap; }
+input[type=text], input[type=number], select, textarea {
+  font-family: var(--mono); font-size: 12px;
+  background: var(--surface2); color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+  outline: none;
+  transition: border-color .15s, box-shadow .15s;
+}
+input[type=text]:focus, input[type=number]:focus, select:focus, textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-glow);
+}
+select { cursor: pointer; appearance: none; padding-right: 28px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%235a5a72' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 8px center; }
+#search-input { width: 220px; }
+#author-filter, #category-filter, #price-filter { width: 140px; }
+#tag-filter { width: 150px; }
+.filter-divider { width: 1px; height: 20px; background: var(--border); margin: 0 2px; }
+
+/* ── MAIN ── */
+#main { padding: 148px 24px 60px; }
+#grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--card-w), 1fr));
+  gap: 16px;
+}
+
+/* ── CARD ── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform .18s cubic-bezier(.2,.8,.2,1), box-shadow .18s, border-color .18s;
+  position: relative;
+  animation: fadeUp .3s ease both;
+}
+@keyframes fadeUp {
+  from { opacity:0; transform: translateY(12px); }
+  to   { opacity:1; transform: translateY(0); }
+}
+.card:hover {
+  transform: translateY(-4px) scale(1.012);
+  box-shadow: 0 20px 60px #00000080, 0 0 0 1px var(--accent)33;
+  border-color: var(--accent)55;
+  z-index: 2;
+}
+.card-img {
+  width: 100%; aspect-ratio: 16/9;
+  object-fit: cover; display: block;
+  background: var(--surface2);
+  transition: transform .3s;
+}
+.card:hover .card-img { transform: scale(1.03); }
+.card-img-wrap { overflow: hidden; }
+.card-body { padding: 12px; }
+.card-title {
+  font-family: var(--display); font-weight: 600; font-size: 13px;
+  color: var(--text); line-height: 1.35;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  margin-bottom: 6px;
+}
+.card-meta { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+.card-author {
+  font-size: 10px; color: var(--text3);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.price-badge {
+  margin-left: auto; white-space: nowrap;
+  font-size: 11px; font-weight: 500;
+  padding: 2px 8px; border-radius: 4px;
+}
+.price-free { background: #22d3a022; color: var(--green); }
+.price-low  { background: #6c63ff22; color: var(--accent); }
+.price-mid  { background: #ffd16622; color: var(--yellow); }
+.price-high { background: #ff8c4222; color: var(--orange); }
+.price-prem { background: #ff525222; color: var(--red); }
+.card-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+.tag {
+  font-size: 9px; color: var(--text3);
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 3px; padding: 2px 6px;
+  white-space: nowrap;
+}
+.card-footer {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 12px;
+  border-top: 1px solid var(--border);
+  background: var(--surface2);
+}
+.card-date { font-size: 9px; color: var(--text3); }
+.card-cat {
+  font-size: 9px; color: var(--accent2);
+  background: var(--accent-glow); border-radius: 3px; padding: 2px 6px;
+  text-transform: uppercase; letter-spacing: .5px;
+}
+
+/* ── PANELS ── */
+.panel-overlay {
+  position: fixed; inset: 0; z-index: 200;
+  background: #00000088; backdrop-filter: blur(4px);
+  display: none; align-items: center; justify-content: center;
+}
+.panel-overlay.open { display: flex; }
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 14px;
+  padding: 24px;
+  width: 480px; max-width: 95vw;
+  max-height: 90vh; overflow-y: auto;
+  position: relative;
+}
+.panel-title {
+  font-family: var(--display); font-weight: 700; font-size: 16px;
+  margin-bottom: 20px; color: var(--text);
+  display: flex; align-items: center; gap: 10px;
+}
+.panel-title .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+.panel-close {
+  position: absolute; top: 16px; right: 16px;
+  background: none; border: none; color: var(--text3);
+  font-size: 20px; cursor: pointer; line-height: 1;
+  transition: color .15s;
+}
+.panel-close:hover { color: var(--text); }
+.form-row { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
+.form-row label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: .8px; }
+.form-row input, .form-row select, .form-row textarea { width: 100%; }
+.form-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.btn {
+  font-family: var(--mono); font-size: 12px;
+  padding: 8px 16px; border-radius: var(--radius-sm);
+  border: 1px solid transparent; cursor: pointer;
+  transition: all .15s; display: inline-flex; align-items: center; gap: 6px;
+}
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: var(--accent2); }
+.btn-secondary { background: var(--surface3); color: var(--text2); border-color: var(--border); }
+.btn-secondary:hover { color: var(--text); border-color: var(--border2); }
+.btn-danger { background: #ff525222; color: var(--red); border-color: #ff525255; }
+.btn-danger:hover { background: #ff525244; }
+.btn-success { background: #22d3a022; color: var(--green); border-color: #22d3a055; }
+.btn-success:hover { background: #22d3a044; }
+.btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+
+/* ── TOOLS PANEL ── */
+.tool-section { margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
+.tool-section:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+.tool-section h3 { font-family: var(--display); font-size: 12px; font-weight: 600; color: var(--text2); margin-bottom: 10px; text-transform: uppercase; letter-spacing: .8px; }
+.tool-note { font-size: 11px; color: var(--text3); margin-top: 6px; line-height: 1.5; }
+
+/* ── BULK PASTE / CSV ── */
+textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
+
+/* ── EMPTY STATE ── */
+#empty-state {
+  display: none; text-align: center;
+  padding: 80px 20px; color: var(--text3);
+}
+#empty-state .empty-icon { font-size: 48px; margin-bottom: 16px; }
+#empty-state h3 { font-family: var(--display); font-size: 18px; color: var(--text2); margin-bottom: 8px; }
+#empty-state p { font-size: 12px; }
+
+/* ── TOAST ── */
+#toast {
+  position: fixed; bottom: 24px; right: 24px; z-index: 999;
+  background: var(--surface2); border: 1px solid var(--border2);
+  border-radius: var(--radius); padding: 12px 20px;
+  font-size: 12px; color: var(--text);
+  transform: translateY(80px); opacity: 0;
+  transition: all .25s cubic-bezier(.2,.8,.2,1);
+  max-width: 320px;
+}
+#toast.show { transform: translateY(0); opacity: 1; }
+#toast.success { border-color: var(--green)55; color: var(--green); }
+#toast.error { border-color: var(--red)55; color: var(--red); }
+
+/* ── LOADER ── */
+#load-sentinel { height: 60px; display: flex; align-items: center; justify-content: center; }
+.spinner { width: 20px; height: 20px; border: 2px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── TAG ACTIVE ── */
+.tag.active-tag { background: var(--accent-glow); color: var(--accent); border-color: var(--accent)55; }
+
+/* ── responsive ── */
+@media (max-width: 700px) {
+  #header { padding: 0 12px; }
+  #filter-bar { padding: 8px 12px; }
+  #main { padding: 148px 12px 60px; }
+  #search-input { width: 160px; }
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div id="header">
+  <div id="logo">AssetVault <span>DISCOVERY</span></div>
+  <div id="result-count"><b id="count-num">0</b> results</div>
+  <button class="hdr-btn" onclick="openPanel('tools-panel')">⚙ Tools</button>
+  <button class="hdr-btn" onclick="openPanel('add-panel')">+ Add Asset</button>
+  <button class="hdr-btn" onclick="openPanel('import-panel')">↑ Import</button>
+  <button class="hdr-btn accent" onclick="exportJSON()">↓ JSON</button>
+  <button class="hdr-btn" onclick="exportCSV()">↓ CSV</button>
+</div>
+
+<!-- FILTER BAR -->
+<div id="filter-bar">
+  <div class="filter-group">
+    <span class="filter-label">Search</span>
+    <input type="text" id="search-input" placeholder="Title, tag, author…" oninput="applyFilters()">
+  </div>
+  <div class="filter-divider"></div>
+  <div class="filter-group">
+    <span class="filter-label">Author</span>
+    <select id="author-filter" onchange="applyFilters()"><option value="">All</option></select>
+  </div>
+  <div class="filter-group">
+    <span class="filter-label">Category</span>
+    <select id="category-filter" onchange="applyFilters()"><option value="">All</option></select>
+  </div>
+  <div class="filter-group">
+    <span class="filter-label">Price</span>
+    <select id="price-filter" onchange="applyFilters()">
+      <option value="">All</option>
+      <option value="free">Free</option>
+      <option value="0-10">$0–10</option>
+      <option value="10-20">$10–20</option>
+      <option value="20-50">$20–50</option>
+      <option value="50-100">$50–100</option>
+      <option value="100+">$100+</option>
+    </select>
+  </div>
+  <div class="filter-group">
+    <span class="filter-label">Tag</span>
+    <input type="text" id="tag-filter" placeholder="Filter by tag…" oninput="applyFilters()">
+  </div>
+  <div class="filter-divider"></div>
+  <button class="hdr-btn" onclick="clearFilters()" style="font-size:10px;">✕ Clear</button>
+</div>
+
+<!-- MAIN GRID -->
+<div id="main">
+  <div id="grid"></div>
+  <div id="empty-state">
+    <div class="empty-icon">🔍</div>
+    <h3>No assets found</h3>
+    <p>Try different filters or add new assets.</p>
+  </div>
+  <div id="load-sentinel"><div class="spinner" id="spinner" style="display:none"></div></div>
+</div>
+
+<!-- ADD PANEL -->
+<div class="panel-overlay" id="add-panel">
+  <div class="panel">
+    <button class="panel-close" onclick="closePanel('add-panel')">×</button>
+    <div class="panel-title"><div class="dot"></div>Add Asset</div>
+    <div class="form-row"><label>Title *</label><input type="text" id="f-title" placeholder="Asset name"></div>
+    <div class="form-row"><label>Link *</label><input type="text" id="f-link" placeholder="https://…"></div>
+    <div class="form-2col">
+      <div class="form-row"><label>Author</label><input type="text" id="f-author" placeholder="Creator name"></div>
+      <div class="form-row"><label>Price ($)</label><input type="number" id="f-price" placeholder="0" min="0" step="0.01"></div>
+    </div>
+    <div class="form-2col">
+      <div class="form-row"><label>Category</label><input type="text" id="f-category" placeholder="3D, Audio, FX…"></div>
+      <div class="form-row"><label>Image URL</label><input type="text" id="f-image" placeholder="Leave blank = placeholder"></div>
+    </div>
+    <div class="form-row"><label>Tags (comma-separated)</label><input type="text" id="f-tags" placeholder="unity, pbr, environment"></div>
+    <div class="btn-row"><button class="btn btn-primary" onclick="addAsset()">+ Add Asset</button><button class="btn btn-secondary" onclick="closePanel('add-panel')">Cancel</button></div>
+  </div>
+</div>
+
+<!-- IMPORT PANEL -->
+<div class="panel-overlay" id="import-panel">
+  <div class="panel">
+    <button class="panel-close" onclick="closePanel('import-panel')">×</button>
+    <div class="panel-title"><div class="dot"></div>Import Assets</div>
+    <div class="tool-section">
+      <h3>Bulk Paste (JSON lines or CSV rows)</h3>
+      <div class="form-row">
+        <label>Paste data (one asset per line: title,link,author,price,category,tags)</label>
+        <textarea id="bulk-paste" placeholder="Cyberpunk City Pack,https://fab.com/xyz,PolyArt,29.99,3D,&quot;urban,sci-fi,modular&quot;
+Fantasy Forest,https://cgtrader.com/abc,NatureStudio,0,3D,&quot;trees,foliage,free&quot;"></textarea>
+      </div>
+      <div class="btn-row"><button class="btn btn-primary" onclick="bulkPaste()">↑ Import Paste</button></div>
+      <div class="tool-note">Duplicates are automatically removed (by title match).</div>
+    </div>
+    <div class="tool-section">
+      <h3>Import CSV File</h3>
+      <div class="form-row"><label>CSV File (same columns as above)</label><input type="file" id="csv-file" accept=".csv" style="color:var(--text2);padding:4px;"></div>
+      <div class="btn-row"><button class="btn btn-primary" onclick="importCSV()">↑ Import CSV</button></div>
+    </div>
+    <div class="tool-section">
+      <h3>Import JSON File</h3>
+      <div class="form-row"><label>JSON File (array of asset objects)</label><input type="file" id="json-file" accept=".json" style="color:var(--text2);padding:4px;"></div>
+      <div class="btn-row"><button class="btn btn-primary" onclick="importJSON()">↑ Import JSON</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- TOOLS PANEL -->
+<div class="panel-overlay" id="tools-panel">
+  <div class="panel">
+    <button class="panel-close" onclick="closePanel('tools-panel')">×</button>
+    <div class="panel-title"><div class="dot"></div>Mass Tools</div>
+
+    <div class="tool-section">
+      <h3>Update Prices</h3>
+      <div class="tool-note">Simulate realistic price changes (±5–30%), update price_range and last_checked for all assets.</div>
+      <div class="btn-row" style="margin-top:10px;"><button class="btn btn-secondary" onclick="updatePrices()">⟳ Update Prices</button></div>
+    </div>
+
+    <div class="tool-section">
+      <h3>Replace Links Domain</h3>
+      <div class="form-2col">
+        <div class="form-row"><label>Old Domain</label><input type="text" id="old-domain" placeholder="cgtrader.com"></div>
+        <div class="form-row"><label>New Domain</label><input type="text" id="new-domain" placeholder="fab.com"></div>
+      </div>
+      <div class="btn-row"><button class="btn btn-secondary" onclick="replaceLinks()">↔ Replace Domains</button></div>
+    </div>
+
+    <div class="tool-section">
+      <h3>Fix Images</h3>
+      <div class="tool-note">Replace all placeholder/broken image URLs with generated placeholder images.</div>
+      <div class="btn-row" style="margin-top:10px;"><button class="btn btn-secondary" onclick="fixImages()">🖼 Fix Images</button></div>
+    </div>
+
+    <div class="tool-section">
+      <h3>Deduplicate</h3>
+      <div class="tool-note">Remove duplicate assets (matched by title, case-insensitive).</div>
+      <div class="btn-row" style="margin-top:10px;"><button class="btn btn-secondary" onclick="deduplicate()">✦ Deduplicate</button></div>
+    </div>
+
+    <div class="tool-section">
+      <h3>Danger Zone</h3>
+      <div class="btn-row" style="margin-top:10px;"><button class="btn btn-danger" onclick="clearAll()">✕ Clear All Assets</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script>
+// ─── CONSTANTS ─────────────────────────────────────────────────────────────
+const STORAGE_KEY = 'assetvault_v2';
+const PLACEHOLDERS = [
+  'https://placehold.co/480x270/111118/6c63ff?text=Asset',
+  'https://placehold.co/480x270/111118/9d5cff?text=Asset',
+  'https://placehold.co/480x270/111118/22d3a0?text=Asset',
+  'https://placehold.co/480x270/111118/ffd166?text=Asset',
+];
+const PAGE_SIZE = 30;
+
+// ─── STATE ─────────────────────────────────────────────────────────────────
+let allAssets = [];
+let filteredAssets = [];
+let renderedCount = 0;
+let isLoading = false;
+
+// ─── SEED DATA ─────────────────────────────────────────────────────────────
+const SEED = [
+  {title:"Cyberpunk City Megapack",post_link:"https://fab.com",author:"PolyForge",price:49.99,category:"3D",tags:["urban","sci-fi","modular","pbr"],image_url:"https://placehold.co/480x270/0a0a1f/6c63ff?text=Cyberpunk+City"},
+  {title:"Fantasy Forest Kit",post_link:"https://fab.com",author:"NatureStudio",price:29.99,category:"3D",tags:["trees","foliage","fantasy","environment"],image_url:"https://placehold.co/480x270/0a1f0a/22d3a0?text=Fantasy+Forest"},
+  {title:"Orchestral Battle Suite",post_link:"https://unity.com",author:"SoundForge",price:0,category:"Audio",tags:["music","orchestral","battle","loop"],image_url:"https://placehold.co/480x270/0a0a1f/ffd166?text=Audio+Suite"},
+  {title:"Sci-Fi UI Sounds Pack",post_link:"https://cgtrader.com",author:"AudioCraft",price:9.99,category:"Audio",tags:["ui","sfx","sci-fi","interface"],image_url:"https://placehold.co/480x270/0a0a1f/9d5cff?text=UI+Sounds"},
+  {title:"AAA Character Controller",post_link:"https://fab.com",author:"DevKit Pro",price:79.99,category:"Code",tags:["unity","controller","character","gameplay"],image_url:"https://placehold.co/480x270/0a0a1f/ff8c42?text=Character+Ctrl"},
+  {title:"Inventory System Pro",post_link:"https://unity.com",author:"ToolSmith",price:39.99,category:"Code",tags:["unity","inventory","rpg","system"],image_url:"https://placehold.co/480x270/0a0a1f/6c63ff?text=Inventory+Pro"},
+  {title:"PBR Stone Walls Mega",post_link:"https://cgtrader.com",author:"TextureLab",price:19.99,category:"Textures",tags:["pbr","stone","walls","seamless"],image_url:"https://placehold.co/480x270/1a1a1a/22d3a0?text=Stone+Walls"},
+  {title:"Spaceship FX Collection",post_link:"https://fab.com",author:"VFXMaster",price:34.99,category:"VFX",tags:["particles","spaceship","sci-fi","effects"],image_url:"https://placehold.co/480x270/0a0a1f/9d5cff?text=Space+FX"},
+  {title:"Lowpoly Medieval Pack",post_link:"https://unity.com",author:"LowPixel",price:0,category:"3D",tags:["lowpoly","medieval","castle","free"],image_url:"https://placehold.co/480x270/1a0a0a/ffd166?text=Medieval+Pack"},
+  {title:"Rain & Weather System",post_link:"https://fab.com",author:"WeatherWorks",price:59.99,category:"Code",tags:["weather","rain","unity","environment"],image_url:"https://placehold.co/480x270/0a0a2a/6c63ff?text=Weather+Sys"},
+  {title:"Horror Ambience Bundle",post_link:"https://cgtrader.com",author:"DarkSounds",price:14.99,category:"Audio",tags:["horror","ambience","atmospheric","loop"],image_url:"https://placehold.co/480x270/1a0a0a/ff5252?text=Horror+Audio"},
+  {title:"Anime Eyes Texture Atlas",post_link:"https://fab.com",author:"AnimeArt",price:4.99,category:"Textures",tags:["anime","eyes","2d","sprite"],image_url:"https://placehold.co/480x270/0a0a1f/ffd166?text=Anime+Eyes"},
+  {title:"Procedural Dungeon Gen",post_link:"https://unity.com",author:"ProceduralPete",price:89.99,category:"Code",tags:["procedural","dungeon","roguelike","generator"],image_url:"https://placehold.co/480x270/0a0a1f/ff8c42?text=Dungeon+Gen"},
+  {title:"Tropical Beach Environment",post_link:"https://fab.com",author:"TropicArt",price:24.99,category:"3D",tags:["beach","tropical","ocean","nature"],image_url:"https://placehold.co/480x270/0a1a1a/22d3a0?text=Beach+Env"},
+  {title:"Robot Mech Modular Kit",post_link:"https://cgtrader.com",author:"MechForge",price:69.99,category:"3D",tags:["robot","mech","sci-fi","modular","pbr"],image_url:"https://placehold.co/480x270/0a0a1f/9d5cff?text=Mech+Kit"},
+  {title:"Mobile UI Kit Dark",post_link:"https://fab.com",author:"UIFactory",price:0,category:"2D",tags:["ui","mobile","dark","free","2d"],image_url:"https://placehold.co/480x270/0a0a1f/6c63ff?text=Mobile+UI"},
+  {title:"Advanced AI Pathfinding",post_link:"https://unity.com",author:"AILabs",price:49.99,category:"Code",tags:["ai","pathfinding","navmesh","npc"],image_url:"https://placehold.co/480x270/0a0a1f/ffd166?text=AI+Pathfind"},
+  {title:"Waterfall Shader Pack",post_link:"https://fab.com",author:"ShaderCraft",price:19.99,category:"VFX",tags:["shader","water","waterfall","nature"],image_url:"https://placehold.co/480x270/0a0a2a/22d3a0?text=Waterfall"},
+  {title:"Dragon Character Rigged",post_link:"https://cgtrader.com",author:"DragonArt",price:119.99,category:"3D",tags:["dragon","character","rigged","fantasy","animated"],image_url:"https://placehold.co/480x270/1a0a0a/ff8c42?text=Dragon+Char"},
+  {title:"Pixel Explosion Effects",post_link:"https://fab.com",author:"PixelBurst",price:0,category:"2D",tags:["pixel","explosion","effects","free","2d"],image_url:"https://placehold.co/480x270/0a0a1f/ff5252?text=Pixel+FX"},
+  {title:"Music Reactive VFX",post_link:"https://unity.com",author:"BeatVFX",price:34.99,category:"VFX",tags:["music","reactive","particles","vfx"],image_url:"https://placehold.co/480x270/0a0a1f/9d5cff?text=Music+VFX"},
+  {title:"Abandoned Factory Scene",post_link:"https://fab.com",author:"PostApoc",price:74.99,category:"3D",tags:["factory","abandoned","industrial","horror"],image_url:"https://placehold.co/480x270/1a1a0a/ffd166?text=Factory"},
+  {title:"2D Platformer Sprites",post_link:"https://cgtrader.com",author:"SpriteKit",price:9.99,category:"2D",tags:["sprite","platformer","2d","character"],image_url:"https://placehold.co/480x270/0a0a1f/6c63ff?text=Platformer+2D"},
+  {title:"Sky & Atmosphere System",post_link:"https://fab.com",author:"SkyWorks",price:44.99,category:"VFX",tags:["sky","atmosphere","clouds","daynight"],image_url:"https://placehold.co/480x270/0a0a2a/22d3a0?text=Sky+System"},
+  {title:"RPG Dialogue System",post_link:"https://unity.com",author:"NarrativeKit",price:29.99,category:"Code",tags:["rpg","dialogue","narrative","npc"],image_url:"https://placehold.co/480x270/0a0a1f/ff8c42?text=Dialogue+Sys"},
+  {title:"Nordic Architecture Pack",post_link:"https://fab.com",author:"NodicBuilds",price:54.99,category:"3D",tags:["nordic","architecture","village","snow"],image_url:"https://placehold.co/480x270/0a0a1a/9d5cff?text=Nordic+Pack"},
+  {title:"Free Icon Set 500+",post_link:"https://cgtrader.com",author:"IconDrop",price:0,category:"2D",tags:["icons","ui","free","vector","2d"],image_url:"https://placehold.co/480x270/0a0a1f/ffd166?text=Icon+Set"},
+  {title:"Modular Pipe Systems",post_link:"https://fab.com",author:"PipeWorks",price:22.99,category:"3D",tags:["pipes","modular","industrial","pbr"],image_url:"https://placehold.co/480x270/1a0a0a/22d3a0?text=Pipe+Sys"},
+  {title:"Toon Shader Complete",post_link:"https://unity.com",author:"ToonLabs",price:39.99,category:"VFX",tags:["toon","shader","cel","stylized"],image_url:"https://placehold.co/480x270/0a0a1f/6c63ff?text=Toon+Shader"},
+  {title:"Desert Ruins Collection",post_link:"https://fab.com",author:"DesertArt",price:32.99,category:"3D",tags:["desert","ruins","ancient","egypt","pbr"],image_url:"https://placehold.co/480x270/1a1a0a/ff8c42?text=Desert+Ruins"},
+  {title:"Save System Universal",post_link:"https://unity.com",author:"SaveKit",price:0,category:"Code",tags:["save","system","unity","free","utility"],image_url:"https://placehold.co/480x270/0a0a1f/9d5cff?text=Save+Sys"},
+  {title:"Combat Animation Bundle",post_link:"https://fab.com",author:"AnimaForge",price:59.99,category:"3D",tags:["animation","combat","melee","rigged"],image_url:"https://placehold.co/480x270/1a0a0a/ff5252?text=Combat+Anim"},
+  {title:"Galaxy & Nebula Skybox",post_link:"https://cgtrader.com",author:"CosmicArt",price:7.99,category:"Textures",tags:["skybox","galaxy","space","nebula"],image_url:"https://placehold.co/480x270/0a0a2a/ffd166?text=Galaxy+Sky"},
+  {title:"Footstep Sound Library",post_link:"https://fab.com",author:"FootstepFX",price:12.99,category:"Audio",tags:["sfx","footstep","foley","surfaces"],image_url:"https://placehold.co/480x270/0a0a1f/22d3a0?text=Footstep+Lib"},
+  {title:"Glitch Post-Processing",post_link:"https://unity.com",author:"GlitchLab",price:17.99,category:"VFX",tags:["glitch","postprocess","vfx","effect"],image_url:"https://placehold.co/480x270/0a0a1f/6c63ff?text=Glitch+FX"},
+  {title:"Stylized Water Shader",post_link:"https://fab.com",author:"WaterWorks",price:27.99,category:"VFX",tags:["water","shader","stylized","ocean"],image_url:"https://placehold.co/480x270/0a0a2a/9d5cff?text=Water+Shader"},
+  {title:"Weapon FX Collection",post_link:"https://cgtrader.com",author:"BladeArt",price:44.99,category:"VFX",tags:["weapon","sword","magic","effects"],image_url:"https://placehold.co/480x270/1a0a0a/ff8c42?text=Weapon+FX"},
+  {title:"Grass & Ground Foliage",post_link:"https://fab.com",author:"FoliageStudio",price:19.99,category:"3D",tags:["grass","foliage","nature","terrain"],image_url:"https://placehold.co/480x270/0a1a0a/22d3a0?text=Grass+Pack"},
+  {title:"Ultimate Font Pack",post_link:"https://unity.com",author:"TypeForge",price:0,category:"2D",tags:["font","typography","ui","free"],image_url:"https://placehold.co/480x270/0a0a1f/ffd166?text=Font+Pack"},
+  {title:"Loot & Drop System",post_link:"https://fab.com",author:"LootKit",price:34.99,category:"Code",tags:["loot","drop","rpg","random","system"],image_url:"https://placehold.co/480x270/0a0a1f/6c63ff?text=Loot+Sys"},
+  {title:"Cartoon Cloud Pack",post_link:"https://cgtrader.com",author:"CloudArt",price:5.99,category:"3D",tags:["cloud","cartoon","stylized","sky"],image_url:"https://placehold.co/480x270/0a0a1a/9d5cff?text=Cloud+Pack"},
+  {title:"Horror Door Animations",post_link:"https://fab.com",author:"HorrorAnims",price:11.99,category:"3D",tags:["horror","door","animation","prop"],image_url:"https://placehold.co/480x270/1a0a0a/ff5252?text=Door+Anim"},
+  {title:"Procedural Tree Generator",post_link:"https://unity.com",author:"TreeGen",price:64.99,category:"Code",tags:["tree","procedural","nature","generator"],image_url:"https://placehold.co/480x270/0a1a0a/22d3a0?text=Tree+Gen"},
+  {title:"Retro Arcade SFX Pack",post_link:"https://fab.com",author:"RetroFX",price:0,category:"Audio",tags:["retro","arcade","sfx","8bit","free"],image_url:"https://placehold.co/480x270/0a0a1f/ffd166?text=Arcade+SFX"},
+  {title:"Military Gear Megapack",post_link:"https://cgtrader.com",author:"TacForge",price:89.99,category:"3D",tags:["military","gear","weapon","tactical","pbr"],image_url:"https://placehold.co/480x270/0a1a0a/ff8c42?text=Military+Pack"},
+  {title:"Pause Menu Template",post_link:"https://fab.com",author:"UIHelper",price:0,category:"Code",tags:["ui","menu","pause","template","free"],image_url:"https://placehold.co/480x270/0a0a1f/6c63ff?text=Pause+Menu"},
+  {title:"Sci-Fi Console Props",post_link:"https://unity.com",author:"PropWorks",price:28.99,category:"3D",tags:["sci-fi","props","console","environment"],image_url:"https://placehold.co/480x270/0a0a1f/9d5cff?text=Console+Props"},
+  {title:"Magic Circle Shaders",post_link:"https://fab.com",author:"MagicVFX",price:22.99,category:"VFX",tags:["magic","circle","shader","ritual","fantasy"],image_url:"https://placehold.co/480x270/0a0a1f/ff5252?text=Magic+Circle"},
+  {title:"Viking Warrior Pack",post_link:"https://cgtrader.com",author:"VikingArt",price:74.99,category:"3D",tags:["viking","warrior","character","rigged","norse"],image_url:"https://placehold.co/480x270/1a0a0a/ffd166?text=Viking+Pack"},
+  {title:"Footstep Decal System",post_link:"https://fab.com",author:"DecalKit",price:16.99,category:"Code",tags:["decal","footstep","trail","system"],image_url:"https://placehold.co/480x270/0a0a1f/22d3a0?text=Decal+Sys"},
+];
+
+// ─── NORMALIZE ─────────────────────────────────────────────────────────────
+function priceRange(price) {
+  if (price === 0) return 'free';
+  if (price <= 10) return '0-10';
+  if (price <= 20) return '10-20';
+  if (price <= 50) return '20-50';
+  if (price <= 100) return '50-100';
+  return '100+';
+}
+
+function normalizePost(post) {
+  const isPlaceholder = !post.image_url || post.image_url.includes('placehold.co') || post.image_url.trim() === '';
+  if (!post.image_url || post.image_url.trim() === '') {
+    post.image_url = randomPlaceholder(post.title || '');
+  }
+  post.price = parseFloat(post.price) || 0;
+  post.price_range = priceRange(post.price);
+  if (!post.tags || !Array.isArray(post.tags)) {
+    post.tags = post.tags ? String(post.tags).split(',').map(t => t.trim()).filter(Boolean) : [];
+  }
+  if (!post.last_checked) post.last_checked = new Date().toISOString().slice(0,10);
+  if (!post.id) post.id = 'id_' + Date.now() + '_' + Math.random().toString(36).slice(2,7);
+  if (!post.category) post.category = 'Misc';
+  if (!post.author) post.author = 'Unknown';
+  return post;
+}
+
+function randomPlaceholder(title) {
+  const colors = ['6c63ff','9d5cff','22d3a0','ffd166','ff8c42'];
+  const c = colors[Math.abs(hashStr(title)) % colors.length];
+  const t = encodeURIComponent(title.slice(0,14) || 'Asset');
+  return `https://placehold.co/480x270/111118/${c}?text=${t}`;
+}
+
+function hashStr(s) {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (Math.imul(31,h)+s.charCodeAt(i))|0;
+  return h;
+}
+
+// ─── STORAGE ───────────────────────────────────────────────────────────────
+function save() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(allAssets)); } catch(e){}
+}
+
+function load() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) { allAssets = JSON.parse(raw).map(normalizePost); return; }
+  } catch(e){}
+  allAssets = SEED.map(p => normalizePost({...p}));
+  save();
+}
+
+// ─── DEDUP ─────────────────────────────────────────────────────────────────
+function deduplicateList(list) {
+  const seen = new Set();
+  return list.filter(a => {
+    const key = (a.title||'').toLowerCase().trim();
+    if (seen.has(key)) return false;
+    seen.add(key); return true;
+  });
+}
+
+// ─── FILTER SYSTEM ─────────────────────────────────────────────────────────
+function applyFilters() {
+  const q = document.getElementById('search-input').value.toLowerCase().trim();
+  const auth = document.getElementById('author-filter').value;
+  const cat = document.getElementById('category-filter').value;
+  const price = document.getElementById('price-filter').value;
+  const tag = document.getElementById('tag-filter').value.toLowerCase().trim();
+
+  filteredAssets = allAssets.filter(a => {
+    if (q) {
+      const hay = `${a.title} ${a.author} ${(a.tags||[]).join(' ')}`.toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    if (auth && a.author !== auth) return false;
+    if (cat && a.category !== cat) return false;
+    if (price && a.price_range !== price) return false;
+    if (tag) {
+      const ok = (a.tags||[]).some(t => t.toLowerCase().includes(tag));
+      if (!ok) return false;
+    }
+    return true;
+  });
+
+  document.getElementById('count-num').textContent = filteredAssets.length;
+  renderedCount = 0;
+  document.getElementById('grid').innerHTML = '';
+  document.getElementById('empty-state').style.display = filteredAssets.length ? 'none' : 'block';
+  renderChunk();
+}
+
+function clearFilters() {
+  document.getElementById('search-input').value = '';
+  document.getElementById('author-filter').value = '';
+  document.getElementById('category-filter').value = '';
+  document.getElementById('price-filter').value = '';
+  document.getElementById('tag-filter').value = '';
+  applyFilters();
+}
+
+// ─── RENDER ────────────────────────────────────────────────────────────────
+function renderChunk() {
+  if (isLoading) return;
+  const slice = filteredAssets.slice(renderedCount, renderedCount + PAGE_SIZE);
+  if (!slice.length) { document.getElementById('spinner').style.display = 'none'; return; }
+  isLoading = true;
+  const grid = document.getElementById('grid');
+  slice.forEach((a, i) => {
+    const el = buildCard(a);
+    el.style.animationDelay = (i * 0.02) + 's';
+    grid.appendChild(el);
+  });
+  renderedCount += slice.length;
+  isLoading = false;
+  document.getElementById('spinner').style.display = renderedCount < filteredAssets.length ? 'flex' : 'none';
+}
+
+function priceBadgeClass(pr) {
+  return {free:'price-free','0-10':'price-low','10-20':'price-mid','20-50':'price-mid','50-100':'price-high','100+':'price-prem'}[pr]||'price-low';
+}
+
+function buildCard(a) {
+  const div = document.createElement('div');
+  div.className = 'card';
+  div.onclick = () => window.open(a.post_link,'_blank');
+  const priceLabel = a.price === 0 ? 'Free' : '$' + a.price.toFixed(2);
+  const tagsHtml = (a.tags||[]).slice(0,4).map(t=>`<span class="tag">${esc(t)}</span>`).join('');
+  const date = a.last_checked ? a.last_checked.slice(0,10) : '';
+  div.innerHTML = `
+    <div class="card-img-wrap">
+      <img class="card-img" src="${esc(a.image_url)}" alt="${esc(a.title)}" loading="lazy" onerror="this.src='${randomPlaceholder(a.title)}'">
+    </div>
+    <div class="card-body">
+      <div class="card-title" title="${esc(a.title)}">${esc(a.title)}</div>
+      <div class="card-meta">
+        <span class="card-author">${esc(a.author)}</span>
+        <span class="price-badge ${priceBadgeClass(a.price_range)}">${priceLabel}</span>
+      </div>
+      <div class="card-tags">${tagsHtml}</div>
+    </div>
+    <div class="card-footer">
+      <span class="card-date">${date}</span>
+      <span class="card-cat">${esc(a.category)}</span>
+    </div>`;
+  return div;
+}
+
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ─── POPULATE FILTER DROPDOWNS ─────────────────────────────────────────────
+function refreshSelects() {
+  const authors = [...new Set(allAssets.map(a=>a.author))].sort();
+  const cats = [...new Set(allAssets.map(a=>a.category))].sort();
+  const asel = document.getElementById('author-filter');
+  const csel = document.getElementById('category-filter');
+  const av = asel.value, cv = csel.value;
+  asel.innerHTML = '<option value="">All Authors</option>' + authors.map(a=>`<option value="${esc(a)}">${esc(a)}</option>`).join('');
+  csel.innerHTML = '<option value="">All Categories</option>' + cats.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
+  asel.value = av; csel.value = cv;
+}
+
+// ─── ADD ASSET ─────────────────────────────────────────────────────────────
+function addAsset() {
+  const title = document.getElementById('f-title').value.trim();
+  const link = document.getElementById('f-link').value.trim();
+  if (!title || !link) { toast('Title and Link are required', 'error'); return; }
+  const asset = normalizePost({
+    title, post_link: link,
+    author: document.getElementById('f-author').value.trim() || 'Unknown',
+    price: parseFloat(document.getElementById('f-price').value) || 0,
+    category: document.getElementById('f-category').value.trim() || 'Misc',
+    image_url: document.getElementById('f-image').value.trim(),
+    tags: document.getElementById('f-tags').value.split(',').map(t=>t.trim()).filter(Boolean),
+  });
+  allAssets.unshift(asset);
+  save(); refreshSelects(); applyFilters();
+  ['f-title','f-link','f-author','f-price','f-category','f-image','f-tags'].forEach(id=>document.getElementById(id).value='');
+  closePanel('add-panel');
+  toast('Asset added!', 'success');
+}
+
+// ─── BULK PASTE ─────────────────────────────────────────────────────────────
+function bulkPaste() {
+  const raw = document.getElementById('bulk-paste').value.trim();
+  if (!raw) { toast('Nothing to import', 'error'); return; }
+  const lines = raw.split('\n').map(l=>l.trim()).filter(Boolean);
+  let added = 0;
+  lines.forEach(line => {
+    // Try JSON first
+    if (line.startsWith('{')) {
+      try {
+        const obj = JSON.parse(line);
+        allAssets.push(normalizePost(obj));
+        added++; return;
+      } catch(e){}
+    }
+    // CSV parse (handle quoted fields)
+    const parts = parseCSVLine(line);
+    if (parts.length >= 2) {
+      allAssets.push(normalizePost({
+        title: parts[0]||'',
+        post_link: parts[1]||'#',
+        author: parts[2]||'Unknown',
+        price: parseFloat(parts[3])||0,
+        category: parts[4]||'Misc',
+        tags: (parts[5]||'').split(',').map(t=>t.trim()).filter(Boolean),
+      }));
+      added++;
+    }
+  });
+  allAssets = deduplicateList(allAssets);
+  save(); refreshSelects(); applyFilters();
+  document.getElementById('bulk-paste').value = '';
+  closePanel('import-panel');
+  toast(`Imported ${added} assets, deduped.`, 'success');
+}
+
+function parseCSVLine(line) {
+  const result = [];
+  let cur = '', inQ = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (c === '"') { inQ = !inQ; continue; }
+    if (c === ',' && !inQ) { result.push(cur.trim()); cur = ''; continue; }
+    cur += c;
+  }
+  result.push(cur.trim());
+  return result;
+}
+
+// ─── IMPORT CSV ─────────────────────────────────────────────────────────────
+function importCSV() {
+  const file = document.getElementById('csv-file').files[0];
+  if (!file) { toast('Select a CSV file', 'error'); return; }
+  const reader = new FileReader();
+  reader.onload = e => {
+    const lines = e.target.result.split('\n').map(l=>l.trim()).filter(Boolean);
+    let added = 0, startIdx = 0;
+    // skip header row if it looks like one
+    if (lines[0] && lines[0].toLowerCase().includes('title')) startIdx = 1;
+    for (let i = startIdx; i < lines.length; i++) {
+      const parts = parseCSVLine(lines[i]);
+      if (parts.length < 2) continue;
+      allAssets.push(normalizePost({
+        title: parts[0]||'',
+        post_link: parts[1]||'#',
+        author: parts[2]||'Unknown',
+        price: parseFloat(parts[3])||0,
+        category: parts[4]||'Misc',
+        tags: (parts[5]||'').split(',').map(t=>t.trim()).filter(Boolean),
+        image_url: parts[6]||'',
+      }));
+      added++;
+    }
+    allAssets = deduplicateList(allAssets);
+    save(); refreshSelects(); applyFilters();
+    closePanel('import-panel');
+    toast(`CSV: ${added} imported, deduped.`, 'success');
+  };
+  reader.readAsText(file);
+}
+
+// ─── IMPORT JSON ─────────────────────────────────────────────────────────────
+function importJSON() {
+  const file = document.getElementById('json-file').files[0];
+  if (!file) { toast('Select a JSON file', 'error'); return; }
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const arr = JSON.parse(e.target.result);
+      if (!Array.isArray(arr)) { toast('JSON must be an array', 'error'); return; }
+      arr.forEach(obj => allAssets.push(normalizePost({...obj})));
+      allAssets = deduplicateList(allAssets);
+      save(); refreshSelects(); applyFilters();
+      closePanel('import-panel');
+      toast(`JSON: ${arr.length} imported, deduped.`, 'success');
+    } catch(err) { toast('Invalid JSON', 'error'); }
+  };
+  reader.readAsText(file);
+}
+
+// ─── MASS TOOLS ─────────────────────────────────────────────────────────────
+function updatePrices() {
+  const today = new Date().toISOString().slice(0,10);
+  let changed = 0;
+  allAssets.forEach(a => {
+    if (a.price === 0) return; // free stays free
+    const factor = 1 + (Math.random() * 0.5 - 0.25); // ±25%
+    a.price = Math.max(0, parseFloat((a.price * factor).toFixed(2)));
+    a.price_range = priceRange(a.price);
+    a.last_checked = today;
+    changed++;
+  });
+  save(); applyFilters();
+  toast(`Updated prices on ${changed} assets.`, 'success');
+}
+
+function replaceLinks() {
+  const od = document.getElementById('old-domain').value.trim();
+  const nd = document.getElementById('new-domain').value.trim();
+  if (!od || !nd) { toast('Fill both domain fields', 'error'); return; }
+  let changed = 0;
+  allAssets.forEach(a => {
+    if (a.post_link && a.post_link.includes(od)) {
+      a.post_link = a.post_link.replace(new RegExp(od.replace(/\./g,'\\.'), 'g'), nd);
+      changed++;
+    }
+  });
+  save();
+  toast(`Replaced domain in ${changed} links.`, 'success');
+}
+
+function fixImages() {
+  let fixed = 0;
+  allAssets.forEach(a => {
+    if (!a.image_url || a.image_url.trim() === '' || a.image_url.includes('placehold.co')) {
+      a.image_url = randomPlaceholder(a.title);
+      fixed++;
+    }
+  });
+  save(); applyFilters();
+  toast(`Fixed ${fixed} images.`, 'success');
+}
+
+function deduplicate() {
+  const before = allAssets.length;
+  allAssets = deduplicateList(allAssets);
+  save(); refreshSelects(); applyFilters();
+  toast(`Removed ${before - allAssets.length} duplicates.`, 'success');
+}
+
+function clearAll() {
+  if (!confirm('Delete ALL assets? This cannot be undone.')) return;
+  allAssets = [];
+  save(); refreshSelects(); applyFilters();
+  toast('All assets cleared.', 'success');
+}
+
+// ─── EXPORT ─────────────────────────────────────────────────────────────────
+function exportJSON() {
+  const blob = new Blob([JSON.stringify(allAssets, null, 2)], {type:'application/json'});
+  dl(blob, 'assetvault_export.json');
+  toast('JSON exported.', 'success');
+}
+
+function exportCSV() {
+  const header = 'title,post_link,author,price,price_range,category,tags,image_url,last_checked';
+  const rows = allAssets.map(a =>
+    [a.title,a.post_link,a.author,a.price,a.price_range,a.category,(a.tags||[]).join('|'),a.image_url,a.last_checked]
+    .map(v => `"${String(v||'').replace(/"/g,'""')}"`)
+    .join(',')
+  );
+  const blob = new Blob([header+'\n'+rows.join('\n')], {type:'text/csv'});
+  dl(blob, 'assetvault_export.csv');
+  toast('CSV exported.', 'success');
+}
+
+function dl(blob, name) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+// ─── PANELS ─────────────────────────────────────────────────────────────────
+function openPanel(id) { document.getElementById(id).classList.add('open'); }
+function closePanel(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.panel-overlay').forEach(el => {
+  el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open'); });
+});
+
+// ─── TOAST ───────────────────────────────────────────────────────────────────
+let toastTimer;
+function toast(msg, type='') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'show' + (type ? ' '+type : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.className='', 2800);
+}
+
+// ─── INFINITE SCROLL ─────────────────────────────────────────────────────────
+const sentinel = document.getElementById('load-sentinel');
+const observer = new IntersectionObserver(entries => {
+  if (entries[0].isIntersecting && renderedCount < filteredAssets.length) {
+    document.getElementById('spinner').style.display = 'flex';
+    setTimeout(renderChunk, 80);
+  }
+}, {rootMargin:'200px'});
+observer.observe(sentinel);
+
+// ─── KEYBOARD ────────────────────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') document.querySelectorAll('.panel-overlay.open').forEach(p=>p.classList.remove('open'));
+  if ((e.ctrlKey||e.metaKey) && e.key==='k') { e.preventDefault(); document.getElementById('search-input').focus(); }
+});
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+load();
+refreshSelects();
+applyFilters();
+</script>
+</body>
+</html>
