@@ -4633,23 +4633,24 @@ select option { background: var(--card); }
 
 <div id="toasts"></div>
 
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
 <script>
-// Firebase compat wrappers — map modular API calls to compat SDK
-function getDatabase(app) { return firebase.database(); }
-function getAuth(app) { return firebase.auth(); }
-function ref(db, path) { return db.ref(path); }
-function set(r, val) { return r.set(val); }
-function update(r, val) { return r.update(val); }
-function remove(r) { return r.remove(); }
-function push(r) { return r.push(); }
-function get(r) { return r.once('value'); }
-function onValue(r, cb) { return r.on('value', cb); }
-function signInWithEmailAndPassword(auth, email, pass) { return auth.signInWithEmailAndPassword(email, pass); }
-function onAuthStateChanged(auth, cb) { return auth.onAuthStateChanged(cb); }
-function signOut(auth) { return auth.signOut(); }
+const firebaseConfig = {
+  apiKey: "AIzaSyDbg8fnVjVe7badJ7eXaDGWnAus7QxFkUs",
+  authDomain: "assets-vault-9ec2b.firebaseapp.com",
+  projectId: "assets-vault-9ec2b",
+  storageBucket: "assets-vault-9ec2b.firebasestorage.app",
+  messagingSenderId: "656390855397",
+  appId: "1:656390855397:web:791bce333961e9abf6120c"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+const COLLECTION = "assets_dev";
+</script>
 
 /* ═══════════════════════════════════════════════
    CONFIG
