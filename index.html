@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GameScout Admin</title>
+<title>AssetScout Admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -4227,6 +4227,7 @@ select option { background: var(--card); }
 }
 
 
+/* TAG SUGGESTION DROPDOWN */
 .tag-suggest-dropdown {
   position: absolute;
   top: 100%;
@@ -4251,21 +4252,27 @@ select option { background: var(--card); }
   align-items: center;
   gap: 8px;
 }
-.tag-suggest-item:hover, .tag-suggest-item.active { background: var(--neon-dim); color: var(--neon); }
-.tag-suggest-item .ts-new { font-size: 10px; color: var(--muted); margin-left: auto; font-family: 'JetBrains Mono', monospace; }
+.tag-suggest-item:hover, .tag-suggest-item.active {
+  background: var(--neon-dim);
+  color: var(--neon);
+}
+.tag-suggest-item .ts-new {
+  font-size: 10px;
+  color: var(--muted);
+  margin-left: auto;
+  font-family: 'JetBrains Mono', monospace;
+}
 </style>
 </head>
 <body>
 
 <!-- LOGIN -->
-
-
-<!-- MAIN APP (hidden until login) -->
+<!-- MAIN APP -->
 <div id="app" style="display:flex;">
 
   <!-- PAGE TRANSITION LOADER -->
   <div id="page-loader">
-    <div class="page-loader-logo">GameScout</div>
+    <div class="page-loader-logo">AssetScout</div>
     <div class="page-loader-spinner"></div>
     <div class="page-loader-bar"><div class="page-loader-bar-fill"></div></div>
   </div>
@@ -4277,7 +4284,7 @@ select option { background: var(--card); }
   <nav id="sidebar">
     <div class="sb-logo">
       <div class="sb-logo-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 12h4m-2-2v4"/><circle cx="16" cy="10" r="1" fill="currentColor"/><circle cx="18" cy="12" r="1" fill="currentColor"/><circle cx="16" cy="14" r="1" fill="currentColor"/><circle cx="14" cy="12" r="1" fill="currentColor"/></svg></div>
-      <div class="sb-logo-text">GameScout</div>
+      <div class="sb-logo-text">AssetScout</div>
 
     </div>
 
@@ -4299,9 +4306,9 @@ select option { background: var(--card); }
         Taxonomy
       </div>
       <div class="nav-item" onclick="switchView('quality', this)">
-        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-        Data Quality
-        <span class="nav-badge" id="nb-quality" style="background:rgba(239,68,68,0.15);color:#ef4444;">0</span>
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
+        Mass Tools
+        <span class="nav-badge" id="nb-quality" style="background:rgba(0,212,255,0.15);color:var(--neon);">✦</span>
       </div>
       <div class="sb-section" style="margin-top:6px;">Logs</div>
       <div class="nav-item" onclick="switchView('updates', this)">
@@ -4310,17 +4317,13 @@ select option { background: var(--card); }
       </div>
     </div>
 
-    <div class="sb-footer">
+      <div class="sb-footer">
       <div class="sb-user">
         <div class="sb-avatar" id="sb-avatar-text">A</div>
         <div class="sb-user-info">
           <div class="sb-user-name" id="sb-user-email">admin</div>
           <div class="sb-user-role">Administrator</div>
         </div>
-      </div>
-      <div class="sb-logout-badge" onclick="doLogout()" title="Sign out">
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-        SIGN OUT
       </div>
     </div>
   </nav>
@@ -4335,7 +4338,7 @@ select option { background: var(--card); }
       <div class="topbar-actions" id="topbar-actions">
         <button class="btn btn-secondary btn-sm" onclick="openImportExportModal()"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="margin-right:4px;vertical-align:-1px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Import/Export</button>
         <button class="btn btn-secondary btn-sm" onclick="openBulkModal()"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="margin-right:4px;vertical-align:-1px"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/></svg> Bulk</button>
-        <button class="btn btn-primary btn-sm" onclick="openAddGameModal()"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="margin-right:4px;vertical-align:-1px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add Game</button>
+        <button class="btn btn-primary btn-sm" onclick="openAddGameModal()"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="margin-right:4px;vertical-align:-1px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add Asset</button>
       </div>
       <div class="topbar-section-badge" id="topbar-title">Library</div>
       <div class="admin-neon-badge">ADMIN</div>
@@ -4354,7 +4357,7 @@ select option { background: var(--card); }
           <div class="filter-pill" id="fp-live" onclick="setLibFilter('live',this)">Live</div>
           <div class="filter-pill" id="fp-feat" onclick="setLibFilter('featured',this)">Featured</div>
           <div class="filter-pill" id="fp-ea" onclick="setLibFilter('ea',this)">Early Access</div>
-          <div class="lib-count" id="lib-count">0 games</div>
+          <div class="lib-count" id="lib-count">0 assets</div>
           <button class="btn btn-secondary btn-sm" id="lib-select-all-btn" onclick="selectAllCards()">Select All</button>
           <button class="btn btn-secondary btn-sm" id="filter-toggle-btn" onclick="toggleAdminFilter()" style="margin-left:auto;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;vertical-align:-1px"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg> Filter</button>
           <button class="btn btn-secondary btn-sm" id="lib-view-toggle" onclick="toggleLibView()" title="Toggle List / Grid view" style="padding:5px 9px;">
@@ -4415,9 +4418,11 @@ select option { background: var(--card); }
               Add File
             </button>
 
-            <div style="font-size:10px;color:var(--dim);text-align:center;margin:4px 0;font-family:'JetBrains Mono',monospace;">— or paste IDs directly —</div>
+            <div style="font-size:10px;color:var(--dim);text-align:center;margin:4px 0;font-family:'JetBrains Mono',monospace;">— or paste links / NDJSON directly —</div>
             <textarea id="bulk-ids-area"
-              placeholder="730&#10;1245620&#10;https://store.steampowered.com/app/1245620"
+              placeholder="Paste links or NDJSON (one per line):
+https://fab.com/listings/...
+https://cgtrader.com/3d-models/..."
               style="min-height:70px;max-height:160px;font-family:'JetBrains Mono',monospace;font-size:12px;resize:vertical;"></textarea>
 
             <!-- Actions -->
@@ -4530,12 +4535,17 @@ select option { background: var(--card); }
           <div class="io-card">
             <div class="io-card-header">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              Export Games
+              Export Assets
             </div>
             <div class="io-card-body">
-              <div class="io-card-desc">Download all games as a JSON backup file.</div>
-              <button class="btn btn-success" onclick="exportGames()">Export assets.json</button>
-                <button class="btn btn-success" onclick="exportSelectedXML()" style="background:rgba(16,185,129,0.12);color:#10b981;border:1px solid rgba(16,185,129,0.3);">Export → WordPress XML</button>
+              <div class="io-card-desc">Download all assets as a JSON backup file.</div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <button class="btn btn-success" onclick="exportGames()">Export assets.json</button>
+                <button class="btn btn-success" onclick="exportToWordPressXML(allGames)" style="background:rgba(16,185,129,0.12);color:#10b981;border:1px solid rgba(16,185,129,0.3);">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="margin-right:4px;vertical-align:-1px"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/></svg>
+                  Export → WordPress XML
+                </button>
+              </div>
             </div>
           </div>
           <div class="io-card">
@@ -4613,7 +4623,7 @@ select option { background: var(--card); }
 <div id="drawer-overlay" onclick="closeDrawer()"></div>
 <div id="drawer">
   <div class="drawer-header">
-    <div class="drawer-title" id="drawer-title">Edit Game</div>
+    <div class="drawer-title" id="drawer-title">Edit Asset</div>
     <button class="drawer-close" onclick="closeDrawer()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
   </div>
   <div class="drawer-body" id="drawer-body"></div>
@@ -4629,6 +4639,7 @@ select option { background: var(--card); }
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 <script>
 /* ═══════════════════════════════════════════════
    CONFIG — Firestore
@@ -4637,16 +4648,17 @@ const firebaseConfig = {
   apiKey: "AIzaSyDbg8fnVjVe7badJ7eXaDGWnAus7QxFkUs",
   authDomain: "assets-vault-9ec2b.firebaseapp.com",
   projectId: "assets-vault-9ec2b",
-  storageBucket: "assets-vault-9ec2b.firebasestorage.app",
+  storageBucket: "assets-vault-9ec2b.appspot.com",
   messagingSenderId: "656390855397",
   appId: "1:656390855397:web:791bce333961e9abf6120c"
 };
 
 const COLLECTION = "assets_dev";
 
-/* ═══════════════════════════════════════════════
-   EARLY DECLARATIONS (must be before any function use)
-═══════════════════════════════════════════════ */
+/* EARLY DECLARATIONS — must be before any function */
+let _loaderTimer = null;
+let db, storage;
+window._pendingImageFile = null;
 
 /* ═══════════════════════════════════════════════
    SUPABASE SYNC — keeps public site in sync
@@ -4700,7 +4712,7 @@ async function _sbSetStatus(id, status) {
 /* ═══════════════════════════════════════════════
    STATE
 ═══════════════════════════════════════════════ */
-let fbApp, db;
+let fbApp;
 let allGames = [], TAXONOMY = {};
 
 // ── Unified parsing maps + helpers (Add Game / Bulk / QFix) ─────────────
@@ -4830,11 +4842,10 @@ let editingGameId = null;
 ═══════════════════════════════════════════════ */
 function initFirebase() {
   if (!firebase.apps.length) {
-    fbApp = firebase.initializeApp(firebaseConfig);
-  } else {
-    fbApp = firebase.apps[0];
+    firebase.initializeApp(firebaseConfig);
   }
   db = firebase.firestore();
+  storage = firebase.storage();
   console.log('[Firebase] Firestore initialized, collection:', COLLECTION);
   showApp();
 }
@@ -4861,17 +4872,16 @@ function invalidateFilterCache() {
 }
 
 async function _loadRemaining() {
-  // Firestore: additional pages already loaded in loadData via onSnapshot
+  // Firestore: data fully loaded via onSnapshot in loadData
   _adminAllLoaded = true;
 }
 
 function loadData() {
   if (!db) { console.error('[loadData] db not initialized'); return; }
-
   if (_dataListenersAttached) return;
   _dataListenersAttached = true;
 
-  // ── Firestore real-time listener ─────────────────────────────────────────
+  // Real-time Firestore listener on assets collection
   db.collection(COLLECTION).onSnapshot(snapshot => {
     allGames = [];
     snapshot.forEach(doc => {
@@ -4888,7 +4898,7 @@ function loadData() {
     toast('Failed to load data: ' + err.message, 'error');
   });
 
-  // ── Taxonomy listener ─────────────────────────────────────────────────────
+  // Taxonomy listener
   db.collection('meta').doc('taxonomy').onSnapshot(snap => {
     TAXONOMY = snap.exists ? snap.data() : {};
     mergeTaxonomyDefaults();
@@ -4899,8 +4909,8 @@ function loadData() {
     const panel = document.getElementById('admin-filter-panel');
     if (panel && panel.classList.contains('open')) buildAdminFilterPanel();
   }, () => {
-    mergeTaxonomyDefaults();
-    buildFormSelects(); buildAllCheckboxGrids(); populateStoresMultiselect(); renderTaxonomy();
+    mergeTaxonomyDefaults(); buildFormSelects(); buildAllCheckboxGrids();
+    populateStoresMultiselect(); renderTaxonomy();
   });
 }
 
@@ -4909,14 +4919,14 @@ function loadData() {
    VIEW SWITCHING
 ═══════════════════════════════════════════════ */
 const VIEW_META = {
-  library:  { title: 'Library',        sub: 'All published games' },
-  drafts:   { title: 'Drafts',         sub: 'Games pending review' },
-  add:      { title: 'Add Game',       sub: 'Fetch from Steam or add manually' },
-  bulk:     { title: 'Bulk Import',    sub: 'Import multiple games via Steam IDs or store URLs' },
+  library:  { title: 'Library',        sub: 'All published assets' },
+  drafts:   { title: 'Drafts',         sub: 'Assets pending review' },
+  add:      { title: 'Add Asset',      sub: 'Add manually' },
+  bulk:     { title: 'Bulk Import',    sub: 'Import multiple assets via store IDs or URLs' },
   taxonomy: { title: 'Taxonomy',       sub: 'Manage filter categories and tags' },
   io:       { title: 'Import / Export',sub: 'Backup and restore your catalog' },
   updates:  { title: 'Recent Updates', sub: 'History of all admin actions' },
-  quality:  { title: 'Data Quality',   sub: 'Find and fix games with missing or incomplete data' },
+  quality:  { title: 'Mass Tools',     sub: 'Affiliate links, image fixes, deduplication' },
 };
 
 // ── ACTIVITY LOG ──────────────────────────────────────────────────────────────
@@ -4934,9 +4944,9 @@ const TRACKED_FIELDS = [
   { key: 'popularity',   label: 'Popularity' },
   { key: 'cover',        label: 'Cover URL' },
   { key: 'trailer',      label: 'Trailer URL' },
-  { key: 'genres',       label: 'Genres' },
   { key: 'userTags',     label: 'Tags' },
-  { key: 'features',     label: 'Features' },
+  { key: 'overview',     label: 'Overview' },
+  { key: 'technicalDetails', label: 'Technical Details' },
   { key: 'themes',       label: 'Themes' },
   { key: 'platforms',    label: 'Platforms' },
   { key: 'playMode',     label: 'Play Mode' },
@@ -5147,7 +5157,7 @@ function toggleUpdatesView() {
 async function undoField(logKey, fieldKey) {
   try {
     const snap = await db.collection('activityLog').doc(logKey).get();
-    const e = snap.exists ? snap.data() : null;
+    const e = snap.val();
     if (!e || !e.gameId) { toast('Log entry not found', 'error'); return; }
     const change = (e.changes || []).find(c => c.field === fieldKey);
     if (!change) { toast('Field change not found', 'error'); return; }
@@ -5184,7 +5194,7 @@ async function undoField(logKey, fieldKey) {
 async function undoAction(logKey) {
   try {
     const snap = await db.collection('activityLog').doc(logKey).get();
-    const e = snap.exists ? snap.data() : null;
+    const e = snap.val();
     if (!e) { toast('Log entry not found', 'error'); return; }
     if (e.actionType === 'game_updated' && e.previousData && e.gameId) {
       await db.collection(COLLECTION).doc(e.gameId).set(e.previousData);
@@ -5200,7 +5210,7 @@ async function undoAction(logKey) {
 async function undoDelete(logKey) {
   try {
     const snap = await db.collection('activityLog').doc(logKey).get();
-    const e = snap.exists ? snap.data() : null;
+    const e = snap.val();
     if (!e) { toast('Log entry not found', 'error'); return; }
     if (e.actionType !== 'game_deleted') { toast('Not a delete action', 'error'); return; }
     if (!e.previousData || !e.gameId) { toast('No data to restore', 'error'); return; }
@@ -5229,1058 +5239,238 @@ async function undoDelete(logKey) {
 
 async function clearActivityLog() {
   if (!confirm('Clear entire activity log?')) return;
-  const colSnap = await db.collection('activityLog').get();
-  const batch = db.batch();
-  colSnap.forEach(doc => batch.delete(doc.ref));
-  await batch.commit();
+  const colSnap2 = await db.collection('activityLog').get(); const batch2 = db.batch(); colSnap2.forEach(doc => batch2.delete(doc.ref)); await batch2.commit();
   renderActivityLog();
   toast('Log cleared', 'info');
 }
 
 /* ═══════════════════════════════════════════════
-   DATA QUALITY DASHBOARD
+   MASS TOOLS
 ═══════════════════════════════════════════════ */
-
-const QUALITY_CHECKS = [
-  { key:'cover',       label:'Cover',          check: g => !!g.cover },
-  { key:'description', label:'Description',    check: g => !!g.description },
-  { key:'genres',      label:'Genres',         check: g => g.genres?.length > 0 },
-  { key:'platforms',   label:'Platforms',      check: g => g.platforms?.length > 0 },
-  { key:'period',      label:'Period',         check: g => !!g.period },
-  { key:'rating',      label:'Rating',         check: g => !!g.rating },
-  { key:'difficulty',  label:'Difficulty',     check: g => !!g.difficulty },
-  { key:'length',      label:'Length',         check: g => !!g.length },
-  { key:'visual',      label:'Visual',         check: g => !!g.visual },
-  { key:'themes',      label:'Themes',         check: g => g.themes?.length > 0 },
-  { key:'userTags',    label:'User Tags',      check: g => g.userTags?.length > 0 },
-  { key:'features',    label:'Features',       check: g => g.features?.length > 0 },
-  { key:'trailer',     label:'Trailer',        check: g => !!g.trailer },
-  { key:'playMode',    label:'Play Mode',      check: g => g.playMode?.length > 0 },
-  { key:'price',       label:'Price',          check: g => !!g.price },
-];
-
-const FIX_FIELDS = ['cover','description','genres','platforms','period','price','rating',
-  'difficulty','length','visual','themes','userTags','features','trailer',
-  'steamAppId','playMode','perspective'];
-
-let _qFilter   = 'all';
-let _qField    = 'any';
-let _qSelected = new Set();
-let _qRunning  = false;
-// Session-only set — tracks games fixed THIS session (not yet persisted)
-// Cleared after save. Resets on page reload.
-let _qFixedThisSession = new Set();
-let _qLastId   = null;
-let _qFiltered = [];
-
-function _getQFiltered() {
-  // Issue 4: hide games that are fully fixed (qfixProcessed OR isFullyFixed)
-  const pub = allGames.filter(g => g.status !== 'draft' && !g.qfixProcessed && !g.isFullyFixed);
-  let list = pub.map(g => {
-    const missing = QUALITY_CHECKS.filter(c => !c.check(g)).map(c => c.key);
-    return { ...g, _missing: missing, _score: Math.round((QUALITY_CHECKS.length - missing.length) / QUALITY_CHECKS.length * 100) };
-  }).filter(g => g._missing.length > 0).sort((a,b) => a._score - b._score);
-  if (_qField !== 'any') list = list.filter(g => g._missing.includes(_qField));
-  if (_qFilter === 'steam')   list = list.filter(g => g.steamAppId);
-  if (_qFilter === 'nosteam') list = list.filter(g => !g.steamAppId);
-  return list;
-}
 
 function renderQualityDashboard() {
   const el = document.getElementById('quality-content');
   if (!el) return;
 
-  const pub   = allGames.filter(g => g.status !== 'draft' && !g.qfixProcessed && !g.isFullyFixed);
-  const total = pub.length;
-  const allIssues = pub.filter(g => QUALITY_CHECKS.some(c => !c.check(g)));
-
-  // ── count duplicates for the stat card ──
-  const _dupSteam = {}, _dupTitle = {};
-  for (const g of pub) {
-    const sid = g.steamAppId ? String(g.steamAppId) : null;
-    if (sid) { _dupSteam[sid] = (_dupSteam[sid]||0) + 1; }
-    else { const t=(g.title||'').toLowerCase().trim(); _dupTitle[t]=(_dupTitle[t]||0)+1; }
-  }
-  const dupCount = Object.values(_dupSteam).filter(n=>n>1).reduce((s,n)=>s+(n-1),0)
-                 + Object.values(_dupTitle).filter(n=>n>1).reduce((s,n)=>s+(n-1),0);
-
-  // ── under-rated count ──
-  const underRated = pub.filter(g => g.rating === 'Mixed' || g.rating === 'Negative');
-
-  const fieldStats = QUALITY_CHECKS.map(c => {
-    const missing = pub.filter(g => !c.check(g)).length;
-    return { ...c, missing, pct: total ? Math.round((total - missing) / total * 100) : 100 };
-  });
-  const avgScore   = Math.round(fieldStats.reduce((s,f) => s+f.pct, 0) / fieldStats.length);
-  const scoreColor = avgScore >= 80 ? '#10b981' : avgScore >= 60 ? '#eab308' : '#ef4444';
-
-  _qFiltered = _getQFiltered();
-  const filtered  = _qFiltered;
-  const selCount  = _qSelected.size;
-  const allSel    = filtered.length > 0 && filtered.every(g => _qSelected.has(g.id));
-
-  const badge = document.getElementById('nb-quality');
-  if (badge) badge.textContent = allIssues.length;
-
-  // ── Issue 5: pagination state ────────────────────────────
-  const Q_PAGE_SIZE = 50;
-  if (!window._qPage) window._qPage = 1;
-  const qPageStart = (window._qPage - 1) * Q_PAGE_SIZE;
-  const qPageEnd   = window._qPage * Q_PAGE_SIZE;
-  const qTotalPages = Math.max(1, Math.ceil(filtered.length / Q_PAGE_SIZE));
-  if (window._qPage > qTotalPages) window._qPage = 1;
-  const qPageGames = filtered.slice(qPageStart, qPageEnd);
+  const storeSources = _getStoreSources();
+  const storeOpts = storeSources.map(s => `<option value="${s.domain}">${s.name} (${s.domain})</option>`).join('');
 
   el.innerHTML = `
-    <!-- ── Issue 2: Quick Actions at TOP ── -->
-    <div style="margin-bottom:20px;">
-      <div style="font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px;font-family:'JetBrains Mono',monospace;">Quick Actions</div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px;">
-        ${[
-          { icon:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>', label:'Find Duplicates', sub:'Scan by ID + title', color:'var(--neon)', action:'qShowDuplicates()' },
-          { icon:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>', label:'Under Rated', sub:'Mixed + Negative', color:'#eab308', action:'qShowUnderRated()' },
-          { icon:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>', label:'Fix All Issues', sub:filtered.length+' games need fixing', color:'var(--green)', action:'qSelectAll();qFix()' },
-          { icon:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M8.5 14.5A2.5 2.5 0 0011 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 11-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 002.5 3z"/></svg>', label:'Fix Featured (Buzz)', sub:'Re-save latestFeatured games', color:'var(--amber)', action:'fixFeaturedGames()' },
-          { icon:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>', label:'Fix Missing Covers', sub:allGames.filter(g=>!g.cover&&g.steamAppId).length+' games', color:'var(--neon)', action:'fixMissingCovers()' },
-          { icon:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>', label:'Remove Dupes', sub:'Delete all duplicates', color:'#ef4444', action:'qShowDuplicates()' },
-          { icon:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>', label:'No Cover', sub:fieldStats.find(f=>f.key==="cover")?.missing+" missing", color:'var(--amber)', action:'qSetField("cover")' },
-          { icon:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>', label:'No Description', sub:fieldStats.find(f=>f.key==="description")?.missing+" missing", color:'var(--purple)', action:'qSetField("description")' },
-        ].map(c=>`
-          <div onclick="${c.action}" style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 12px;cursor:pointer;display:flex;align-items:center;gap:10px;" onmouseover="this.style.borderColor='${c.color}';this.style.background='var(--hover)'" onmouseout="this.style.borderColor='var(--border)';this.style.background='var(--card)'">            <div style="color:${c.color};opacity:0.85;flex-shrink:0;">${c.icon}</div>
-            <div style="min-width:0;">
-              <div style="font-size:11px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${c.label}</div>
-              <div style="font-size:10px;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${c.sub}</div>
-            </div>
-          </div>`).join('')}
-      </div>
-    </div>
+    <div style="max-width:760px;padding:4px 0;">
 
-    <!-- ── Stats ── -->
-    <div class="q-stat-grid">
-      ${[
-        { val:avgScore+'%', label:'Quality Score', color:scoreColor, sub:'' },
-        { val:allIssues.length, label:'With Issues', color:'#ef4444', sub:'' },
-        { val:total-allIssues.length, label:'Complete', color:'#10b981', sub:'' },
-        { val:total, label:'Total Games', color:'var(--neon)', sub:'' },
-      ].map(s=>`<div class="q-stat-card">
-        <div class="q-stat-val" style="color:${s.color};">${s.val}</div>
-        <div class="q-stat-lbl">${s.label}</div>
-      </div>`).join('')}
-      <div class="q-stat-card q-stat-action ${dupCount>0?'q-stat-danger':''}" onclick="qShowDuplicates()">
-        <div class="q-stat-val" style="color:${dupCount>0?'#ef4444':'#10b981'};">${dupCount}</div>
-        <div class="q-stat-lbl">Duplicates</div>
-        <div class="q-stat-sub">${dupCount>0?'review →':'all clear'}</div>
-      </div>
-      <div class="q-stat-card q-stat-action ${underRated.length>0?'q-stat-warn':''}" onclick="qShowUnderRated()">
-        <div class="q-stat-val" style="color:${underRated.length>0?'#eab308':'#10b981'};">${underRated.length}</div>
-        <div class="q-stat-lbl">Under Rated</div>
-        <div class="q-stat-sub">${underRated.length>0?'Mixed + Negative →':'all clear'}</div>
-      </div>
-    </div>
-
-    <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:16px;">
-      <div style="font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Click a field to filter</div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:5px;">
-        ${fieldStats.map(f=>`
-          <div onclick="qSetField('${f.key}')" style="cursor:pointer;padding:6px 8px;border-radius:5px;border:1px solid ${_qField===f.key?'var(--neon)':'var(--border)'};background:${_qField===f.key?'var(--neon-dim)':'var(--bg-deep)'};transition:all .12s;">
-            <div style="display:flex;justify-content:space-between;margin-bottom:3px;">
-              <span style="font-size:11px;font-weight:500;color:${_qField===f.key?'var(--neon)':'var(--text)'};">${f.label}</span>
-              <span style="font-size:10px;color:${f.pct>=80?'#10b981':f.pct>=60?'#eab308':'#ef4444'};">${f.pct}%</span>
-            </div>
-            <div style="height:2px;background:var(--border);border-radius:2px;"><div style="height:100%;width:${f.pct}%;background:${f.pct>=80?'#10b981':f.pct>=60?'#eab308':'#ef4444'};border-radius:2px;"></div></div>
-            <div style="font-size:10px;color:var(--muted);margin-top:2px;">${f.missing} missing</div>
-          </div>`).join('')}
-      </div>
-    </div>
-
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
-      <select onchange="qSetFilter(this.value)" style="font-size:12px;padding:5px 8px;background:var(--bg-deep);border:1px solid var(--border);border-radius:6px;color:var(--text);">
-        <option value="all" ${_qFilter==='all'?'selected':''}>All</option>
-        <option value="steam" ${_qFilter==='steam'?'selected':''}>Has Steam ID</option>
-        <option value="nosteam" ${_qFilter==='nosteam'?'selected':''}>No Steam ID</option>
-      </select>
-      <span style="font-size:11px;color:var(--muted);">${filtered.length} games</span>
-      ${selCount>0?`<span style="font-size:11px;color:var(--neon);font-weight:600;">${selCount} selected</span>`:''}
-      <div style="margin-left:auto;display:flex;gap:6px;">
-        <button class="btn btn-secondary btn-sm" onclick="qSelectAll()">${allSel?'Deselect All':'Select All'}</button>
-        <button class="btn btn-secondary btn-sm" onclick="qSaveProgress()" style="color:#10b981;border-color:rgba(16,185,129,0.4);" title="Save progress of already-fixed games">💾 Save</button>
-        <button class="btn btn-secondary btn-sm" id="q-stop-btn" onclick="qStop()" style="display:none;align-items:center;gap:4px;">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="margin-right:3px;vertical-align:-1px"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
-          Stop
-        </button>
-        <button class="btn btn-primary btn-sm" id="q-fix-btn" onclick="qFix()" style="${selCount===0?'opacity:.4;pointer-events:none':''}">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="margin-right:3px;vertical-align:-1px"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
-          Full Fix (${selCount})
-        </button>
-      </div>
-    </div>
-
-    <div style="font-size:10px;color:var(--muted);margin-bottom:8px;">Ctrl+click to select · Shift+click for range</div>
-
-    <!-- Progress bar — hidden until fix starts -->
-    <div id="q-progress-wrap" style="display:none;margin-bottom:10px;">
-      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:4px;">
-        <span id="q-progress-label">Fixing…</span>
-        <span id="q-progress-pct">0%</span>
-      </div>
-      <div style="height:4px;background:var(--border);border-radius:2px;">
-        <div id="q-progress-bar" style="height:100%;width:0%;background:var(--neon);border-radius:2px;transition:width .3s ease;"></div>
-      </div>
-    </div>
-
-    <!-- Game list — paginated (Issue 5: performance) -->
-    <div id="q-list" style="display:flex;flex-direction:column;gap:5px;">
-      ${qPageGames.map(g=>`
-        <div class="q-row" data-qid="${g.id}" onclick="qRowClick(event,'${g.id}')"
-          style="background:var(--card);border:1px solid ${_qSelected.has(g.id)?'var(--neon)':'var(--border)'};border-radius:7px;padding:9px 11px;display:flex;align-items:center;gap:9px;cursor:pointer;${_qSelected.has(g.id)?'background:var(--neon-dim);':''}">
-          <div style="width:15px;height:15px;border-radius:3px;border:2px solid ${_qSelected.has(g.id)?'var(--neon)':'var(--border)'};background:${_qSelected.has(g.id)?'var(--neon)':'transparent'};flex-shrink:0;display:flex;align-items:center;justify-content:center;pointer-events:none;">
-            ${_qSelected.has(g.id)?'<svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="var(--bg)" stroke-width="4" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>':''}
+      <!-- A: Affiliate Link Tool -->
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;color:var(--neon);text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;display:flex;align-items:center;gap:8px;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+          Affiliate Link Mass Update
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+          <div>
+            <div class="field-label" style="margin-bottom:5px;">Select Store</div>
+            <select id="mt-store-select" style="width:100%;">
+              <option value="">— Select Store —</option>
+              ${storeOpts}
+            </select>
           </div>
-          ${g.cover?`<img src="${g.cover}" loading="lazy" style="width:40px;height:22px;object-fit:cover;border-radius:3px;flex-shrink:0;pointer-events:none;" onerror="this.style.display='none'">`:'<div style="width:40px;height:22px;background:var(--bg-deep);border-radius:3px;flex-shrink:0;"></div>'}
-          <div style="flex:1;min-width:0;pointer-events:none;">
-            <div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${g.title}</div>
-            <div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:3px;">
-              ${g._missing.map(k=>{const f=QUALITY_CHECKS.find(c=>c.key===k);return `<span style="font-size:10px;padding:1px 5px;border-radius:3px;background:rgba(239,68,68,.1);color:#ef4444;border:1px solid rgba(239,68,68,.2);">${f?.label||k}</span>`;}).join('')}
-            </div>
+          <div>
+            <div class="field-label" style="margin-bottom:5px;">Affiliate Link</div>
+            <input type="url" id="mt-affiliate-url" placeholder="https://partner.example.com/?ref=yourcode" style="width:100%;">
           </div>
-          <div style="text-align:right;flex-shrink:0;pointer-events:none;">
-            <div style="font-size:12px;font-weight:700;color:${g._score>=80?'#10b981':g._score>=60?'#eab308':'#ef4444'};">${g._score}%</div>
-            <div style="font-size:10px;color:var(--muted);">${g.steamAppId?'Steam':'–'}</div>
-          </div>
-          <button onclick="event.stopPropagation();openAddGameModal('${g.id}')"
-            style="flex-shrink:0;background:none;border:1px solid var(--border);color:var(--muted);border-radius:5px;padding:4px 7px;cursor:pointer;">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <button class="btn btn-primary" onclick="mtApplyAffiliate()">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="margin-right:4px;vertical-align:-1px"><polyline points="20 6 9 17 4 12"/></svg>
+            Apply Affiliate
           </button>
-        </div>`).join('')}
-      ${qPageGames.length===0?'<div style="text-align:center;padding:40px;color:var(--muted);font-size:13px;">No games with issues — all clear</div>':''}
+          <div id="mt-affiliate-status" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);"></div>
+        </div>
+        <div style="margin-top:10px;font-size:11px;color:var(--dim);line-height:1.6;">
+          Matches assets by domain — replaces only links from the selected store. Other store links are untouched.
+        </div>
+      </div>
+
+
+      <!-- C: Mass Image Fix -->
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;color:var(--purple);text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;display:flex;align-items:center;gap:8px;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          Mass Image Fix
+        </div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">
+          Assets missing cover: <strong style="color:var(--neon);">${allGames.filter(g=>!g.cover&&!g.image).length}</strong> &nbsp;|&nbsp;
+          Total assets: <strong style="color:var(--text);">${allGames.length}</strong>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <button class="btn btn-secondary" onclick="mtFixImages()">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="margin-right:4px;vertical-align:-1px"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            Fix Missing Images
+          </button>
+          <div id="mt-image-status" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);"></div>
+        </div>
+        <div style="margin-top:10px;font-size:11px;color:var(--dim);">Sets a generated placeholder for all assets missing cover/image.</div>
+      </div>
+
+      <!-- D: Deduplication -->
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;display:flex;align-items:center;gap:8px;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
+          Deduplication (by post_link)
+        </div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:12px;" id="mt-dedup-info">Click Scan to find duplicates.</div>
+        <div id="mt-dedup-results" style="max-height:240px;overflow-y:auto;margin-bottom:10px;"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-secondary" onclick="mtScanDuplicates()">Scan Duplicates</button>
+          <button class="btn btn-danger" id="mt-dedup-delete-btn" style="display:none;" onclick="mtDeleteDuplicates()">Delete Duplicates</button>
+        </div>
+      </div>
+
     </div>
-    <!-- Pagination -->
-    ${qTotalPages > 1 ? `<div style="display:flex;align-items:center;justify-content:center;gap:6px;padding:16px 0 8px;flex-wrap:wrap;">
-      <button onclick="window._qPage=Math.max(1,window._qPage-1);renderQualityDashboard()" class="adm-page-btn" ${window._qPage<=1?'disabled':''}>‹</button>
-      ${Array.from({length:Math.min(qTotalPages,7)},(_,i)=>{
-        const pg = qTotalPages<=7 ? i+1 : (window._qPage<=4 ? i+1 : (window._qPage>=qTotalPages-3 ? qTotalPages-6+i : window._qPage-3+i));
-        return `<button onclick="window._qPage=${pg};renderQualityDashboard()" class="adm-page-btn${window._qPage===pg?' active':''}">${pg}</button>`;
-      }).join('')}
-      <button onclick="window._qPage=Math.min(qTotalPages,window._qPage+1);renderQualityDashboard()" class="adm-page-btn" ${window._qPage>=qTotalPages?'disabled':''}>›</button>
-      <span style="font-size:11px;color:var(--muted);margin-left:4px;">Page ${window._qPage}/${qTotalPages} · ${filtered.length} total</span>
-    </div>` : ''}
-
-
   `;
 }
 
-function qSetField(key) { _qField = _qField===key?'any':key; window._qPage=1; renderQualityDashboard(); }
-function qSetFilter(val) { _qFilter = val; window._qPage=1; renderQualityDashboard(); }
+/* ═══════════════════════════════════════════════
+   MASS TOOLS FUNCTIONS
+═══════════════════════════════════════════════ */
 
-function qSelectAll() {
-  const ids = _qFiltered.map(g => g.id);
-  const allSel = ids.length > 0 && ids.every(id => _qSelected.has(id));
-  // Fast path — no re-render, just update DOM directly
-  if (allSel) {
-    _qSelected.clear();
-  } else {
-    ids.forEach(id => _qSelected.add(id));
-  }
-  _qLastId = null;
-  // Update checkboxes directly without full re-render
-  document.querySelectorAll('.q-row').forEach(row => {
-    const id = row.dataset.qid;
-    const sel = _qSelected.has(id);
-    row.style.borderColor = sel ? 'var(--neon)' : 'var(--border)';
-    row.style.background  = sel ? 'var(--neon-dim)' : 'var(--card)';
-    const cb = row.querySelector('div');
-    if (cb) {
-      cb.style.background   = sel ? 'var(--neon)' : 'transparent';
-      cb.style.borderColor  = sel ? 'var(--neon)' : 'var(--border)';
-      cb.innerHTML = sel ? '<svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="var(--bg)" stroke-width="4" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>' : '';
-    }
+async function mtApplyAffiliate() {
+  const domain = document.getElementById('mt-store-select').value;
+  const affiliateUrl = document.getElementById('mt-affiliate-url').value.trim();
+  const status = document.getElementById('mt-affiliate-status');
+  if (!domain) { status.textContent = '✕ Select a store first'; status.style.color = 'var(--red)'; return; }
+  if (!affiliateUrl) { status.textContent = '✕ Enter affiliate URL'; status.style.color = 'var(--red)'; return; }
+  status.textContent = 'Scanning…'; status.style.color = 'var(--muted)';
+  const matches = allGames.filter(g => {
+    if (g.post_link && g.post_link.includes(domain)) return true;
+    if (g.storeLinks) return Object.values(g.storeLinks).some(u => u && u.includes(domain));
+    return false;
   });
-  // Update button text and count
-  const btn = document.getElementById('q-sel-all-btn');
-  if (btn) btn.textContent = allSel ? 'Select All' : 'Deselect All';
-  // Update selected count display — re-render only the actions area
-  const countEl = document.querySelector('#quality-content span[style*="var(--neon)"]');
-  if (countEl && _qSelected.size > 0) countEl.textContent = _qSelected.size + ' selected';
-  // Full re-render for button states
-  setTimeout(renderQualityDashboard, 50);
-}
-
-let _qRenderTimer = null;
-function qRender() {
-  clearTimeout(_qRenderTimer);
-  _qRenderTimer = setTimeout(renderQualityDashboard, 50);
-}
-
-function qRowClick(e, id) {
-  e.stopPropagation();
-  e.preventDefault();
-  // Prevent browser text selection on shift+click
-  if (e.shiftKey) window.getSelection()?.removeAllRanges();
-  const ids = _qFiltered.map(g => g.id);
-  if (e.shiftKey && _qLastId && ids.includes(_qLastId)) {
-    const a = ids.indexOf(_qLastId), b = ids.indexOf(id);
-    const [from, to] = a < b ? [a,b] : [b,a];
-    for (let i = from; i <= to; i++) _qSelected.add(ids[i]);
-  } else {
-    if (_qSelected.has(id)) _qSelected.delete(id);
-    else _qSelected.add(id);
-  }
-  _qLastId = id;
-  qRender();
-}
-
-function qStop() { _qRunning = false; }
-
-let _qDupRunning = false;
-
-let _dupScanRunning = false;
-
-async function qShowDuplicates() {
-  const el = document.getElementById('quality-content');
-  if (!el) return;
-
-  // show scanning state immediately
-  _dupScanRunning = true;
-  const pub = allGames.filter(g => g.status !== 'draft');
-  el.innerHTML = `<div style="display:flex;align-items:center;gap:10px;padding:20px;color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:12px;">
-    <div class="blk-dot" style="flex-shrink:0;"></div>
-    <span id="dup-scan-label">Scanning ${pub.length} games…</span>
-    <button class="btn btn-secondary btn-sm" style="margin-left:auto;" onclick="_dupScanRunning=false;renderQualityDashboard()">Stop</button>
-  </div>`;
-
-  // yield to let DOM paint
-  await new Promise(r => setTimeout(r, 30));
-  if (!_dupScanRunning) return;
-
-  const bySteam = {}, byTitle = {};
-  for (const g of pub) {
-    const sid = g.steamAppId ? String(g.steamAppId) : null;
-    if (sid) { if (!bySteam[sid]) bySteam[sid]=[]; bySteam[sid].push(g); }
-    const t = (g.title||'').toLowerCase().trim();
-    if (t) { if (!byTitle[t]) byTitle[t]=[]; byTitle[t].push(g); }
-  }
-  if (!_dupScanRunning) return;
-
-  const groups = [];
-  const seenIds = new Set();
-  for (const [k,arr] of Object.entries(bySteam)) {
-    if (arr.length>1) { groups.push({type:'steam', key:'Steam: '+k, arr}); arr.forEach(g=>seenIds.add(g.id)); }
-  }
-  for (const [k,arr] of Object.entries(byTitle)) {
-    if (arr.length>1) {
-      const uncovered = arr.filter(g=>!seenIds.has(g.id));
-      if (uncovered.length>1 || (uncovered.length>0 && arr.length>uncovered.length)) {
-        groups.push({type:'title', key:'Title: '+arr[0].title, arr});
-      }
-    }
-  }
-  _dupScanRunning = false;
-
-  if (!groups.length) { toast('No duplicates found — library is clean!', 'success'); renderQualityDashboard(); return; }
-
-  // build delete list — keep oldest per group
-  const buildDeleteList = () => groups.flatMap(g => {
-    const sorted = [...g.arr].sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
-    return sorted.slice(1);
-  });
-  window._qDupToDelete = buildDeleteList();
-  window._qDupGroups   = groups;
-
-  const render = () => {
-    const delIds = new Set((window._qDupToDelete||[]).map(x=>x.id));
-    el.innerHTML = `
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
-        <button onclick="renderQualityDashboard()" class="btn btn-secondary btn-sm">← Back</button>
-        <span style="font-size:11px;color:var(--amber);font-family:'JetBrains Mono',monospace;">
-          ${groups.length} group${groups.length!==1?'s':''} · ${window._qDupToDelete.length} marked for deletion
-        </span>
-        <div style="margin-left:auto;display:flex;gap:6px;">
-          <button class="btn btn-secondary btn-sm" onclick="qDupSelectAll()">Select All</button>
-          <button id="q-dup-del-btn" onclick="qDeleteDuplicates()" class="btn btn-danger btn-sm"
-            ${window._qDupToDelete.length?'':'disabled style="opacity:.4;"'}>
-            Delete Selected (${window._qDupToDelete.length})
-          </button>
-        </div>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:8px;">
-        ${groups.map((g,gi) => {
-          const sorted = [...g.arr].sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
-          return `<div style="background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden;">
-            <div style="padding:7px 12px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;">
-              <span style="font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;flex:1;">${g.key}</span>
-              <span style="font-size:9px;padding:1px 6px;border-radius:3px;background:${g.type==='steam'?'rgba(0,212,255,0.1)':'rgba(245,158,11,0.1)'};color:${g.type==='steam'?'var(--neon)':'var(--amber)'};">${g.type==='steam'?'STEAM ID':'TITLE'}</span>
-            </div>
-            ${sorted.map((x,i)=>{
-              const isDel = delIds.has(x.id);
-              return `<div style="display:grid;grid-template-columns:auto 56px 1fr auto auto;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid var(--border);${i===sorted.length-1?'border-bottom:none;':''}${isDel?'background:rgba(239,68,68,0.04);':''}">
-                <input type="checkbox" ${isDel?'checked':''} onchange="qDupToggle('${x.id}',this.checked)" style="accent-color:var(--red);width:14px;height:14px;">
-                ${x.cover?`<img src="${x.cover}" style="width:56px;height:32px;object-fit:cover;border-radius:3px;" onerror="this.style.display='none'">`:'<div style="width:56px;height:32px;background:var(--surface);border-radius:3px;"></div>'}
-                <div style="min-width:0;">
-                  <div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${x.title||x.id}</div>
-                  <div style="font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;">
-                    ${x.steamAppId?'Steam: '+x.steamAppId+' · ':''}${x.createdAt?new Date(x.createdAt).toLocaleDateString():'-'} · ID:${x.id.slice(-8)}
-                  </div>
-                </div>
-                <div style="display:flex;gap:4px;flex-shrink:0;">
-                  <button onclick="event.stopPropagation();qDupPreview('${x.id}')" class="btn btn-secondary btn-sm" style="padding:3px 8px;font-size:10px;" title="Preview details">
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/></svg>
-                  </button>
-                  <button onclick="event.stopPropagation();openAddGameModal('${x.id}')" class="btn btn-secondary btn-sm" style="padding:3px 8px;font-size:10px;" title="Edit">
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                  </button>
-                </div>
-                <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;flex-shrink:0;${i===0?'background:rgba(16,185,129,0.12);color:#10b981;':'background:rgba(239,68,68,0.12);color:#ef4444;'}">${i===0?'KEEP':'DEL'}</span>
-              </div>`;
-            }).join('')}
-          </div>`;
-        }).join('')}
-      </div>`;
-  };
-
-  render();
-  window._qDupRender = render;
-}
-
-function qDupToggle(id, checked) {
-  const list = window._qDupToDelete || [];
-  if (checked) {
-    // add to delete list if not there
-    const g = allGames.find(x=>x.id===id);
-    if (g && !list.find(x=>x.id===id)) list.push(g);
-  } else {
-    const idx = list.findIndex(x=>x.id===id);
-    if (idx>-1) list.splice(idx,1);
-  }
-  window._qDupToDelete = list;
-  // update button
-  const btn = document.getElementById('q-dup-del-btn');
-  if (btn) { btn.textContent=`Delete Selected (${list.length})`; btn.disabled=list.length===0; btn.style.opacity=list.length?'1':'0.4'; }
-}
-
-function qDupSelectAll() {
-  const groups = window._qDupGroups || [];
-  const allDups = groups.flatMap(g => {
-    const sorted = [...g.arr].sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
-    return sorted.slice(1);
-  });
-  window._qDupToDelete = allDups;
-  if (window._qDupRender) window._qDupRender();
-}
-
-function qDupPreview(id) {
-  const g = allGames.find(x=>x.id===id);
-  if (!g) return;
-  const modal = document.createElement('div');
-  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
-  modal.onclick = e => { if(e.target===modal) modal.remove(); };
-  const fields = ['title','rating','price','genres','platforms','description','steamAppId','createdAt','updatedAt'];
-  modal.innerHTML = `<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;width:100%;max-width:520px;max-height:80vh;overflow-y:auto;padding:0;">
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--card);z-index:1;">
-      <span style="font-size:13px;font-weight:700;">${g.title||g.id}</span>
-      <button onclick="this.closest('[style*=fixed]').remove()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;line-height:1;">×</button>
-    </div>
-    ${g.cover?`<img src="${g.cover}" style="width:100%;height:180px;object-fit:cover;" onerror="this.style.display='none'">`:''}
-    <div style="padding:14px 16px;display:flex;flex-direction:column;gap:8px;">
-      ${fields.map(f => {
-        let v = g[f];
-        if (v == null || v === '') return '';
-        if (f==='createdAt'||f==='updatedAt') v = new Date(v).toLocaleString();
-        if (Array.isArray(v)) v = v.join(', ');
-        return `<div style="display:grid;grid-template-columns:110px 1fr;gap:8px;font-size:11px;font-family:'JetBrains Mono',monospace;">
-          <span style="color:var(--muted);">${f}</span>
-          <span style="color:var(--text);word-break:break-all;">${v}</span>
-        </div>`;
-      }).join('')}
-      <div style="margin-top:8px;display:flex;gap:8px;">
-        <button onclick="openAddGameModal('${g.id}');this.closest('[style*=fixed]').remove()" class="btn btn-primary btn-sm">Edit Game</button>
-        <button onclick="this.closest('[style*=fixed]').remove()" class="btn btn-secondary btn-sm">Close</button>
-      </div>
-    </div>
-  </div>`;
-  document.body.appendChild(modal);
-}
-
-async function qDeleteDuplicates() {
-  const toDelete = window._qDupToDelete || [];
-  if (!toDelete.length) return;
-  if (!confirm(`Delete ${toDelete.length} game${toDelete.length!==1?'s':''}? This cannot be undone.`)) return;
-  const btn = document.getElementById('q-dup-del-btn');
-  if (btn) { btn.disabled=true; btn.textContent='Deleting…'; }
-  let done=0;
-  for (const g of toDelete) {
-    await db.collection(COLLECTION).doc(g.id).delete();
-    done++;
-    if (btn) btn.textContent = `Deleting… ${done}/${toDelete.length}`;
-  }
-  window._qDupToDelete = [];
-  toast(`${done} game${done!==1?'s':''} deleted`, 'success');
-  renderQualityDashboard();
-}
-
-/* ── Under Rated view (Mixed + Negative) ─────── */
-let _qUrSelected = new Set();
-
-function qShowUnderRated() {
-  const pub = allGames.filter(g => g.status !== 'draft');
-  const list = pub.filter(g => g.rating === 'Mixed' || g.rating === 'Negative')
-                  .sort((a,b)=> {
-                    const order = { Negative:0, Mixed:1 };
-                    return (order[a.rating]||2) - (order[b.rating]||2);
-                  });
-  const el = document.getElementById('quality-content');
-  if (!el) return;
-  if (!list.length) { toast('No Mixed or Negative rated games found!', 'success'); return; }
-  _qUrSelected = new Set();
-
-  const render = () => {
-    const selCount = _qUrSelected.size;
-    el.innerHTML = `
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
-        <button onclick="renderQualityDashboard()" class="btn btn-secondary btn-sm">← Back</button>
-        <span style="font-size:11px;color:var(--amber);font-family:'JetBrains Mono',monospace;">${list.length} games — Mixed or Negative</span>
-        <div style="margin-left:auto;display:flex;gap:6px;align-items:center;">
-          ${selCount?`<span style="font-size:11px;color:var(--neon);font-family:'JetBrains Mono',monospace;">${selCount} selected</span>`:''}
-          <button class="btn btn-secondary btn-sm" onclick="qUrSelectAll()">Select All</button>
-          <button class="btn btn-danger btn-sm" onclick="qUrDeleteSelected()" ${selCount?'':'disabled style="opacity:.4;"'}>
-            Delete Selected${selCount?' ('+selCount+')':''}
-          </button>
-        </div>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:5px;">
-        ${list.map(g => {
-          const isSel = _qUrSelected.has(g.id);
-          const rCol = g.rating==='Negative'?'#ef4444':'#eab308';
-          const rBg  = g.rating==='Negative'?'rgba(239,68,68,0.1)':'rgba(234,179,8,0.1)';
-          return `<div style="display:grid;grid-template-columns:auto 64px 1fr auto auto;align-items:center;gap:10px;padding:8px 12px;background:${isSel?'var(--neon-dim)':'var(--card)'};border:1px solid ${isSel?'var(--neon)':'var(--border)'};border-radius:7px;cursor:pointer;transition:all .12s;"
-            onclick="qUrToggle('${g.id}')">
-            <input type="checkbox" ${isSel?'checked':''} onclick="event.stopPropagation();qUrToggle('${g.id}')" style="accent-color:var(--neon);width:14px;height:14px;">
-            ${g.cover?`<img src="${g.cover}" style="width:64px;height:36px;object-fit:cover;border-radius:4px;" onerror="this.style.display='none'">`:'<div style="width:64px;height:36px;background:var(--surface);border-radius:4px;"></div>'}
-            <div style="min-width:0;">
-              <div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${g.title}</div>
-              <div style="font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;">${g.price||'—'} · ${g.genres?.slice(0,2).join(', ')||'—'}</div>
-            </div>
-            <span style="font-size:10px;font-weight:700;padding:3px 10px;border-radius:4px;background:${rBg};color:${rCol};flex-shrink:0;">${g.rating}</span>
-            <button onclick="event.stopPropagation();openAddGameModal('${g.id}')" class="btn btn-secondary btn-sm" style="padding:3px 8px;font-size:10px;">
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-              Edit
-            </button>
-          </div>`;
-        }).join('')}
-      </div>`;
-  };
-
-  render();
-  window._qUrRender = render;
-}
-
-function qUrToggle(id) {
-  if (_qUrSelected.has(id)) _qUrSelected.delete(id);
-  else _qUrSelected.add(id);
-  if (window._qUrRender) window._qUrRender();
-}
-
-function qUrSelectAll() {
-  const pub = allGames.filter(g => g.status !== 'draft');
-  const list = pub.filter(g => g.rating === 'Mixed' || g.rating === 'Negative');
-  if (_qUrSelected.size === list.length) _qUrSelected.clear();
-  else list.forEach(g => _qUrSelected.add(g.id));
-  if (window._qUrRender) window._qUrRender();
-}
-
-async function qUrDeleteSelected() {
-  if (!_qUrSelected.size) return;
-  if (!confirm(`Delete ${_qUrSelected.size} game${_qUrSelected.size!==1?'s':''}? This cannot be undone.`)) return;
-  let done = 0;
-  for (const id of _qUrSelected) {
-    await db.collection(COLLECTION).doc(id).delete();
-    done++;
-  }
-  _qUrSelected.clear();
-  toast(`${done} game${done!==1?'s':''} deleted`, 'success');
-  renderQualityDashboard();
-}
-
-
-// ── Re-Tag ALL games (select all with issues + retag) ────────────────────
-// ── Fix Featured (latestFeatured) bug — re-save all featured games ───────
-// ── Fix Missing Covers ───────────────────────────────────────────────────
-async function fixMissingCovers() {
-  const missing = allGames.filter(g => !g.cover && g.steamAppId && g.status !== 'draft');
-  if (!missing.length) { toast('No games with missing covers', 'info'); return; }
-
-  if (!confirm(`Fix covers for ${missing.length.toLocaleString()} games?\nThis uses Steam CDN URLs instantly — no API calls.`)) return;
-
-  let fixed = 0;
-  toast(`Fixing ${missing.length.toLocaleString()} covers…`, 'info');
-
-  for (const g of missing) {
-    try {
-      const cover = `https://cdn.akamai.steamstatic.com/steam/apps/${g.steamAppId}/header.jpg`;
-      await db.collection(COLLECTION).doc(g.id).update({ cover });
-      g.cover = cover;
-      fixed++;
-    } catch(e) { /* skip */ }
-  }
-
-  toast(`Fixed ${fixed.toLocaleString()} covers ✓`, 'success');
-  renderLibrary();
-  renderQualityDashboard();
-}
-
-async function fixFeaturedGames() {
-  const featured = allGames.filter(g => g.latestFeatured === true || g.latestFeatured === 'true');
-  if (!featured.length) { toast('No featured games found', 'info'); return; }
-
-  toast(`Fixing ${featured.length} featured games…`, 'info');
-  let fixed = 0;
-  for (const g of featured) {
-    try {
-      await db.collection(COLLECTION).doc(g.id).update({
-        latestFeatured: true,
-        updatedAt: Date.now()
-      });
-      // Update in-memory
-      g.latestFeatured = true;
-      fixed++;
-    } catch(e) {
-      console.error('Fix featured error:', g.title, e);
-    }
-  }
-  toast(`Fixed ${fixed} featured games ✓ — site hero slider will update`, 'success');
-  renderQualityDashboard();
-}
-
-async function qRetagAll() {
-  // Select all published games
-  const pub = allGames.filter(g => g.status !== 'draft');
-  _qSelected = new Set(pub.map(g => g.id));
-  _qFiltered = pub;
-  toast(`Selected ${pub.length.toLocaleString()} games for re-tagging…`, 'info');
-  await new Promise(r => setTimeout(r, 500));
-  qRetagFromExisting();
-}
-
-// ── Re-Tag from existing userTags (no Steam fetch) ───────────────────────
-// Fixes visual / perspective / themes / difficulty / playMode
-// using improved PARSE_MAPS on already-stored userTags + genres
-async function qRetagFromExisting() {
-  if (_qRunning || _qSelected.size === 0) return;
-  _qRunning = true;
-
-  const fixBtn   = document.getElementById('q-fix-btn');
-  const retagBtn = document.getElementById('q-retag-btn');
-  const stopBtn  = document.getElementById('q-stop-btn');
-  if (fixBtn)   fixBtn.style.display   = 'none';
-  if (retagBtn) retagBtn.style.display = 'none';
-  if (stopBtn)  { stopBtn.style.display = 'inline-flex'; stopBtn.style.alignItems = 'center'; }
-
-  const games  = allGames.filter(g => _qSelected.has(g.id));
-  const total  = games.length;
-  let done=0, fixed=0, skipped=0;
-
-  const report  = document.getElementById('q-report-panel');
-  const repBody = document.getElementById('q-report-body');
-  const repDot  = document.getElementById('q-report-dot');
-  const qrpBar  = document.getElementById('qrp-bar');
-  const qrpCur  = document.getElementById('qrp-current');
-  if (report)  report.style.display  = 'flex';
-  if (repBody) repBody.innerHTML = '';
-  if (repDot)  repDot.classList.remove('idle');
-  if (qrpBar)  qrpBar.style.width = '0%';
-  ['q-rep-fixed','q-rep-skipped','q-rep-failed'].forEach(id => {
-    const el = document.getElementById(id); if (el) el.textContent = '0';
-  });
-
-  const RETAG_FIELDS = ['visual','perspective','themes','difficulty','playMode','cover','trailer'];
-
-  for (const g of games) {
-    if (!_qRunning) break;
-
-    if (qrpCur) qrpCur.textContent = g.title;
-    if (qrpBar) qrpBar.style.width = Math.round(done/total*100) + '%';
-
-    // Build tag pool from existing stored data
-    const allTags = [
-      ...(g.userTags || []),
-      ...(g.genres   || []),
-      ...(g.features || []),
-    ];
-    const cats = (g.features || []).map(c => c.toLowerCase());
-
-    const parsed = parseTagsToFields(allTags, cats);
-
-    const updates = {};
-    const changed = [];
-
-    if (!g.visual       && parsed.visual)       { updates.visual       = parsed.visual;       changed.push('visual'); }
-    if (!g.perspective  && parsed.perspective)  { updates.perspective  = parsed.perspective;  changed.push('perspective'); }
-    if ((!g.themes || !g.themes.length) && parsed.themes.length) {
-      updates.themes = parsed.themes; changed.push('themes');
-    }
-    if ((!g.playMode || !g.playMode.length) && parsed.playMode.length) {
-      updates.playMode = parsed.playMode; changed.push('playMode');
-    }
-    if (!g.difficulty || g.difficulty === 'Normal') {
-      if (parsed.difficulty && parsed.difficulty !== 'Normal') {
-        updates.difficulty = parsed.difficulty; changed.push('difficulty');
-      }
-    }
-    // Fix bad length labels
-    const BAD_LENGTHS = {'Under 5h':'Under 2 Hours','5-15h':'5–10 Hours','15-40h':'10–20 Hours','40-80h':'20–50 Hours','80h+':'100+ Hours'};
-    if (g.length && BAD_LENGTHS[g.length]) {
-      updates.length = BAD_LENGTHS[g.length]; changed.push('length');
-    }
-    // Fix perspective casing inconsistency
-    const PERSP_FIX = {'First-person':'First-Person','Third-person':'Third-Person','Top-down':'Top-Down','Side-scrolling':'Side-Scrolling'};
-    if (g.perspective && PERSP_FIX[g.perspective]) {
-      updates.perspective = PERSP_FIX[g.perspective]; changed.push('perspective-case');
-    }
-    // Fix missing/broken cover — rebuild from steamAppId
-    if (g.steamAppId) {
-      const isBrokenCover = !g.cover
-        || g.cover.includes('placeholder')
-        || g.cover.includes('capsule_sm')
-        || g.cover === '';
-      if (isBrokenCover) {
-        updates.cover = `https://cdn.akamai.steamstatic.com/steam/apps/${g.steamAppId}/header.jpg`;
-        changed.push('cover');
-      }
-    }
-    // Fix missing trailer — build Steam trailer URL from steamAppId
-    if (!g.trailer && g.steamAppId) {
-      // Use YouTube search as async fallback (non-blocking)
-      fetchYouTubeTrailer(g.title).then(yt => {
-        if (yt) db.collection(COLLECTION).doc(g.id).update({ trailer: yt });
-      });
-      changed.push('trailer(async)');
-    }
-
-    if (Object.keys(updates).length > 0) {
-      updates.updatedAt = Date.now();
+  if (!matches.length) { status.textContent = '— No assets matched domain "' + domain + '"'; status.style.color = 'var(--amber)'; return; }
+  status.textContent = `Updating ${matches.length} assets…`; status.style.color = 'var(--neon)';
+  let updated = 0, failed = 0;
+  const BATCH = 10;
+  for (let i = 0; i < matches.length; i += BATCH) {
+    const chunk = matches.slice(i, i + BATCH);
+    await Promise.all(chunk.map(async g => {
       try {
-        await db.collection(COLLECTION).doc(g.id).update(updates);
-        // Update in-memory
-        Object.assign(g, updates);
-        fixed++;
-        const fEl = document.getElementById('q-rep-fixed');
-        if (fEl) fEl.textContent = fixed;
-        // Log
-        const item = document.createElement('div');
-        item.className = 'q-log-item ok';
-        item.innerHTML = '<span class="qli-status">FIXED</span><span class="qli-title">' + g.title + '</span><span class="qli-fields">' + changed.join(', ') + '</span>';
-        if (repBody) { repBody.appendChild(item); repBody.scrollTop = repBody.scrollHeight; }
-      } catch(e) {
-        const item = document.createElement('div');
-        item.className = 'q-log-item fail';
-        item.innerHTML = '<span class="qli-status">FAIL</span><span class="qli-title">' + g.title + '</span>';
-        if (repBody) { repBody.appendChild(item); repBody.scrollTop = repBody.scrollHeight; }
-      }
-    } else {
-      skipped++;
-      const sEl = document.getElementById('q-rep-skipped');
-      if (sEl) sEl.textContent = skipped;
-    }
-
-    done++;
-    // Batch: no delay needed since no network calls
-    if (done % 50 === 0) await new Promise(r => setTimeout(r, 10));
+        const patch = {};
+        if (g.post_link && g.post_link.includes(domain)) patch.post_link = affiliateUrl;
+        const newStoreLinks = { ...(g.storeLinks || {}) };
+        for (const [k, v] of Object.entries(newStoreLinks)) {
+          if (v && v.includes(domain)) newStoreLinks[k] = affiliateUrl;
+        }
+        patch.storeLinks = newStoreLinks;
+        patch.updatedAt = Date.now();
+        await db.collection(COLLECTION).doc(g.id).update(patch);
+        const idx = _gamesIndex.get(g.id);
+        if (idx !== undefined) allGames[idx] = { ...allGames[idx], ...patch };
+        updated++;
+      } catch(e) { console.error('[mtAffiliate]', e); failed++; }
+    }));
+    if (i + BATCH < matches.length) await new Promise(r => setTimeout(r, 200));
   }
-
-  _qRunning = false;
-  if (fixBtn)   fixBtn.style.display   = 'inline-flex';
-  if (retagBtn) retagBtn.style.display = 'inline-flex';
-  if (stopBtn)  stopBtn.style.display  = 'none';
-  if (qrpBar)   qrpBar.style.width = '100%';
-  if (qrpCur)   qrpCur.textContent = `Done — ${fixed} fixed, ${skipped} skipped`;
-  toast(`Re-tagged ${fixed.toLocaleString()} games`, 'success');
-  setTimeout(renderQualityDashboard, 1000);
+  invalidateFilterCache();
+  status.textContent = `✓ Updated ${updated} asset${updated!==1?'s':''}${failed?' · '+failed+' failed':''}`;
+  status.style.color = updated > 0 ? 'var(--green)' : 'var(--red)';
+  toast(`Affiliate applied to ${updated} assets`, updated>0?'success':'error');
 }
 
-// ── Save QFix progress — marks all currently-fixed games as processed ──────
-async function qSaveProgress() {
-  // qFix already persists each game to Firebase as it runs.
-  // This button only re-marks games as qfixProcessed in case of partial failures.
-  const btn = document.getElementById('q-save-progress-btn');
-  if (btn) { btn.textContent = 'Checking…'; btn.style.pointerEvents = 'none'; }
+async function mtFixImages() {
+  const status = document.getElementById('mt-image-status');
+  const missing = allGames.filter(g => !g.cover && !g.image);
+  if (!missing.length) { status.textContent = '✓ All assets have images'; status.style.color = 'var(--green)'; return; }
+  status.textContent = `Fixing ${missing.length}…`; status.style.color = 'var(--muted)';
+  let fixed = 0;
+  const BATCH = 15;
+  for (let i = 0; i < missing.length; i += BATCH) {
+    const chunk = missing.slice(i, i + BATCH);
+    await Promise.all(chunk.map(async g => {
+      try {
+        const ph = `https://placehold.co/480x270/111820/00d4ff?text=${encodeURIComponent((g.title||'Asset').slice(0,20))}`;
+        await db.collection(COLLECTION).doc(g.id).update({ cover: ph, image: ph, updatedAt: Date.now() });
+        const idx = _gamesIndex.get(g.id);
+        if (idx !== undefined) allGames[idx] = { ...allGames[idx], cover: ph, image: ph };
+        fixed++;
+      } catch(e) { console.error('[mtImage]', e); }
+    }));
+    if (i + BATCH < missing.length) await new Promise(r => setTimeout(r, 200));
+  }
+  invalidateFilterCache();
+  status.textContent = `✓ Fixed ${fixed} image${fixed!==1?'s':''}`;
+  status.style.color = 'var(--green)';
+  toast(`Fixed ${fixed} images`, 'success');
+}
 
-  // Only process games fixed this session that might have failed the qfixProcessed write
-  const toSave = allGames.filter(g => _qFixedThisSession.has(g.id));
+let _mtDupToDelete = [];
 
-  if (!toSave.length) {
-    toast('All fixed games are already saved to database ✓', 'success');
-    if (btn) { btn.innerHTML = '💾 Save Progress'; btn.style.pointerEvents = 'auto'; }
+function mtScanDuplicates() {
+  const info = document.getElementById('mt-dedup-info');
+  const results = document.getElementById('mt-dedup-results');
+  const delBtn = document.getElementById('mt-dedup-delete-btn');
+  _mtDupToDelete = [];
+  const normUrl = u => (u||'').toLowerCase().trim().replace(/\/+$/, '');
+  const seen = new Map();
+  for (const g of allGames) {
+    const key = normUrl(g.post_link || '');
+    if (!key) continue;
+    if (!seen.has(key)) seen.set(key, []);
+    seen.get(key).push(g);
+  }
+  const groups = [...seen.values()].filter(arr => arr.length > 1);
+  if (!groups.length) {
+    info.textContent = '✓ No duplicates found — library is clean!';
+    info.style.color = 'var(--green)';
+    if (delBtn) delBtn.style.display = 'none';
+    if (results) results.innerHTML = '';
     return;
   }
-
-  if (btn) btn.textContent = `Saving ${toSave.length} games…`;
-  let saved = 0, skipped = 0;
-  const now = Date.now();
-  const BATCH = 20;
-
-  for (let i = 0; i < toSave.length; i += BATCH) {
-    const batch = toSave.slice(i, i + BATCH);
-    await Promise.all(batch.map(async g => {
-      try {
-        // Only update the qfixProcessed flag — data already saved by qFix
-        await db.collection(COLLECTION).doc(g.id).update({
-          qfixProcessed: true,
-          isFullyFixed: true,
-          qfixAt: g.qfixAt || now,
-          updatedAt: now
-        });
-        _qFixedThisSession.delete(g.id);
-        saved++;
-      } catch(e) { skipped++; }
-    }));
-    if (btn) btn.textContent = `Saving… ${saved}/${toSave.length}`;
+  // keep oldest, mark rest for deletion
+  groups.forEach(arr => {
+    const sorted = [...arr].sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
+    sorted.slice(1).forEach(dup => _mtDupToDelete.push(dup));
+  });
+  info.textContent = `Found ${groups.length} duplicate group${groups.length!==1?'s':''} — ${_mtDupToDelete.length} to delete`;
+  info.style.color = 'var(--amber)';
+  if (results) {
+    results.innerHTML = groups.map(arr => {
+      const sorted = [...arr].sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
+      return `<div style="padding:8px 10px;background:var(--surface);border-radius:6px;border:1px solid var(--border);margin-bottom:6px;">
+        <div style="font-size:10px;color:var(--muted);margin-bottom:4px;">post_link: ${(sorted[0].post_link||'').slice(0,80)}</div>
+        ${sorted.map((x,i)=>`<div style="font-size:11px;display:flex;gap:8px;align-items:center;padding:2px 0;">
+          <span style="color:${i===0?'var(--green)':'var(--red)'};font-weight:700;font-family:'JetBrains Mono',monospace;">${i===0?'KEEP':'DEL '}</span>
+          <span style="flex:1;">${x.title||x.id}</span>
+          <span style="color:var(--muted);font-size:10px;font-family:'JetBrains Mono',monospace;">${x.createdAt?new Date(x.createdAt).toLocaleDateString():'-'}</span>
+        </div>`).join('')}
+      </div>`;
+    }).join('');
   }
-
-  toast(`Marked ${saved} games as processed${skipped ? ` · ${skipped} failed` : ''} ✓`, saved > 0 ? 'success' : 'error');
-  if (btn) {
-    btn.innerHTML = `💾 Saved ${saved}`;
-    btn.style.pointerEvents = 'auto';
-    setTimeout(() => { if (btn) btn.innerHTML = '💾 Save Progress'; }, 4000);
-  }
+  if (delBtn) delBtn.style.display = 'inline-flex';
 }
 
-async function qFix() {
-  if (_qRunning || _qSelected.size === 0) return;
-  _qRunning = true;
-
-  const fixBtn   = document.getElementById('q-fix-btn');
-  const retagBtn = document.getElementById('q-retag-btn');
-  const stopBtn  = document.getElementById('q-stop-btn');
-  if (fixBtn)   fixBtn.style.display   = 'none';
-  if (retagBtn) retagBtn.style.display = 'none';
-  if (stopBtn)  { stopBtn.style.display = 'inline-flex'; stopBtn.style.alignItems = 'center'; }
-
-  const games   = allGames.filter(g => _qSelected.has(g.id));
-  const total   = games.length;
-  let done=0, fixed=0, skipped=0, failed=0;
-  const CONCURRENCY = 3; // low concurrency to avoid Firebase rate limiting
-
-  // Show progress
-  const progWrap = document.getElementById('q-progress-wrap');
-  const progBar  = document.getElementById('q-progress-bar');
-  const progLbl  = document.getElementById('q-progress-label');
-  const progPct  = document.getElementById('q-progress-pct');
-  const report   = document.getElementById('q-report-panel');
-  const repBody  = document.getElementById('q-report-body');
-  const repSum   = document.getElementById('q-report-summary');
-
-  if (progWrap) progWrap.style.display = 'block';
-  // show floating fix report panel
-  if (report) { report.style.display = 'flex'; }
-  if (repBody) { repBody.innerHTML = ''; }
-  // reset counters and progress
-  ['q-rep-fixed','q-rep-skipped','q-rep-failed'].forEach(id => { const el=document.getElementById(id); if(el) el.textContent='0'; });
-  const repDot = document.getElementById('q-report-dot');
-  if (repDot) repDot.classList.remove('idle');
-  const qrpBar = document.getElementById('qrp-bar');
-  const qrpCur = document.getElementById('qrp-current');
-  if (qrpBar) qrpBar.style.width = '0%';
-
-  const addReport = (title, status, fields) => {
-    const body = document.getElementById('q-report-body');
-    if (!body) return;
-    const labels = { ok:'FIXED', skip:'SKIP', fail:'FAIL' };
-    const fieldStr = fields.filter(f=>f!=='up to date').slice(0,5).join(', ');
-    const item = document.createElement('div');
-    item.className = `q-log-item ${status}`;
-    item.innerHTML = `<span class="qli-status">${labels[status]||status}</span><span class="qli-title">${title}</span>${fieldStr?`<span class="qli-fields">${fieldStr}</span>`:''}`;
-    body.appendChild(item);
-    body.scrollTop = body.scrollHeight;
-    // update stat counters
-    const fEl = document.getElementById('q-rep-fixed');
-    const sEl = document.getElementById('q-rep-skipped');
-    const eEl = document.getElementById('q-rep-failed');
-    if (status==='ok'   && fEl) fEl.textContent = parseInt(fEl.textContent||0)+1;
-    if (status==='skip' && sEl) sEl.textContent = parseInt(sEl.textContent||0)+1;
-    if (status==='fail' && eEl) eEl.textContent = parseInt(eEl.textContent||0)+1;
-  };
-
-  const repBar = document.getElementById('q-report-bar');
-  const repCur = document.getElementById('q-report-current');
-  const updateProgress = (label) => {
-    const pct = Math.round(done/total*100);
-    if (progBar) progBar.style.width = pct+'%';
-    if (progPct) progPct.textContent = pct+'%';
-    if (progLbl) progLbl.textContent = label || `Fixing ${done}/${total}…`;
-    if (repSum)  repSum.textContent  = `${done} / ${total}`;
-    if (qrpBar)  qrpBar.style.width  = pct+'%';
-    if (qrpCur && label) qrpCur.textContent = label;
-  };
-
-  // Process in concurrent batches — single pipeline: retag + price + images
-  const processGame = async (g) => {
-    if (!_qRunning) return;
-
-    // Skip already-processed
-    if (g.qfixProcessed) {
-      const row = document.querySelector(`.q-row[data-qid="${g.id}"]`);
-      if (row) { row.style.borderColor = '#10b981'; row.style.opacity = '0.35'; }
-      addReport(g.title, 'skip', ['already fixed']);
-      skipped++; _qSelected.delete(g.id); done++;
-      updateProgress();
-      return;
-    }
-
-    const row = document.querySelector(`.q-row[data-qid="${g.id}"]`);
-    if (row) { row.style.borderColor = '#eab308'; row.style.opacity = '.7'; }
-
+async function mtDeleteDuplicates() {
+  if (!_mtDupToDelete.length) return;
+  const info = document.getElementById('mt-dedup-info');
+  const delBtn = document.getElementById('mt-dedup-delete-btn');
+  if (!confirm(`Delete ${_mtDupToDelete.length} duplicate asset${_mtDupToDelete.length!==1?'s':''}? This cannot be undone.`)) return;
+  if (delBtn) delBtn.disabled = true;
+  info.textContent = 'Deleting…'; info.style.color = 'var(--muted)';
+  let done = 0;
+  for (const g of _mtDupToDelete) {
     try {
-      let newData = null;
-      if (g.steamAppId) {
-        newData = await bulkFetchSingleGame(String(g.steamAppId));
-      } else {
-        const ir = await fetch('https://gamescout-worker.gamescout.workers.dev/api/game-data?title=' + encodeURIComponent(g.title)).then(r=>r.json()).catch(()=>null);
-        if (ir?.steamId) {
-          newData = await bulkFetchSingleGame(ir.steamId);
-          if (newData) newData.steamAppId = ir.steamId;
-        } else if (ir) {
-          newData = { cover: ir.cover, description: ir.description, genres: ir.tags||[], steamAppId:'' };
-        }
-      }
-
-      if (!newData) {
-        if (row) { row.style.borderColor='#ef4444'; row.style.opacity='1'; }
-        addReport(g.title, 'skip', ['No data found']);
-        skipped++; done++;
-        updateProgress();
-        return;
-      }
-
-      // Trailer fallback
-      if (!newData.trailer && newData.steamAppId) {
-        const st = await fetchSteamTrailer(newData.steamAppId).catch(()=>null);
-        if (st) newData.trailer = st;
-      }
-      if (!newData.trailer) {
-        const yt = await fetchYouTubeTrailer(g.title).catch(()=>null);
-        if (yt) newData.trailer = yt;
-      }
-
-      const prev   = { ...g };
-      const merged = { ...g };
-      const changed = [];
-
-      // ── 1. Steam data fields ─────────────────────────────────────────────
-      for (const field of FIX_FIELDS) {
-        const v = newData[field];
-        if (v != null && v !== '' && !(Array.isArray(v) && v.length === 0)) {
-          const oldVal = JSON.stringify(merged[field] ?? null);
-          const newVal = JSON.stringify(v);
-          if (oldVal !== newVal) changed.push(field);
-          merged[field] = v;
-        }
-      }
-
-      // ── 2. Re-tag from parsed tags (merged into same pass) ───────────────
-      const allTags = [...(merged.userTags||[]), ...(merged.genres||[]), ...(merged.features||[])];
-      const cats    = (merged.features||[]).map(c => c.toLowerCase());
-      const parsed  = parseTagsToFields(allTags, cats);
-      const RETAG   = ['visual','perspective','themes','difficulty','playMode'];
-      for (const f of RETAG) {
-        const pv = parsed[f];
-        if (!pv || (Array.isArray(pv) && !pv.length)) continue;
-        if (!merged[f] || (Array.isArray(merged[f]) && !merged[f].length)) {
-          if (JSON.stringify(merged[f]??null) !== JSON.stringify(pv)) {
-            merged[f] = pv; changed.push(f+':retag');
-          }
-        }
-      }
-      // Fix bad length labels
-      const BAD_LENGTHS = {'Under 5h':'Under 2 Hours','5-15h':'5–10 Hours','15-40h':'10–20 Hours','40-80h':'20–50 Hours','80h+':'100+ Hours'};
-      if (merged.length && BAD_LENGTHS[merged.length]) {
-        merged.length = BAD_LENGTHS[merged.length]; changed.push('length:fix');
-      }
-
-      // ── 3. Cover fallback ────────────────────────────────────────────────
-      const isBroken = !merged.cover || merged.cover.includes('placeholder') || merged.cover.includes('capsule_sm');
-      if (isBroken && merged.steamAppId) {
-        merged.cover = `https://cdn.akamai.steamstatic.com/steam/apps/${merged.steamAppId}/header.jpg`;
-        changed.push('cover:fallback');
-      }
-
-      // ── 4. Price sync ────────────────────────────────────────────────────
-      if (merged.steamAppId) {
-        const priceResult = await syncGamePrice(merged).catch(() => null);
-        if (priceResult?.price) {
-          if (priceResult.price !== (merged.price||'')) { merged.price = priceResult.price; changed.push('price'); }
-          merged.priceUpdatedAt = Date.now();
-        }
-      }
-
-      merged.updatedAt = Date.now();
-      merged.qfixProcessed = true;
-      merged.isFullyFixed  = true;
-      merged.qfixAt = Date.now();
-      const mergedNorm = normalizeTaxFields(merged);
-      // Retry up to 3 times on PERMISSION_DENIED or transient errors
-      let writeOk = false;
-      for (let attempt = 0; attempt < 3; attempt++) {
-        try {
-          await db.collection(COLLECTION).doc(g.id).set(mergedNorm);
-          writeOk = true;
-          break;
-        } catch(writeErr) {
-          if (attempt < 2) {
-            await new Promise(r => setTimeout(r, 800 * (attempt + 1)));
-          } else {
-            throw writeErr;
-          }
-        }
-      }
-      if (!writeOk) throw new Error('Firebase write failed after 3 attempts');
-      _sbUpsert(mergedNorm); // sync to Supabase
-      const _mIdx = _gamesIndex.get(g.id);
-      if (_mIdx !== undefined) allGames[_mIdx] = { ...allGames[_mIdx], qfixProcessed: true, isFullyFixed: true, qfixAt: merged.qfixAt };
-      _qFixedThisSession.add(g.id); // track for Save Progress
-      await logAction('game_updated', g.title, g.id, prev, mergedNorm);
-
-      if (row) {
-        row.style.borderColor = '#10b981'; row.style.opacity = '1';
-        row.style.background  = 'rgba(16,185,129,0.08)';
-        setTimeout(() => {
-          row.style.transition = 'opacity .5s'; row.style.opacity = '0';
-          setTimeout(() => row.parentNode?.removeChild(row), 500);
-        }, 1200);
-      }
-
-      addReport(g.title, 'ok', changed.length ? changed : ['up to date']);
-      fixed++;
-    } catch(err) {
-      if (row) { row.style.borderColor='#ef4444'; row.style.opacity='1'; }
-      addReport(g.title, 'fail', [err.message]);
-      failed++;
-    }
-
-    _qSelected.delete(g.id);
-    done++;
-    updateProgress(`${done}/${total}`);
-  };
-
-  // Run in concurrent batches of CONCURRENCY
-  for (let i = 0; i < games.length; i += CONCURRENCY) {
-    if (!_qRunning) break;
-    const batch = games.slice(i, i + CONCURRENCY);
-    updateProgress(`Batch ${Math.floor(i/CONCURRENCY)+1} / ${Math.ceil(total/CONCURRENCY)}`);
-    await Promise.all(batch.map(processGame));
-    // Pause between batches to respect Firebase rate limits
-    if (i + CONCURRENCY < games.length) await new Promise(r => setTimeout(r, 1000));
+      await db.collection(COLLECTION).doc(g.id).delete();
+      await _sbDelete(g.id);
+      done++;
+    } catch(e) { console.error('[mtDedup]', e); }
+    info.textContent = `Deleted ${done} / ${_mtDupToDelete.length}…`;
   }
-
-  _qRunning = false;
-  if (progLbl) progLbl.textContent = `Done — ${fixed} fixed, ${skipped} skipped, ${failed} failed`;
-  if (progBar) progBar.style.background = fixed > 0 ? '#10b981' : '#eab308';
-  if (repSum)  repSum.textContent = `${fixed} fixed · ${skipped} skipped · ${failed} failed`;
-
-  if (fixBtn)   fixBtn.style.display   = 'inline-flex';
-  if (retagBtn) retagBtn.style.display = 'inline-flex';
-  if (stopBtn)  stopBtn.style.display  = 'none';
-  toast(`Fixed ${fixed} game${fixed!==1?'s':''}${skipped?' · '+skipped+' skipped':''}`, fixed>0?'success':'info');
-  setTimeout(renderQualityDashboard, 1500);
+  _mtDupToDelete = [];
+  if (delBtn) { delBtn.style.display = 'none'; delBtn.disabled = false; }
+  info.textContent = `✓ ${done} duplicate${done!==1?'s':''} deleted`;
+  info.style.color = 'var(--green)';
+  document.getElementById('mt-dedup-results').innerHTML = '';
+  invalidateFilterCache();
+  toast(`${done} duplicates deleted`, 'success');
 }
+
 
 function switchView(name, navEl) {
   if (window.innerWidth <= 768) closeMobSidebar();
@@ -6342,7 +5532,6 @@ function _doSwitchView(name, navEl) {
   }
   currentView = name;
   if (history.state?.view !== name) {
-    history.pushState({ view: name }, '', '#' + name);
   }
 
   // Step 5: remove transition-kill after 2 frames — browser committed the static paint
@@ -6503,27 +5692,71 @@ let adminFilters = {};
 ═══════════════════════════════════════════════ */
 
 function loadGameIntoForm(id) {
+  window._pendingImageFile = null;
   const g = allGames.find(x => x.id === id);
   if (!g) return;
   editingGameId = id;
   document.getElementById('edit-game-id').value = id;
-  const set = (elId, v) => { const e = document.getElementById(elId); if (e) e.value = v || ''; };
-  set('f-title',    g.title);
-  set('f-post-link', g.post_link || '');
-  set('f-author',   g.author || g.developer || '');
-  set('f-cover',    g.cover || g.image || '');
-  set('f-desc',     g.description);
-  set('f-overview', g.overview || '');
-  set('f-technical', g.technicalDetails || '');
-  set('f-price',    g.price);
+  const set = (el, v) => { const e = document.getElementById(el); if (e) e.value = v || ''; };
+  set('f-title',       g.title);
+  set('f-post-link',   g.post_link || g.storeLinks?.Steam || '');
+  set('f-author',      g.author || g.developer || '');
+  set('f-desc',        g.description);
+  set('f-overview',    g.overview || '');
+  set('f-technical',   g.technicalDetails || '');
+  set('f-price',       g.price);
+  set('f-price-range', g.price_range || _calcPriceRange(g.price));
+  set('f-cover',       g.cover || g.image || '');
+  set('f-difficulty',  g.difficulty);
+  set('f-length',      g.length);
+  set('f-period',      g.period);
+  set('f-rating',      g.rating);
+  set('f-visual',      g.visual);
   _populateCategorySelect(g.category || '');
+  // Populate hierarchical category dropdowns
+  if (typeof _initCatDropdowns === 'function') {
+    _initCatDropdowns(g.category_lvl1||'', g.category_lvl2||'', g.category_lvl3||'', g.category_lvl4||'');
+    if (!g.category_lvl1 && g.category) {
+      const parts = g.category.split('>').map(p => p.trim()).filter(Boolean);
+      _initCatDropdowns(parts[0]||'', parts[1]||'', parts[2]||'', parts[3]||'');
+    }
+  }
   _showImagePreview(g.cover || g.image || '');
+  buildFormSelects(g);
+  buildAllCheckboxGrids(g);
+  // Load store links
   const slRows = document.getElementById('store-link-rows');
   if (slRows) {
     slRows.innerHTML = '';
     Object.entries(g.storeLinks || {}).forEach(([n, u]) => addStoreLinkRow(n, u));
   }
-  if (typeof setPasteValues === 'function') setPasteValues('usertags', '', g.userTags || []);
+  const dlRows = document.getElementById('deals-link-rows');
+  if (dlRows) {
+    dlRows.innerHTML = '';
+    (g.deals || []).forEach(d => addDealLinkRow(d.name||'', d.url||'', d.discount||''));
+  }
+  if (typeof setPasteValues === 'function') {
+    setPasteValues('usertags', '', g.userTags || []);
+  }
+  ['cb-platforms','cb-playmode','cb-themes'].forEach(cbId => {
+    const el = document.getElementById(cbId);
+    if (!el) return;
+    const field = cbId.replace('cb-','');
+    const vals = field === 'platforms' ? (g.platforms||[])
+               : field === 'playmode'  ? (g.playMode||[])
+               : (g.themes||[]);
+    el.querySelectorAll('input[type=checkbox]').forEach(cb => {
+      cb.checked = vals.map(v=>v.toLowerCase()).includes(cb.value.toLowerCase());
+    });
+  });
+  const pop = document.getElementById('f-popularity');
+  if (pop) pop.value = g.popularity || 0;
+  const ea = document.getElementById('f-ea');
+  if (ea) ea.value = g.earlyAccess ? 'true' : 'false';
+  const sp = document.getElementById('f-sponsored');
+  if (sp) sp.value = g.sponsored ? 'true' : 'false';
+  const buzz = document.getElementById('f-lf');
+  if (buzz) buzz.value = g.latestFeatured ? 'true' : 'false';
   const saveBtn = document.querySelector('#add-game-modal-body .btn-primary[onclick*="saveGame"]');
   if (saveBtn) saveBtn.textContent = 'Update Asset';
 }
@@ -6585,27 +5818,23 @@ async function refetchCurrentGame() {
   }
 }
 function openAddGameModal(id) {
-  history.pushState({ adminModal: 'game', id: id || null, view: currentView }, '', '#edit' + (id ? '=' + id : ''));
+  window._pendingImageFile = null;
   if (id) {
     editingGameId = id;
     loadGameIntoForm(id);
-    // Show refetch button + update title
-    const refetchBtn = document.getElementById('refetch-btn');
     const title = document.getElementById('add-game-modal-title');
-    if (refetchBtn) refetchBtn.style.display = 'inline-flex';
-    if (title) title.innerHTML = title.innerHTML.replace('Add Game', 'Edit Game');
+    if (title) title.innerHTML = title.innerHTML.replace('Add Asset', 'Edit Asset');
   } else {
     editingGameId = null;
     clearGameForm();
-    const refetchBtn = document.getElementById('refetch-btn');
     const title = document.getElementById('add-game-modal-title');
-    if (refetchBtn) refetchBtn.style.display = 'none';
-    if (title) title.innerHTML = title.innerHTML.replace('Edit Game', 'Add Game');
+    if (title) title.innerHTML = title.innerHTML.replace('Edit Asset', 'Add Asset');
   }
   document.getElementById('add-game-modal').classList.add('open');
   document.body.style.overflow = 'hidden';
 }
 function closeAddGameModal() {
+  window._pendingImageFile = null;
   const m = document.getElementById('add-game-modal');
   m.classList.remove('open');
   m.style.display = '';
@@ -6711,7 +5940,10 @@ function toggleAdminFilter() {
 function buildAdminFilterPanel() {
   const container = document.getElementById('afp-sections');
   const TAXONOMY_DEFS = [
-    { key:'genres',     label:'Genre' },
+    { key:'category',    label:'Category' },
+    { key:'author',      label:'Author', fromData: true },
+    { key:'price_range', label:'Price Range', fromData: true },
+
     { key:'platforms',  label:'Platform' },
     { key:'themes',     label:'Theme / Mood' },
     { key:'playMode',   label:'Play Mode' },
@@ -6724,10 +5956,16 @@ function buildAdminFilterPanel() {
     { key:'userTags',   label:'Tags' },
   ];
   const hidden = (TAXONOMY && TAXONOMY._hidden) || {};
-  container.innerHTML = TAXONOMY_DEFS.map(({key, label}) => {
+  container.innerHTML = TAXONOMY_DEFS.map(({key, label, fromData}) => {
     if (hidden['_card_' + key]) return '';
     let vals = [];
-    if (TAXONOMY && Array.isArray(TAXONOMY[key]) && TAXONOMY[key].length) {
+    if (fromData) {
+      // Pull values directly from game data
+      vals = [...new Set(allGames.flatMap(g => {
+        const v = g[key];
+        return Array.isArray(v) ? v : (v ? [v] : []);
+      }))].sort();
+    } else if (TAXONOMY && Array.isArray(TAXONOMY[key]) && TAXONOMY[key].length) {
       const hiddenItems = Array.isArray(hidden[key]) ? hidden[key] : [];
       vals = TAXONOMY[key].filter(v => !hiddenItems.includes(v)).sort();
     } else {
@@ -6882,10 +6120,10 @@ function renderLibrary() {
   _libPage = Math.min(_libPage, totalPages);
   const pageGames = games.slice((_libPage - 1) * PAGE_SIZE, _libPage * PAGE_SIZE);
 
-  document.getElementById('lib-count').textContent = `${total} game${total !== 1 ? 's' : ''}`;
+  document.getElementById('lib-count').textContent = `${total} asset${total !== 1 ? 's' : ''}`;
   const grid = document.getElementById('game-grid');
   if (!total) {
-    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-state-icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" opacity="0.3"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 12h4m-2-2v4"/><circle cx="16" cy="12" r="1.5" fill="currentColor"/></svg></div><div class="empty-state-text">No games found</div><div class="empty-state-sub">Try changing the filter or search query</div></div>`;
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-state-icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" opacity="0.3"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 12h4m-2-2v4"/><circle cx="16" cy="12" r="1.5" fill="currentColor"/></svg></div><div class="empty-state-text">No assets found</div><div class="empty-state-sub">Try changing the filter or search query</div></div>`;
     document.getElementById('lib-pagination').innerHTML = '';
     return;
   }
@@ -6906,7 +6144,7 @@ function renderDrafts() {
 
   const grid = document.getElementById('draft-grid');
   if (!total) {
-    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-state-icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" opacity="0.3"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div><div class="empty-state-text">No drafts</div><div class="empty-state-sub">All games are published!</div></div>`;
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-state-icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" opacity="0.3"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div><div class="empty-state-text">No drafts</div><div class="empty-state-sub">All assets are published!</div></div>`;
     document.getElementById('draft-pagination').innerHTML = '';
     return;
   }
@@ -7182,19 +6420,20 @@ function openDrawer(id) {
       <div class="field full"><div class="field-label">Title</div><input type="text" id="de-title" value="${esc(g.title||'')}"></div>
       <div class="field full"><div class="field-label">Cover URL</div><input type="url" id="de-cover" value="${esc(g.cover||'')}"></div>
       <div class="field full"><div class="field-label">Description</div><textarea id="de-desc">${esc(g.description||'')}</textarea></div>
+      <div class="field full"><div class="field-label">Overview</div><textarea id="de-overview">${esc(g.overview||'')}</textarea></div>
+      <div class="field full"><div class="field-label">Technical Details</div><textarea id="de-technical">${esc(g.technicalDetails||'')}</textarea></div>
 
       <div class="form-section">Details</div>
       <div class="field"><div class="field-label">Price</div><input type="text" id="de-price" value="${esc((g.price||'').replace(/^\$/,'').trim())}"></div>
       <div class="field"><div class="field-label">Popularity</div><input type="number" id="de-pop" min="0" max="100" value="${g.popularity||''}"></div>
       <div class="field"><div class="field-label">Rating Tier</div><select id="de-rating"><option value="">—</option>${selOpts(T.rating,g.rating)}</select></div>
       <div class="field"><div class="field-label">Difficulty</div><select id="de-diff"><option value="">—</option>${selOpts(T.difficulty,g.difficulty)}</select></div>
-      <div class="field"><div class="field-label">Game Length</div><select id="de-length"><option value="">—</option>${selOpts(T.length,g.length)}</select></div>
+      <div class="field"><div class="field-label">Length</div><select id="de-length"><option value="">—</option>${selOpts(T.length,g.length)}</select></div>
       <div class="field"><div class="field-label">Release Period</div><select id="de-period"><option value="">—</option>${selOpts(T.period,g.period)}</select></div>
       <div class="field"><div class="field-label">Visual Style</div><select id="de-visual"><option value="">—</option>${selOpts(T.visual,Array.isArray(g.visual)?g.visual[0]:g.visual)}</select></div>
-      <div class="field"><div class="field-label">Status</div><select id="de-status"><option value="published" ${g.status!=='draft'?'selected':''}>Published</option><option value="draft" ${g.status==='draft'?'selected':''}>Draft</option></select></div>
       <div class="field"><div class="field-label">Early Access</div><select id="de-ea"><option value="false" ${!g.earlyAccess?'selected':''}>No</option><option value="true" ${g.earlyAccess?'selected':''}>Yes</option></select></div>
       <div class="field"><div class="field-label">Sponsored</div><select id="de-sp"><option value="false" ${!g.sponsored?'selected':''}>No</option><option value="true" ${g.sponsored?'selected':''}>Yes</option></select></div>
-      <div class="field full"><div class="field-label"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0011 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 11-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 002.5 3z"/></svg> Latest & Buzz</div><select id="de-lf"><option value="false" ${!g.latestFeatured?'selected':''}>No</option><option value="true" ${g.latestFeatured?'selected':''}>Yes</option></select></div>
+      <div class="field full"><div class="field-label">Latest & Buzz</div><select id="de-lf"><option value="false" ${!g.latestFeatured?'selected':''}>No</option><option value="true" ${g.latestFeatured?'selected':''}>Yes</option></select></div>
 
       <div class="form-section">Classification</div>
       <div class="field full"><div class="field-label">Platforms</div><div class="cb-grid" id="de-cb-platforms">${cbGroup('platforms',T.platforms,g.platforms,true)}</div></div>
@@ -7203,9 +6442,7 @@ function openDrawer(id) {
       <div class="field full"><div class="field-label">Perspective</div><div class="cb-grid" id="de-cb-perspective">${cbGroup('perspective',T.perspective||['First-person','Third-person','Isometric','Top-down','Side-scrolling'],g.perspective,false)}</div></div>
 
       <div class="form-section">Tags</div>
-      <div class="field full"><div class="field-label">Genres</div><div class="paste-field" id="dpf-genres" onclick="this.querySelector('.paste-input-area').focus()"><div class="paste-tags" id="dpt-genres"></div><textarea class="paste-input-area" id="dpi-genres" placeholder="genres…" rows="1" oninput="parsePaste('genres','d')"></textarea></div></div>
       <div class="field full"><div class="field-label">User Tags</div><div class="paste-field" id="dpf-usertags" onclick="this.querySelector('.paste-input-area').focus()"><div class="paste-tags" id="dpt-usertags"></div><textarea class="paste-input-area" id="dpi-usertags" placeholder="tags…" rows="1" oninput="parsePaste('userTags','d')"></textarea></div></div>
-      <div class="field full"><div class="field-label">Features</div><div class="paste-field" id="dpf-features" onclick="this.querySelector('.paste-input-area').focus()"><div class="paste-tags" id="dpt-features"></div><textarea class="paste-input-area" id="dpi-features" placeholder="features…" rows="1" oninput="parsePaste('features','d')"></textarea></div></div>
 
       <div class="form-section">Stores & Links</div>
       <div class="field full">
@@ -7238,9 +6475,7 @@ function openDrawer(id) {
     </div>`;
 
   // Load paste tags
-  setPasteValues('genres','d', g.genres||[]);
-  setPasteValues('userTags','d', g.userTags||g.subgenres||[]);
-  setPasteValues('features','d', g.features||[]);
+  setPasteValues('userTags','d', g.userTags||[]);
 
   // Show drawer
   document.getElementById('drawer-overlay').classList.add('open');
@@ -7316,47 +6551,55 @@ async function saveDrawerEdit(republish = false) {
 
   const data = {
     ...existing,
-    title:        document.getElementById('de-title')?.value.trim() || existing.title,
-    cover:        document.getElementById('de-cover')?.value.trim() || '',
-    trailer:      document.getElementById('de-trailer')?.value.trim() || document.getElementById('f-trailer')?.value.trim() || '',
-    description:  document.getElementById('de-desc')?.value.trim() || '',
-    price:        document.getElementById('de-price')?.value.trim() || '',
-    popularity:   parseInt(document.getElementById('de-pop')?.value) || 50,
-    rating:       document.getElementById('de-rating')?.value || '',
-    difficulty:   document.getElementById('de-diff')?.value || '',
-    length:       document.getElementById('de-length')?.value || '',
-    period:       document.getElementById('de-period')?.value || '',
-    visual:       document.getElementById('de-visual')?.value || '',
-    status:       republish ? 'published' : (document.getElementById('de-status')?.value || 'published'),
-    earlyAccess:  document.getElementById('de-ea')?.value === 'true',
-    sponsored:    document.getElementById('de-sp')?.value === 'true',
-    latestFeatured: document.getElementById('de-lf')?.value === 'true',
-    platforms:    getDrawerCbValues('de-cb-platforms', true),
-    playMode:     getDrawerCbValues('de-cb-playmode', true),
-    themes:       getDrawerCbValues('de-cb-themes', true),
-    perspective:  getDrawerCbValues('de-cb-perspective', false),
-    genres:       getPasteValues('genres','d'),
-    userTags:     getPasteValues('userTags','d'),
-    features:     getPasteValues('features','d'),
+    title:            document.getElementById('de-title')?.value.trim() || existing.title,
+    cover:            document.getElementById('de-cover')?.value.trim() || '',
+    image:            document.getElementById('de-cover')?.value.trim() || '',
+    post_link:        document.getElementById('de-post-link')?.value.trim() || existing.post_link || '',
+    author:           document.getElementById('de-author')?.value.trim() || existing.author || '',
+    category:         document.getElementById('de-category')?.value || existing.category || '',
+    description:      document.getElementById('de-desc')?.value.trim() || '',
+    overview:         document.getElementById('de-overview')?.value.trim() || '',
+    technicalDetails: document.getElementById('de-technical')?.value.trim() || '',
+    price:            document.getElementById('de-price')?.value.trim() || '',
+    price_range:      _calcPriceRange(document.getElementById('de-price')?.value.trim() || ''),
+    popularity:       parseInt(document.getElementById('de-pop')?.value) || 50,
+    rating:           document.getElementById('de-rating')?.value || '',
+    difficulty:       document.getElementById('de-diff')?.value || '',
+    length:           document.getElementById('de-length')?.value || '',
+    period:           document.getElementById('de-period')?.value || '',
+    visual:           document.getElementById('de-visual')?.value || '',
+    status:           republish ? 'published' : (existing.status || 'published'),
+    earlyAccess:      document.getElementById('de-ea')?.value === 'true',
+    sponsored:        document.getElementById('de-sp')?.value === 'true',
+    latestFeatured:   document.getElementById('de-lf')?.value === 'true',
+    platforms:        getDrawerCbValues('de-cb-platforms', true),
+    playMode:         getDrawerCbValues('de-cb-playmode', true),
+    themes:           getDrawerCbValues('de-cb-themes', true),
+    perspective:      getDrawerCbValues('de-cb-perspective', false),
+    userTags:         getPasteValues('userTags','d'),
     storeLinks,
     deals,
-    updatedAt:    Date.now(),
+    updatedAt:        Date.now(),
   };
 
-  await db.collection(COLLECTION).doc(drawerGameId).set(data);
-  _sbUpsert(data); // sync to Supabase
-  toast('Saved!', 'success');
-  // Log the edit with field-level diff
-  await logAction('game_updated', data.title || existing.title, drawerGameId, existing, data);
-  closeDrawer();
+  try {
+    await db.collection(COLLECTION).doc(drawerGameId).set(data);
+    _sbUpsert(data);
+    toast('Saved!', 'success');
+    await logAction('game_updated', data.title || existing.title, drawerGameId, existing, data);
+    closeDrawer();
+  } catch(e) {
+    console.error('[Firebase] saveDrawerEdit failed:', e);
+    toast('Save failed: ' + e.message, 'error');
+  }
 }
 
 /* ═══════════════════════════════════════════════
    PASTE TAG FIELDS
    prefix 'd' = drawer, '' = add form
 ═══════════════════════════════════════════════ */
-const pasteStore = { genres:{}, userTags:{}, features:{} };
-const dPasteStore = { genres:{}, userTags:{}, features:{} };
+const pasteStore = { userTags:{} };
+const dPasteStore = { userTags:{} };
 
 function parsePaste(field, prefix='') {
   const areaId = (prefix?'d':'') + 'pi-' + (field === 'userTags' ? 'usertags' : field);
@@ -7424,8 +6667,7 @@ document.addEventListener('keydown', e => {
     if (!val) return;
     const areaId = e.target.id;
     const prefix = areaId.startsWith('d') ? 'd' : '';
-    const fieldMap = { 'pi-genres':'genres','pi-usertags':'userTags','pi-features':'features',
-                       'dpi-genres':'genres','dpi-usertags':'userTags','dpi-features':'features' };
+    const fieldMap = { 'pi-usertags':'userTags', 'dpi-usertags':'userTags' };
     const field = fieldMap[areaId];
     if (field) { addPasteTag(field, val, prefix); e.target.value = ''; }
   }
@@ -7486,10 +6728,11 @@ function buildFormSelects(game=null) {
   fill('f-period',    'period',     game?.period||'');
   fill('f-rating',    'rating',     game?.rating||'');
   fill('f-visual',    'visual',     game?.visual||'');
-}
+
+  if (typeof _populateCatLevel === "function") _populateCatLevel(1, []);}
 
 function populateStoresMultiselect(game=null) {
-  const el = document.getElementById('f-stores'); if (!el) return; // element removed from form - safe no-op
+  const el = document.getElementById('f-stores'); if (!el) return;
   const sel = game?.stores||[];
   el.innerHTML = (TAXONOMY.stores||[]).map(s=>`<option value="${s}" ${sel.includes(s)?'selected':''}>${s}</option>`).join('');
 }
@@ -7571,35 +6814,120 @@ function syncDealLinks() {
 /* ═══════════════════════════════════════════════
    SAVE / CLEAR ADD FORM
 ═══════════════════════════════════════════════ */
-function clearGameForm() {
-  editingGameId = null;
-  const setVal = id => { const el = document.getElementById(id); if (el) el.value = ''; };
-  ['edit-game-id','f-title','f-post-link','f-author','f-cover','f-desc','f-overview','f-technical','f-price','f-paste-data'].forEach(setVal);
-  const catEl = document.getElementById('f-category'); if (catEl) catEl.value = '';
-  const prevEl = document.getElementById('f-image-preview'); if (prevEl) prevEl.style.display = 'none';
-  clearPasteField('userTags');
-  const slr = document.getElementById('store-link-rows'); if (slr) slr.innerHTML = '';
-  addStoreLinkRow();
-  _populateCategorySelect('');
-  const ss = document.getElementById('save-status'); if (ss) ss.style.display = 'none';
-  const ps = document.getElementById('paste-data-status'); if (ps) ps.textContent = '';
+/* ═══════════════════════════════════════════════
+   TAG SUGGESTION SYSTEM
+═══════════════════════════════════════════════ */
+function _getAllTaxonomyTags() {
+  const tags = new Set();
+  const taxKeys = ['userTags','themes','platforms','playMode'];
+  taxKeys.forEach(k => { (TAXONOMY[k]||[]).forEach(v => tags.add(v)); });
+  // also pull from all existing assets
+  allGames.forEach(g => { (g.userTags||[]).forEach(t => { if(t) tags.add(t); }); });
+  return [...tags].sort();
 }
 
+function _showTagSuggestions(inputId) {
+  const input = document.getElementById(inputId);
+  if (!input) return;
+  const dropId = 'tag-suggest-' + inputId;
+  const drop = document.getElementById(dropId);
+  if (!drop) return;
+  const val = input.value.trim().toLowerCase();
+  const allTags = _getAllTaxonomyTags();
+  let matches = val
+    ? allTags.filter(t => t.toLowerCase().includes(val) && !_tagAlreadyAdded(t, inputId))
+    : [];
+  if (!matches.length && !val) { drop.style.display = 'none'; return; }
+  // Show "add new" if typed value not in taxonomy
+  const isNew = val && !allTags.some(t => t.toLowerCase() === val);
+  let html = matches.slice(0, 10).map((t, i) =>
+    `<div class="tag-suggest-item" data-val="${t}" onmousedown="event.preventDefault();_selectTagSuggestion('${inputId}','${t.replace(/'/g,"\\'")}')">${t}</div>`
+  ).join('');
+  if (isNew && val) {
+    html += `<div class="tag-suggest-item" data-val="${val}" onmousedown="event.preventDefault();_selectTagSuggestion('${inputId}','${val.replace(/'/g,"\\'")}')">${val}<span class="ts-new">+ Add new</span></div>`;
+  }
+  if (!html) { drop.style.display = 'none'; return; }
+  drop.innerHTML = html;
+  drop.style.display = 'block';
+  drop.querySelectorAll('.tag-suggest-item')[0]?.classList.add('active');
+}
+
+function _tagAlreadyAdded(tag, inputId) {
+  const prefix = inputId.startsWith('d') ? 'd' : '';
+  const store = prefix ? dPasteStore : pasteStore;
+  return !!(store.userTags && store.userTags[tag]);
+}
+
+function _hideTagSuggestions(inputId) {
+  const drop = document.getElementById('tag-suggest-' + inputId);
+  if (drop) drop.style.display = 'none';
+}
+
+function _selectTagSuggestion(inputId, val) {
+  const input = document.getElementById(inputId);
+  if (!input) return;
+  const prefix = inputId.startsWith('d') ? 'd' : '';
+  addPasteTag('userTags', val, prefix);
+  input.value = '';
+  _hideTagSuggestions(inputId);
+  // If new tag, add to taxonomy
+  if (!(TAXONOMY.userTags||[]).includes(val)) {
+    if (!TAXONOMY.userTags) TAXONOMY.userTags = [];
+    TAXONOMY.userTags.push(val);
+    if (db) db.collection('meta').doc('taxonomy').update({ userTags: TAXONOMY.userTags }).catch(()=>{});
+  }
+}
+
+function _tagSuggestKey(event, inputId) {
+  const drop = document.getElementById('tag-suggest-' + inputId);
+  if (!drop || drop.style.display === 'none') return;
+  const items = drop.querySelectorAll('.tag-suggest-item');
+  const active = drop.querySelector('.tag-suggest-item.active');
+  let idx = [...items].indexOf(active);
+  if (event.key === 'ArrowDown') {
+    event.preventDefault();
+    items.forEach(i => i.classList.remove('active'));
+    items[Math.min(idx + 1, items.length - 1)]?.classList.add('active');
+  } else if (event.key === 'ArrowUp') {
+    event.preventDefault();
+    items.forEach(i => i.classList.remove('active'));
+    items[Math.max(idx - 1, 0)]?.classList.add('active');
+  } else if (event.key === 'Enter' || event.key === 'Tab') {
+    const activeItem = drop.querySelector('.tag-suggest-item.active');
+    if (activeItem) {
+      event.preventDefault();
+      _selectTagSuggestion(inputId, activeItem.dataset.val);
+    }
+  } else if (event.key === 'Escape') {
+    _hideTagSuggestions(inputId);
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   ASSET FIELD HELPERS
+═══════════════════════════════════════════════ */
 function _calcPriceRange(price) {
   if (!price) return '';
   const s = String(price).toLowerCase().trim();
-  if (s === 'free' || s === '0' || s === '$0') return 'free';
+  if (s === 'free' || s === '0' || s === '$0' || s === '$0.00') return 'free';
   const m = s.match(/[\d.]+/);
   if (!m) return '';
   const n = parseFloat(m[0]);
-  if (n === 0) return 'free';
-  if (n <= 10) return '0-10';
-  if (n <= 20) return '10-20';
-  if (n <= 50) return '20-50';
-  if (n <= 100) return '50-100';
+  if (n === 0)   return 'free';
+  if (n <= 10)   return '0-10';
+  if (n <= 20)   return '10-20';
+  if (n <= 50)   return '20-50';
+  if (n <= 100)  return '50-100';
   return '100+';
 }
 
+function _autoCalcPriceRange() {
+  const price = document.getElementById('f-price')?.value || '';
+  const sel = document.getElementById('f-price-range');
+  if (sel && !sel.value) sel.value = _calcPriceRange(price);
+}
+
+// Get all unique categories from taxonomy + allGames
 function _getAssetCategories() {
   const fromTax = Array.isArray(TAXONOMY?.assetCategories) ? TAXONOMY.assetCategories : [];
   const fromGames = [...new Set(allGames.map(g => g.category).filter(Boolean))];
@@ -7611,7 +6939,7 @@ function _populateCategorySelect(selected) {
   if (!sel) return;
   const cats = _getAssetCategories();
   sel.innerHTML = '<option value="">— Select —</option>' +
-    cats.map(cat => `<option value="${cat.replace(/"/g,'&quot;')}"${cat===selected?' selected':''}>${cat}</option>`).join('') +
+    cats.map(c => `<option value="${c.replace(/"/g,'&quot;')}"${c===selected?' selected':''}>${c}</option>`).join('') +
     '<option value="__new__">+ Add new category…</option>';
   if (selected && !cats.includes(selected)) {
     sel.innerHTML += `<option value="${selected}" selected>${selected}</option>`;
@@ -7627,36 +6955,279 @@ function _promptNewCategory() {
     return;
   }
   const cat = name.trim();
+  // Save to taxonomy
   if (!TAXONOMY.assetCategories) TAXONOMY.assetCategories = [];
-  if (!TAXONOMY.assetCategories.map(x=>x.toLowerCase()).includes(cat.toLowerCase())) {
+  if (!TAXONOMY.assetCategories.includes(cat)) {
     TAXONOMY.assetCategories.push(cat);
-    if (db) db.collection('meta').doc('taxonomy').set(TAXONOMY).catch(() => {});
+    if (db) db.collection('meta').doc('taxonomy').set(TAXONOMY).catch(e => console.warn('[taxonomy]', e));
   }
   _populateCategorySelect(cat);
+}
+
+function _showImagePreview(url) {
+  const wrap = document.getElementById('f-image-preview');
+  const img = document.getElementById('f-image-preview-img');
+  if (!wrap || !img) return;
+  if (url) {
+    img.src = url;
+    wrap.style.display = 'block';
+  } else {
+    wrap.style.display = 'none';
+  }
 }
 
 function _handleImageUpload(input) {
   const file = input.files?.[0];
   if (!file) return;
-  if (file.size > 2 * 1024 * 1024) { toast('Image too large (max 2MB)', 'error'); return; }
+  handleImageFile(file);
+}
+
+function handleImageFile(file) {
+  if (!file || !file.type.startsWith('image/')) return;
+  if (file.size > 10 * 1024 * 1024) { toast('Image too large (max 10MB)', 'error'); return; }
+  // Preview only — do NOT store base64 in Firestore
   const reader = new FileReader();
   reader.onload = e => {
-    const b64 = e.target.result;
+    _showImagePreview(e.target.result);
+    // Clear URL input — we'll upload on save
     const coverEl = document.getElementById('f-cover');
-    if (coverEl) coverEl.value = b64;
-    _showImagePreview(b64);
+    if (coverEl) coverEl.value = '';
   };
   reader.readAsDataURL(file);
+  window._pendingImageFile = file;
+  const badge = document.getElementById('f-image-upload-badge');
+  if (badge) badge.style.display = 'block';
+  toast('Image ready — will upload on save', 'info');
 }
 
-function _showImagePreview(url) {
-  const wrap = document.getElementById('f-image-preview');
-  const img  = document.getElementById('f-image-preview-img');
-  if (!wrap || !img) return;
-  if (url) { img.src = url; wrap.style.display = 'block'; }
-  else { wrap.style.display = 'none'; }
+// Paste support — user can CTRL+C an image and paste it into the modal
+document.addEventListener('paste', e => {
+  const modal = document.getElementById('add-game-modal');
+  if (!modal || !modal.classList.contains('open')) return;
+  const items = e.clipboardData?.items || [];
+  for (const item of items) {
+    if (item.type.includes('image')) {
+      e.preventDefault();
+      const file = item.getAsFile();
+      if (file) handleImageFile(file);
+      break;
+    }
+  }
+});
+
+// Cover URL input live preview
+(function _attachCoverPreview() {
+  document.addEventListener('input', e => {
+    if (e.target && e.target.id === 'f-cover') _showImagePreview(e.target.value);
+  });
+})();
+
+/* ═══════════════════════════════════════════════
+   STORE SOURCES — Editable dynamic list
+   Stored in localStorage + Firebase taxonomy
+═══════════════════════════════════════════════ */
+const DEFAULT_STORE_SOURCES = [
+  { name: 'Fab', domain: 'fab.com' },
+  { name: 'CGTrader', domain: 'cgtrader.com' },
+  { name: 'Unity Asset Store', domain: 'assetstore.unity.com' },
+  { name: 'Unreal Marketplace', domain: 'unrealengine.com/marketplace' },
+  { name: 'itch.io', domain: 'itch.io' },
+  { name: 'TurboSquid', domain: 'turbosquid.com' },
+  { name: 'Sketchfab', domain: 'sketchfab.com' },
+  { name: 'ArtStation', domain: 'artstation.com/marketplace' },
+];
+
+function _getStoreSources() {
+  try {
+    const saved = localStorage.getItem('assetscout_stores');
+    if (saved) return JSON.parse(saved);
+  } catch(e) {}
+  return DEFAULT_STORE_SOURCES;
 }
 
+function _saveStoreSources(list) {
+  try { localStorage.setItem('assetscout_stores', JSON.stringify(list)); } catch(e) {}
+  if (db) db.collection('meta').doc('storeSources').set({ list }).catch(() => {});
+}
+
+function renderStoreSourcesEditor() {
+  const container = document.getElementById('store-sources-editor');
+  if (!container) return;
+  const stores = _getStoreSources();
+  container.innerHTML = stores.map((s, i) => `
+    <div class="link-row" style="align-items:center;">
+      <input type="text" value="${s.name.replace(/"/g,'&quot;')}" style="flex:1;" onchange="_updateStoreSource(${i},'name',this.value)" placeholder="Store name">
+      <input type="text" value="${s.domain.replace(/"/g,'&quot;')}" style="flex:1.5;" onchange="_updateStoreSource(${i},'domain',this.value)" placeholder="domain.com">
+      <button class="link-row-del" onclick="_removeStoreSource(${i})" title="Remove">×</button>
+    </div>`).join('') +
+    `<button class="add-link-btn" onclick="_addStoreSource()" style="margin-top:6px;">+ Add Store Source</button>`;
+}
+
+function _updateStoreSource(i, field, val) {
+  const list = _getStoreSources();
+  if (list[i]) { list[i][field] = val; _saveStoreSources(list); }
+}
+
+function _removeStoreSource(i) {
+  const list = _getStoreSources();
+  list.splice(i, 1);
+  _saveStoreSources(list);
+  renderStoreSourcesEditor();
+}
+
+function _addStoreSource() {
+  const list = _getStoreSources();
+  list.push({ name: 'New Store', domain: '' });
+  _saveStoreSources(list);
+  renderStoreSourcesEditor();
+}
+
+function clearGameForm() {
+  editingGameId = null;
+  document.getElementById('edit-game-id').value = '';
+  ['f-title','f-post-link','f-author','f-cover','f-desc','f-overview','f-technical','f-popularity','f-price'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  const prEl = document.getElementById('f-price-range'); if (prEl) prEl.value = '';
+  const catEl = document.getElementById('f-category'); if (catEl) catEl.value = '';
+  const prevEl = document.getElementById('f-image-preview'); if (prevEl) prevEl.style.display = 'none';
+  const eaEl = document.getElementById('f-ea'); if (eaEl) eaEl.value = 'false';
+  const spEl = document.getElementById('f-sponsored'); if (spEl) spEl.value = 'false';
+  const lfEl = document.getElementById('f-lf'); if (lfEl) lfEl.value = 'false';
+  ['f-difficulty','f-length','f-period','f-rating','f-visual'].forEach(id => { const e=document.getElementById(id); if(e) e.value=''; });
+  clearPasteField('userTags');
+  window._pendingImageFile = null;
+  ['f-cat-lvl1','f-cat-lvl2','f-cat-lvl3','f-cat-lvl4'].forEach(id => { const el = document.getElementById(id); if (el) { el.innerHTML = '<option value="">—</option>'; } });
+  const slr = document.getElementById('store-link-rows'); if (slr) slr.innerHTML = '';
+  const dlr = document.getElementById('deals-link-rows'); if (dlr) dlr.innerHTML = '';
+  addStoreLinkRow(); addDealLinkRow();
+  buildAllCheckboxGrids(); buildFormSelects();
+  _populateCategorySelect('');
+  const ss = document.getElementById('save-status'); if (ss) ss.style.display = 'none';
+}
+
+/* ═══════════════════════════════════════════════
+   HIERARCHICAL CATEGORY SYSTEM
+═══════════════════════════════════════════════ */
+function _getCategoryTree() {
+  const cats = TAXONOMY.assetCategories;
+  if (!cats || typeof cats !== 'object' || Array.isArray(cats)) return {};
+  return cats;
+}
+
+function _populateCatLevel(level, parentPath) {
+  const sel = document.getElementById('f-cat-lvl' + level);
+  if (!sel) return;
+  let node = _getCategoryTree();
+  for (const part of parentPath) {
+    if (node && node[part]) node = node[part];
+    else { node = null; break; }
+  }
+  const keys = node ? Object.keys(node) : [];
+  sel.innerHTML = '<option value="">— Level ' + level + ' —</option>' +
+    keys.map(k => `<option value="${k}">${k}</option>`).join('');
+  if (keys.length === 0) sel.style.opacity = '0.4';
+  else sel.style.opacity = '1';
+}
+
+function _initCatDropdowns(v1, v2, v3, v4) {
+  _populateCatLevel(1, []);
+  const s1 = document.getElementById('f-cat-lvl1');
+  if (s1 && v1) { s1.value = v1; _populateCatLevel(2, [v1]); }
+  const s2 = document.getElementById('f-cat-lvl2');
+  if (s2 && v2) { s2.value = v2; _populateCatLevel(3, [v1, v2]); }
+  const s3 = document.getElementById('f-cat-lvl3');
+  if (s3 && v3) { s3.value = v3; _populateCatLevel(4, [v1, v2, v3]); }
+  const s4 = document.getElementById('f-cat-lvl4');
+  if (s4 && v4) s4.value = v4;
+}
+
+function _updateCatLevel(level) {
+  const v1 = document.getElementById('f-cat-lvl1')?.value || '';
+  const v2 = document.getElementById('f-cat-lvl2')?.value || '';
+  const v3 = document.getElementById('f-cat-lvl3')?.value || '';
+  if (level === 2) _populateCatLevel(2, [v1]);
+  if (level === 3) _populateCatLevel(3, [v1, v2]);
+  if (level === 4) _populateCatLevel(4, [v1, v2, v3]);
+  // Clear deeper levels on change
+  if (level <= 2) { const s = document.getElementById('f-cat-lvl2'); if (s) s.value = ''; _populateCatLevel(3, []); _populateCatLevel(4, []); }
+  if (level <= 3) { const s = document.getElementById('f-cat-lvl3'); if (s) s.value = ''; _populateCatLevel(4, []); }
+  if (level <= 4) { const s = document.getElementById('f-cat-lvl4'); if (s) s.value = ''; }
+}
+
+function _parseCategoryBulk() {
+  const input = (document.getElementById('f-cat-bulk-input')?.value || '').trim();
+  if (!input) return;
+  const parts = input.split('>').map(p => p.trim()).filter(Boolean);
+  // Auto-create nodes in taxonomy
+  addCategoryPath(parts);
+  // Fill dropdowns
+  _initCatDropdowns(parts[0], parts[1], parts[2], parts[3]);
+  const el = document.getElementById('f-cat-bulk-input');
+  if (el) el.value = '';
+  toast('Category path set: ' + parts.join(' > '), 'success');
+}
+
+function addCategoryPath(pathArray) {
+  if (!TAXONOMY.assetCategories || typeof TAXONOMY.assetCategories !== 'object' || Array.isArray(TAXONOMY.assetCategories)) {
+    TAXONOMY.assetCategories = {};
+  }
+  let ref = TAXONOMY.assetCategories;
+  for (const p of pathArray) {
+    if (!ref[p]) ref[p] = {};
+    ref = ref[p];
+  }
+  saveTaxonomy();
+}
+
+function _showAddCategoryUI() {
+  const path = prompt('Enter category path (e.g. 3D > Character > Human > Male):');
+  if (!path) return;
+  const parts = path.split('>').map(p => p.trim()).filter(Boolean);
+  if (!parts.length) return;
+  addCategoryPath(parts);
+  _initCatDropdowns(parts[0], parts[1], parts[2], parts[3]);
+  toast('Category added: ' + parts.join(' > '), 'success');
+}
+
+/* ═══════════════════════════════════════════════
+   AUTO STORE DETECTION
+═══════════════════════════════════════════════ */
+function _autoDetectStore(url) {
+  const detectedEl = document.getElementById('f-store-detected');
+  const previewEl = document.getElementById('f-auto-store-preview');
+  if (!url) {
+    if (detectedEl) detectedEl.style.display = 'none';
+    if (previewEl) previewEl.textContent = 'Enter Post Link above to auto-detect store';
+    return;
+  }
+  let storeName = '';
+  if (url.includes('assetstore.unity.com') || url.includes('unity.com/packages')) storeName = 'Unity Asset Store';
+  else if (url.includes('cgtrader.com')) storeName = 'CGTrader';
+  else if (url.includes('fab.com/listings')) storeName = 'Fab';
+  else if (url.includes('unrealengine.com/marketplace') || url.includes('fab.com')) storeName = 'Fab / Unreal Marketplace';
+  else if (url.includes('turbosquid.com')) storeName = 'TurboSquid';
+  else if (url.includes('sketchfab.com/3d-models')) storeName = 'Sketchfab';
+  else if (url.includes('artstation.com/marketplace')) storeName = 'ArtStation';
+
+  if (detectedEl) {
+    if (storeName) {
+      detectedEl.textContent = '✓ Detected: ' + storeName;
+      detectedEl.style.display = 'block';
+    } else {
+      detectedEl.style.display = 'none';
+    }
+  }
+  if (previewEl) {
+    previewEl.innerHTML = storeName
+      ? `<span style="color:var(--green);">✓ Auto: <strong>${storeName}</strong> → ${url.slice(0, 60)}${url.length > 60 ? '…' : ''}</span>`
+      : 'Custom link — will be saved as-is';
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   APPLY PASTED DATA (Extension integration)
+═══════════════════════════════════════════════ */
 function applyPastedData() {
   const raw = (document.getElementById('f-paste-data')?.value || '').trim();
   const status = document.getElementById('paste-data-status');
@@ -7668,17 +7239,27 @@ function applyPastedData() {
   }
   const sv = (id, val) => { const el = document.getElementById(id); if (el && val != null && val !== '') el.value = val; };
   if (parsed.title)       sv('f-title', parsed.title);
-  if (parsed.post_link)   sv('f-post-link', parsed.post_link);
+  if (parsed.post_link) { sv('f-post-link', parsed.post_link); _autoDetectStore(parsed.post_link); }
   if (parsed.price)       sv('f-price', parsed.price);
+  if (parsed.price_range) sv('f-price-range', parsed.price_range);
+  else if (parsed.price)  sv('f-price-range', _calcPriceRange(parsed.price));
   if (parsed.author)      sv('f-author', parsed.author);
-  if (parsed.category)    _populateCategorySelect(parsed.category);
   if (parsed.description) sv('f-desc', parsed.description);
   if (parsed.overview)    sv('f-overview', parsed.overview);
-  if (parsed.technicalDetails) sv('f-technical', parsed.technicalDetails);
+  if (parsed.technicalDetails || parsed.technical_details)
+    sv('f-technical', parsed.technicalDetails || parsed.technical_details);
   const imgUrl = parsed.cover || parsed.image || '';
-  if (imgUrl) { sv('f-cover', imgUrl); _showImagePreview(imgUrl); }
+  if (imgUrl && !imgUrl.startsWith('data:')) { sv('f-cover', imgUrl); _showImagePreview(imgUrl); }
+  // Category path
+  if (parsed.category) {
+    const parts = parsed.category.split('>').map(p => p.trim()).filter(Boolean);
+    addCategoryPath(parts);
+    _initCatDropdowns(parts[0], parts[1], parts[2], parts[3]);
+    sv('f-category', parts[0] || parsed.category);
+  }
+  // Tags
   if (parsed.author && typeof addPasteTag === 'function') {
-    const ex = typeof getPasteValues === 'function' ? getPasteValues('userTags','') : [];
+    const ex = typeof getPasteValues === 'function' ? getPasteValues('userTags', '') : [];
     if (!ex.includes(parsed.author)) addPasteTag('userTags', parsed.author, '');
   }
   if (Array.isArray(parsed.tags) && typeof addPasteTag === 'function')
@@ -7686,161 +7267,147 @@ function applyPastedData() {
   if (status) { status.textContent = '✓ Fields filled'; status.style.color = 'var(--green)'; setTimeout(() => { status.textContent = ''; }, 3000); }
 }
 
-/* ═══════════════════════════════════════════════
-   TAG SUGGESTION SYSTEM
-═══════════════════════════════════════════════ */
-function _getAllTaxonomyTags() {
-  const tags = new Set();
-  ['userTags','themes','platforms','playMode'].forEach(k => { (TAXONOMY[k]||[]).forEach(v => tags.add(v)); });
-  allGames.forEach(g => { (g.userTags||[]).forEach(t => { if(t) tags.add(t); }); });
-  return [...tags].sort();
-}
-function _showTagSuggestions(inputId) {
-  const input = document.getElementById(inputId);
-  const drop = document.getElementById('tag-suggest-' + inputId);
-  if (!input || !drop) return;
-  const val = input.value.trim().toLowerCase();
-  const allTags = _getAllTaxonomyTags();
-  const store = pasteStore || {};
-  const existing = Object.keys(store.userTags || {});
-  const matches = val ? allTags.filter(t => t.toLowerCase().includes(val) && !existing.includes(t)).slice(0,10) : [];
-  const isNew = val && !allTags.some(t => t.toLowerCase() === val);
-  let html = matches.map(t => `<div class="tag-suggest-item" data-val="${t}" onmousedown="event.preventDefault();_selectTagSuggestion('${inputId}','${t.replace(/'/g,"\\'")}'">${t}</div>`).join('');
-  if (isNew && val) html += `<div class="tag-suggest-item" data-val="${val}" onmousedown="event.preventDefault();_selectTagSuggestion('${inputId}','${val.replace(/'/g,"\\'")}')"><span>${val}</span><span class="ts-new">+ new</span></div>`;
-  if (!html) { drop.style.display = 'none'; return; }
-  drop.innerHTML = html;
-  drop.style.display = 'block';
-  drop.querySelectorAll('.tag-suggest-item')[0]?.classList.add('active');
-}
-function _hideTagSuggestions(inputId) {
-  const drop = document.getElementById('tag-suggest-' + inputId);
-  if (drop) drop.style.display = 'none';
-}
-function _selectTagSuggestion(inputId, val) {
-  const input = document.getElementById(inputId);
-  if (!input) return;
-  if (typeof addPasteTag === 'function') addPasteTag('userTags', val, '');
-  input.value = '';
-  _hideTagSuggestions(inputId);
-  if (!(TAXONOMY.userTags||[]).includes(val)) {
-    if (!TAXONOMY.userTags) TAXONOMY.userTags = [];
-    TAXONOMY.userTags.push(val);
-    if (db) db.collection('meta').doc('taxonomy').update({ userTags: TAXONOMY.userTags }).catch(()=>{});
-  }
-}
-function _tagSuggestKey(event, inputId) {
-  const drop = document.getElementById('tag-suggest-' + inputId);
-  if (!drop || drop.style.display === 'none') return;
-  const items = drop.querySelectorAll('.tag-suggest-item');
-  const active = drop.querySelector('.tag-suggest-item.active');
-  let idx = [...items].indexOf(active);
-  if (event.key === 'ArrowDown') { event.preventDefault(); items.forEach(i=>i.classList.remove('active')); items[Math.min(idx+1,items.length-1)]?.classList.add('active'); }
-  else if (event.key === 'ArrowUp') { event.preventDefault(); items.forEach(i=>i.classList.remove('active')); items[Math.max(idx-1,0)]?.classList.add('active'); }
-  else if (event.key === 'Enter' || event.key === 'Tab') { const a=drop.querySelector('.tag-suggest-item.active'); if(a){event.preventDefault();_selectTagSuggestion(inputId,a.dataset.val);} }
-  else if (event.key === 'Escape') { _hideTagSuggestions(inputId); }
-}
+/* Update _initCatDropdowns call after taxonomy loads */
+const _origBuildFormSelects = typeof buildFormSelects === 'function' ? buildFormSelects : null;
+
 
 let _saving = false;
-function saveGame() {
+async function saveGame() {
   if (_saving) return;
   const title = (document.getElementById('f-title')?.value || '').trim();
   const postLink = (document.getElementById('f-post-link')?.value || '').trim();
   if (!title) { toast('Title is required', 'error'); return; }
-  syncStoreLinks();
-  const rawPrice = (document.getElementById('f-price')?.value || '').trim();
-  const coverUrl = (document.getElementById('f-cover')?.value || '').trim();
-  // Auto-detect store from post_link
-  const detectedStoreLinks = {};
-  if (postLink) {
-    if (postLink.includes('assetstore.unity.com') || postLink.includes('unity.com')) {
-      detectedStoreLinks['Unity Asset Store'] = postLink;
-    } else if (postLink.includes('cgtrader.com')) {
-      detectedStoreLinks['CGTrader'] = postLink;
-    } else if (postLink.includes('fab.com')) {
-      detectedStoreLinks['Fab'] = postLink;
-    } else if (postLink.includes('unrealengine.com') || postLink.includes('fab.com')) {
-      detectedStoreLinks['Fab'] = postLink;
-    }
-  }
-  const manualStoreLinks = (() => { try { const el = document.getElementById('f-storelinks'); return JSON.parse((el?.value)||'{}'); } catch { return {}; } })();
-  const storeLinks = { ...detectedStoreLinks, ...manualStoreLinks };
+  if (!postLink) { toast('Post Link is required', 'error'); return; }
 
-  const gameData = {
-    title,
-    post_link:   postLink,
-    author:      (document.getElementById('f-author')?.value || '').trim(),
-    category:    (document.getElementById('f-category')?.value || ''),
-    cover:       coverUrl,
-    image:       coverUrl,
-    description: (document.getElementById('f-desc')?.value || '').trim(),
-    overview:    (document.getElementById('f-overview')?.value || '').trim(),
-    technicalDetails: (document.getElementById('f-technical')?.value || '').trim(),
-    userTags:    getPasteValues('userTags'),
-    price:       rawPrice,
-    price_range: _calcPriceRange(rawPrice),
-    storeLinks,
-    status:      'published',
-  };
+  console.log('[saveGame] Starting save for:', title);
+
   const isNew = !editingGameId;
-  const existing = isNew ? null : allGames.find(g => g.id === editingGameId);
-  // Dedup check for new assets
-  if (isNew && postLink) {
-    const norm = u => (u||'').toLowerCase().trim().replace(/\/+$/, '');
-    const dup = allGames.find(g => g.post_link && norm(g.post_link) === norm(postLink));
-    if (dup) { toast('Duplicate: post_link already exists in "' + dup.title + '"', 'error'); return; }
+  if (isNew) {
+    const _normUrl = u => (u||'').toLowerCase().trim().replace(/\/+$/, '');
+    const normLink = _normUrl(postLink);
+    const dup = allGames.find(g => g.post_link && _normUrl(g.post_link) === normLink);
+    if (dup) { toast(`Duplicate: post_link already exists in "${dup.title}"`, 'error'); return; }
   }
-  const finalData = {
-    ...(existing || {}),
-    ...gameData,
-    createdAt: existing?.createdAt || Date.now(),
-    updatedAt: Date.now(),
-  };
+
   _saving = true;
-  console.log('[saveGame] Writing to Firestore:', COLLECTION, finalData);
-  const docRef = isNew
-    ? db.collection(COLLECTION).doc()
-    : db.collection(COLLECTION).doc(editingGameId);
-  finalData.id = docRef.id;
-  docRef.set(finalData)
-    .then(async () => {
-      toast(`"${title}" saved!`, 'success');
-      console.log('[saveGame] Saved OK, id:', finalData.id);
+  const btn = document.querySelector('#add-game-modal-body .btn-primary[onclick*="saveGame"]');
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+
+  try {
+    // ── IMAGE: never store base64, only URL
+    let coverUrl = (document.getElementById('f-cover')?.value || '').trim();
+    // If it's base64, clear it — only URLs allowed in Firestore
+    if (coverUrl.startsWith('data:')) {
+      coverUrl = '';
+      console.warn('[saveGame] Base64 image detected — clearing. Upload to Firebase Storage instead.');
+    }
+    // Upload pending file to Firebase Storage
+    if (window._pendingImageFile) {
       try {
-        await logAction(isNew ? 'game_added' : 'game_updated', title, finalData.id, isNew ? null : (existing || null), finalData);
-      } catch(logErr) { console.warn('[logAction] failed:', logErr); }
-      _sbUpsert(finalData);
-      const ss = document.getElementById('save-status');
-      ss.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:5px;vertical-align:-2px"><polyline points="20 6 9 17 4 12"/></svg>Saved successfully'; ss.style.display = 'block';
-      setTimeout(() => { ss.style.display='none'; }, 3000);
-      // Auto-fetch trailer if game has no trailer
-      if (!finalData.trailer) {
-        toast('Fetching trailer…', 'info');
-        let trailerUrl = '';
-        let trailerSource = '';
-        // 1st priority: Steam HLS/mp4
-        if (finalData.steamAppId) {
-          trailerUrl = await fetchSteamTrailer(finalData.steamAppId);
-          if (trailerUrl) trailerSource = 'Steam';
-        }
-        // 2nd priority: YouTube
-        if (!trailerUrl) {
-          trailerUrl = await fetchYouTubeTrailer(finalData.title);
-          if (trailerUrl) trailerSource = 'YouTube';
-        }
-        if (trailerUrl) {
-          await db.collection(COLLECTION).doc(id).update({ trailer: trailerUrl });
-          const tf = document.getElementById('f-trailer');
-          if (tf) tf.value = trailerUrl;
-          toast(`Trailer saved (${trailerSource})`, 'success');
-        } else {
-          toast('No trailer found', 'info');
-        }
+        toast('Uploading image…', 'info');
+        const file = window._pendingImageFile;
+        const ref = firebase.storage().ref().child('covers/' + Date.now() + '_' + file.name);
+        await ref.put(file);
+        coverUrl = await ref.getDownloadURL();
+        window._pendingImageFile = null;
+        console.log('[saveGame] Image uploaded:', coverUrl);
+      } catch(imgErr) {
+        console.error('[saveGame] Image upload failed:', imgErr);
+        toast('Image upload failed: ' + imgErr.message, 'error');
+        coverUrl = '';
       }
-      closeAddGameModal();
-    })
-    .catch(e => { toast('Error: ' + e.message, 'error'); })
-    .finally(() => { _saving = false; });
+    }
+
+    syncStoreLinks();
+    const rawPrice = (document.getElementById('f-price')?.value || '').trim();
+    const priceRange = (document.getElementById('f-price-range')?.value) || _calcPriceRange(rawPrice);
+
+    // Auto-detect store from post_link
+    const autoStoreLinks = {};
+    if (postLink.includes('assetstore.unity.com') || postLink.includes('unity.com/packages')) {
+      autoStoreLinks['Unity Asset Store'] = postLink;
+    } else if (postLink.includes('cgtrader.com')) {
+      autoStoreLinks['CGTrader'] = postLink;
+    } else if (postLink.includes('fab.com')) {
+      autoStoreLinks['Fab'] = postLink;
+    } else if (postLink.includes('unrealengine.com') || postLink.includes('unrealengine.com/marketplace')) {
+      autoStoreLinks['Unreal Marketplace'] = postLink;
+    } else if (postLink.includes('turbosquid.com')) {
+      autoStoreLinks['TurboSquid'] = postLink;
+    } else if (postLink.includes('sketchfab.com')) {
+      autoStoreLinks['Sketchfab'] = postLink;
+    } else if (postLink.includes('artstation.com')) {
+      autoStoreLinks['ArtStation'] = postLink;
+    }
+    const manualStoreLinks = (() => { try { const el = document.getElementById('f-storelinks'); return JSON.parse((el?.value)||'{}'); } catch { return {}; } })();
+    const storeLinks = { ...autoStoreLinks, ...manualStoreLinks };
+
+    // Category levels
+    const catLvl1 = (document.getElementById('f-cat-lvl1')?.value || '').trim();
+    const catLvl2 = (document.getElementById('f-cat-lvl2')?.value || '').trim();
+    const catLvl3 = (document.getElementById('f-cat-lvl3')?.value || '').trim();
+    const catLvl4 = (document.getElementById('f-cat-lvl4')?.value || '').trim();
+    const categoryPath = [catLvl1, catLvl2, catLvl3, catLvl4].filter(Boolean).join(' > ');
+
+    const gameData = {
+      title,
+      post_link:        postLink,
+      author:           (document.getElementById('f-author')?.value || '').trim(),
+      category:         categoryPath || (document.getElementById('f-category')?.value || ''),
+      category_lvl1:    catLvl1,
+      category_lvl2:    catLvl2,
+      category_lvl3:    catLvl3,
+      category_lvl4:    catLvl4,
+      cover:            coverUrl,
+      image:            coverUrl,
+      description:      (document.getElementById('f-desc')?.value || '').trim(),
+      overview:         (document.getElementById('f-overview')?.value || '').trim(),
+      technicalDetails: (document.getElementById('f-technical')?.value || '').trim(),
+      userTags:         getPasteValues('userTags'),
+      price:            rawPrice,
+      price_range:      priceRange,
+      storeLinks,
+      status:           'published',
+    };
+
+    const docId = editingGameId || db.collection(COLLECTION).doc().id;
+    const existing = isNew ? null : allGames.find(g => g.id === docId);
+    const finalData = {
+      ...(existing || {}),
+      ...gameData,
+      id: docId,
+      createdAt: existing?.createdAt || Date.now(),
+      updatedAt: Date.now(),
+    };
+
+    console.log('[saveGame] Writing to Firestore doc:', docId);
+    await db.collection(COLLECTION).doc(docId).set(finalData);
+    console.log('[saveGame] Saved successfully:', docId);
+    toast(`"${title}" saved!`, 'success');
+
+    try {
+      await logAction(isNew ? 'game_added' : 'game_updated', title, docId,
+        isNew ? null : (existing || null), finalData);
+    } catch(logErr) { console.warn('[Firebase] logAction failed:', logErr); }
+
+    _sbUpsert(finalData);
+
+    const ss = document.getElementById('save-status');
+    if (ss) {
+      ss.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:5px;vertical-align:-2px"><polyline points="20 6 9 17 4 12"/></svg>Saved successfully';
+      ss.style.display = 'block';
+      setTimeout(() => { ss.style.display = 'none'; }, 3000);
+    }
+    closeAddGameModal();
+  } catch(e) {
+    console.error('[Firebase] saveGame write failed:', e);
+    toast('Save failed: ' + (e.message || 'Firebase write error'), 'error');
+  } finally {
+    _saving = false;
+    if (btn) { btn.disabled = false; btn.textContent = 'Save Asset'; }
+  }
 }
+
 
 /* ═══════════════════════════════════════════════
    UNIVERSAL STORE DETECT & FETCH
@@ -8018,15 +7585,9 @@ async function fillFormUniversal(data, storeName, storeUrl) {
   // Tags → genres — wait for DOM to be ready
   if (data.tags?.length) {
     await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
-    setPasteValues('genres', '', data.tags);
+    setPasteValues('userTags', '', data.tags||[]);
   }
-  // Trailer — fetch from Steam if we got a steamId
-  if (data.steamId) {
-    try {
-      const trailerUrl = await fetchSteamTrailer(data.steamId);
-      if (trailerUrl) set('f-trailer', trailerUrl);
-    } catch(e) {}
-  }
+  // Trailer fetch removed — field no longer exists in form
   // Add store link row
   if (storeUrl) addStoreLinkRow(storeName, storeUrl);
 }
@@ -8198,43 +7759,16 @@ function fillFormFromSteamData(d, spyData, ocResults, appId) {
   const ocGame = Array.isArray(ocResults) ? ocResults[0] : null;
   const ocScore = ocGame?.topCriticScore || ocGame?.averageScore || null;
 
-  document.getElementById('f-title').value = d.name || '';
-  document.getElementById('f-cover').value =
-    d.cover
-    || d.cover_fallback
-    || d.header_image
-    || (appId ? `https://cdn.akamai.steamstatic.com/steam/apps/${appId}/header.jpg` : '')
-    || '';
-  const trailerEl = document.getElementById('f-trailer');
-  if (trailerEl) {
-    let trailerVal = '';
-    // Priority 1: Steam HLS/mp4
-    if (d.movies?.length) {
-      for (const mv of d.movies) {
-        trailerVal = mv.hls_h264 || mv.mp4?.['480'] || mv.mp4?.max || mv.webm?.['480'] || mv.webm?.max || '';
-        if (trailerVal) break;
-      }
-    }
-    if (trailerVal) {
-      trailerEl.value = trailerVal;
-    } else {
-      // Priority 2: YouTube fallback (async, don't block form fill)
-      trailerEl.value = '';
-      trailerEl.placeholder = 'Searching YouTube…';
-      fetchYouTubeTrailer(d.name || '').then(ytUrl => {
-        if (ytUrl && !trailerEl.value) {
-          trailerEl.value = ytUrl;
-          trailerEl.placeholder = 'https://cdn.akamai.steamstatic.com/steam/apps/...mp4';
-        } else {
-          trailerEl.placeholder = 'https://cdn.akamai.steamstatic.com/steam/apps/...mp4';
-        }
-      });
-    }
-  }
-  document.getElementById('f-desc').value = d.short_description || d.description || '';
+  const coverVal = d.cover || d.cover_fallback || d.header_image
+    || (appId ? `https://cdn.akamai.steamstatic.com/steam/apps/${appId}/header.jpg` : '') || '';
+  const coverEl = document.getElementById('f-cover');
+  if (coverEl) { coverEl.value = coverVal; _showImagePreview(coverVal); }
+  const titleEl = document.getElementById('f-title');
+  if (titleEl) titleEl.value = d.name || '';
+  const descEl = document.getElementById('f-desc');
+  if (descEl) descEl.value = d.short_description || d.description || '';
 
-  setPasteValues('genres',   '', (d.genres||[]).map(g=>g.description));
-  setPasteValues('features', '', (d.categories||[]).map(c=>c.description));
+  setPasteValues('userTags', '', [...new Set([...(d.genres||[]).map(g=>g.description), ...(d.categories||[]).map(c=>c.description)])].slice(0,15));
   const combinedTags = allTags.length 
     ? allTags.slice(0,20) 
     : [...(d.genres||[]).map(g=>g.description), ...(d.categories||[]).map(c=>c.description)];
@@ -8253,8 +7787,6 @@ function fillFormFromSteamData(d, spyData, ocResults, appId) {
   const playModes = [...new Set(playModeMap.filter(m=>allCA.some(c=>c.includes(m.tag))).map(m=>m.val))];
   buildCheckboxGrid('cb-playmode','playMode',playModes,true);
 
-  // Perspective
-  // ── Perspective / Visual / Difficulty / Themes / PlayMode ──────────────
   const _fp = parseTagsToFields(allTags, cats);
   buildCheckboxGrid('cb-perspective','perspective',_fp.perspective,false);
   buildCheckboxGrid('cb-themes','themes',_fp.themes,true);
@@ -8262,13 +7794,14 @@ function fillFormFromSteamData(d, spyData, ocResults, appId) {
   const diffEl=document.getElementById('f-difficulty'); if(diffEl) diffEl.value=_fp.difficulty;
   buildCheckboxGrid('cb-playmode','playMode',_fp.playMode,true);
 
-  // Price — use unified parseSteamPrice
-  // d.cover is from steamData (caller spreads steamData into d)
-  // d.price is steamData.price (set by caller via price_overview.final_formatted mapping)
   const _priceVal = d.is_free ? 'Free' : parseSteamPrice({ price: d.price_overview?.final_formatted || d.price });
-  if (_priceVal) document.getElementById('f-price').value = _priceVal;
+  if (_priceVal) {
+    const prEl = document.getElementById('f-price');
+    if (prEl) prEl.value = _priceVal;
+    const prRangeEl = document.getElementById('f-price-range');
+    if (prRangeEl) prRangeEl.value = _calcPriceRange(_priceVal);
+  }
 
-  // Length — SteamSpy base, HLTB override (async)
   const avgMin = spyData?.average_forever || 0;
   const avgHrs = avgMin / 60;
   const lengthEl = document.getElementById('f-length');
@@ -8278,14 +7811,12 @@ function fillFormFromSteamData(d, spyData, ocResults, appId) {
     if (d.name) fetchHLTB(d.name).then(hltb => { if (hltb?.lengthLabel && lengthEl) lengthEl.value = hltb.lengthLabel; });
   }
 
-  // Period
   if (d.release_date?.date) {
     const year = new Date(d.release_date.date).getFullYear();
     const periodEl = document.getElementById('f-period');
     if (periodEl) { if(year<=2014) periodEl.value='Before 2015'; else if(year<=2018) periodEl.value='2015-2018'; else if(year<=2021) periodEl.value='2019-2021'; else if(year<=2023) periodEl.value='2022-2023'; else periodEl.value='2024-2025'; }
   }
 
-  // Rating
   const ratingEl = document.getElementById('f-rating');
   if (ratingEl) {
     const pos=spyData?.positive||0, neg=spyData?.negative||0, total=pos+neg;
@@ -8295,17 +7826,14 @@ function fillFormFromSteamData(d, spyData, ocResults, appId) {
     ratingEl.value = rating;
   }
 
-  // Popularity
   const pos=spyData?.positive||0, neg=spyData?.negative||0, total=pos+neg;
   const rr = total>0 ? pos/total : 0.7;
   const os = spyData?.owners ? (()=>{ const parts=spyData.owners.replace(/,/g,'').split('..'); const avg=(parseInt(parts[0]||0)+parseInt(parts[1]||0))/2; if(avg>=10000000)return 99; if(avg>=5000000)return 93; if(avg>=2000000)return 87; if(avg>=1000000)return 80; if(avg>=500000)return 72; if(avg>=200000)return 63; if(avg>=100000)return 54; if(avg>=50000)return 45; if(avg>=20000)return 36; return 25; })() : 50;
   const pop = document.getElementById('f-popularity');
   if (pop) pop.value = Math.min(Math.round(os*0.65+rr*35),99);
 
-  // Store link
-  document.getElementById('store-link-rows').innerHTML = '';
-  addStoreLinkRow('Steam', `https://store.steampowered.com/app/${appId}/`);
-  syncStoreLinks();
+  const slRows = document.getElementById('store-link-rows');
+  if (slRows) { slRows.innerHTML = ''; addStoreLinkRow('Steam', `https://store.steampowered.com/app/${appId}/`); syncStoreLinks(); }
 }
 
 /* ═══════════════════════════════════════════════
@@ -8710,6 +8238,67 @@ async function startBulkFetch() {
   _syncFileEntriesToQueue();
   // ── Build source IDs: queue files + paste + session resume ──
   const pasteRaw = document.getElementById('bulk-ids-area').value.trim();
+  // ── NDJSON / URL direct import ─────────────────────────────────────────
+  const pasteLines = pasteRaw ? pasteRaw.split(/[\r\n]+/).map(s=>s.trim()).filter(Boolean) : [];
+  if (pasteLines.length && !_bulkQueue.length) {
+    const allDirectImport = pasteLines.every(l => l.startsWith('{') || /^https?:\/\//.test(l));
+    if (allDirectImport) {
+      toast('Importing ' + pasteLines.length + ' items…', 'info');
+      let ok = 0, fail = 0;
+      for (const line of pasteLines) {
+        let asset = null;
+        if (line.startsWith('{')) {
+          try {
+            const parsed = JSON.parse(line);
+            if (!parsed.post_link && !parsed.title) { fail++; continue; }
+            const imgUrl = (parsed.cover || parsed.image || '').startsWith('data:') ? '' : (parsed.cover || parsed.image || '');
+            asset = {
+              title: parsed.title || parsed.post_link || '',
+              post_link: parsed.post_link || '',
+              author: parsed.author || '',
+              price: parsed.price || '',
+              price_range: parsed.price_range || '',
+              category: parsed.category || '',
+              cover: imgUrl, image: imgUrl,
+              description: parsed.description || '',
+              overview: parsed.overview || '',
+              technicalDetails: parsed.technicalDetails || parsed.technical_details || '',
+              userTags: Array.isArray(parsed.tags) ? parsed.tags : [],
+              storeLinks: parsed.storeLinks || {},
+              status: 'published', createdAt: Date.now(), updatedAt: Date.now(),
+            };
+          } catch(e) { fail++; continue; }
+        } else if (/^https?:\/\//.test(line)) {
+          let storeName = '';
+          if (line.includes('assetstore.unity.com')) storeName = 'Unity Asset Store';
+          else if (line.includes('cgtrader.com')) storeName = 'CGTrader';
+          else if (line.includes('fab.com')) storeName = 'Fab';
+          asset = {
+            title: line, post_link: line,
+            author: '', price: '', price_range: '', category: '',
+            cover: '', image: '', description: '', overview: '', technicalDetails: '',
+            userTags: [], storeLinks: storeName ? { [storeName]: line } : {},
+            status: 'published', createdAt: Date.now(), updatedAt: Date.now(),
+          };
+        } else { fail++; continue; }
+        // Dedup check
+        const _normUrl = u => (u||'').toLowerCase().trim().replace(/\/+$/, '');
+        if (asset.post_link && allGames.some(g => _normUrl(g.post_link) === _normUrl(asset.post_link))) { fail++; continue; }
+        try {
+          const docRef = db.collection(COLLECTION).doc();
+          asset.id = docRef.id;
+          await docRef.set(asset);
+          ok++;
+        } catch(e) { console.error('[bulk]', e); fail++; }
+      }
+      invalidateFilterCache();
+      renderLibrary(); updateNavBadges();
+      document.getElementById('bulk-ids-area').value = '';
+      toast('Imported ' + ok + ' asset' + (ok!==1?'s':'') + (fail?' · '+fail+' skipped':''), ok>0?'success':'error');
+      return;
+    }
+  }
+
   const pasteIds = pasteRaw ? pasteRaw.split(/[\n\r]+/).map(s=>s.trim()).filter(Boolean) : [];
 
   let allSourceIds = [];
@@ -9202,9 +8791,7 @@ async function bulkFetchSingleGame(appId) {
 
 
 const TAXONOMY_KEYS = [
-  { key:'genres',    label:'Genres' },
   { key:'userTags',  label:'User Tags' },
-  { key:'features',  label:'Features' },
   { key:'platforms', label:'Platforms' },
   { key:'playMode',  label:'Play Modes' },
   { key:'themes',    label:'Themes / Moods' },
@@ -9392,12 +8979,13 @@ const DEFAULT_TAXONOMY = {
   length: ['Under 2 Hours','2–5 Hours','5–10 Hours','10–20 Hours','20–50 Hours','50–100 Hours','100+ Hours','Endless / Replayable'],
   period: ['Before 2000','2000–2004','2005–2009','2010–2014','2015–2017','2018–2019','2020–2021','2022–2023','2024','2025','Upcoming'],
   rating: ['Overwhelmingly Positive','Very Positive','Positive','Mixed','Negative'],
-  assetCategories: ['3D','Characters','Environments','Props','Weapons','Vehicles','Animations','VFX','UI','Audio','Materials','Tools'],
   visual: ['Pixel Art','Hand-Drawn','Cartoon','Anime','Realistic','Stylized','Low Poly','Voxel','Minimalist','Abstract','Retro','Comic Book','Watercolor','3D','2D','Isometric','ASCII','Claymation','Stop Motion','Mixed Media'],
 };
 
 /* merge DEFAULT into TAXONOMY (adds any missing keys/values, never removes existing) */
 function mergeTaxonomyDefaults() {
+  // Ensure assetCategories is an object tree, not array
+  if (!TAXONOMY.assetCategories || Array.isArray(TAXONOMY.assetCategories)) TAXONOMY.assetCategories = {};
   let changed = false;
   for (const [key, vals] of Object.entries(DEFAULT_TAXONOMY)) {
     if (!TAXONOMY[key]) { TAXONOMY[key] = [...vals]; changed = true; continue; }
@@ -9453,48 +9041,53 @@ function normalizeTaxFields(g) {
 ═══════════════════════════════════════════════ */
 function exportGames() {
   const b=new Blob([JSON.stringify(allGames,null,2)],{type:'application/json'});
-  const u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='gamescout-games.json';a.click();URL.revokeObjectURL(u);
+  const u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='assetscout-assets.json';a.click();URL.revokeObjectURL(u);
   toast('Games exported!', 'success');
 }
 
 function exportTaxonomy() {
   const b=new Blob([JSON.stringify(TAXONOMY,null,2)],{type:'application/json'});
-  const u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='gamescout-taxonomy.json';a.click();URL.revokeObjectURL(u);
+  const u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='assetscout-taxonomy.json';a.click();URL.revokeObjectURL(u);
   toast('Taxonomy exported!', 'success');
 }
 
 function exportToWordPressXML(data) {
   if (!data || !data.length) { toast('No assets to export', 'error'); return; }
   const _x = s => String(s == null ? '' : s).trim()
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-    .replace(/"/g,'&quot;').replace(/'/g,'&apos;');
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+
   const now = new Date().toUTCString();
   const items = data.map(g => {
     const title     = _x(g.title);
-    const link      = _x(g.post_link || '');
-    const author    = _x(g.author || '');
+    const link      = _x(g.post_link || g.storeLinks?.Steam || '');
+    const author    = _x(g.author || g.developer || '');
     const category  = _x(g.category || '');
     const price     = _x(g.price || '');
-    const imageUrl  = (g.cover || g.image || '').trim();
+    const image     = _x(g.cover || g.image || '');
+    const priceRange= _x(g.price_range || '');
     const desc      = _x(g.description || '');
-    const overview  = _x(g.overview || '');
-    const technical = _x(g.technicalDetails || '');
-    const tags = [...new Set([...(g.userTags||[])])].filter(Boolean);
-    const tagEls = tags.map(t =>
-      `      <category domain="post_tag" nicename="${_x(t.toLowerCase().replace(/\s+/g,'-'))}"><![CDATA[${t}]]></category>`
-    ).join('\n');
+
+    const tags = [...(g.userTags || []), ...(g.genres || [])];
+    const tagEls = [...new Set(tags)]
+      .filter(Boolean)
+      .map(t => `      <category domain="post_tag" nicename="${_x(t.toLowerCase().replace(/\s+/g,'-'))}"><![CDATA[${t.trim()}]]></category>`)
+      .join('\n');
+
     const catEl = category
       ? `      <category domain="category" nicename="${_x(category.toLowerCase().replace(/\s+/g,'-'))}"><![CDATA[${category}]]></category>`
       : '';
+
     const contentParts = [];
-    // Image: always output wp:attachment_url — empty string if missing (valid XML, WordPress handles gracefully)
-    const wpImage = imageUrl ? imageUrl : '';
-    if (imageUrl) contentParts.push(`<img src="${imageUrl.replace(/"/g,'&quot;')}" alt="${title}" style="max-width:100%;" />`);
-    if (desc) contentParts.push(`<p>${desc}</p>`);
-    if (overview) contentParts.push(`<p>${overview}</p>`);
-    if (technical) contentParts.push(`<p><strong>Technical Details:</strong> ${technical}</p>`);
-    if (price) contentParts.push(`<p><strong>Price:</strong> ${price}</p>`);
-    if (link) contentParts.push(`<p><a href="${link.replace(/"/g,'&quot;')}">View Asset →</a></p>`);
+    if (image) contentParts.push(`<img src="${image.replace(/"/g,'&quot;')}" alt="${title.replace(/"/g,'&quot;')}" style="max-width:100%;" />`);
+    if (desc)  contentParts.push(`<p>${desc}</p>`);
+    if (price) contentParts.push(`<p><strong>Price:</strong> ${price}${priceRange ? ' (' + priceRange + ')' : ''}</p>`);
+    if (link)  contentParts.push(`<p><a href="${link.replace(/"/g,'&quot;')}">View Asset →</a></p>`);
+    const content = contentParts.join('\n');
+
     return `    <item>
       <title>${title}</title>
       <link>${link}</link>
@@ -9504,12 +9097,13 @@ ${catEl}
 ${tagEls}
       <wp:post_type>post</wp:post_type>
       <wp:status>publish</wp:status>
-      <wp:attachment_url>${wpImage}</wp:attachment_url>
+      <wp:attachment_url>${image}</wp:attachment_url>
       <content:encoded><![CDATA[
-${contentParts.join('\n')}
+${content}
       ]]></content:encoded>
     </item>`;
   }).join('\n');
+
   const xml = `<?xml version="1.0" encoding="UTF-8" ?>
 <rss version="2.0"
   xmlns:excerpt="http://wordpress.org/export/1.2/excerpt/"
@@ -9527,6 +9121,7 @@ ${contentParts.join('\n')}
 ${items}
   </channel>
 </rss>`;
+
   const blob = new Blob([xml], { type: 'application/xml;charset=utf-8' });
   const u = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -9536,8 +9131,9 @@ ${items}
 }
 
 function exportSelectedXML() {
-  if (selectedIds && selectedIds.size > 0) {
-    exportToWordPressXML(allGames.filter(g => selectedIds.has(g.id)));
+  if (selectedIds.size > 0) {
+    const sel = allGames.filter(g => selectedIds.has(g.id));
+    exportToWordPressXML(sel);
   } else {
     exportToWordPressXML(allGames);
   }
@@ -9549,12 +9145,8 @@ function importGames() {
   let games; try { games=JSON.parse(raw); } catch(e) { toast('Invalid JSON: '+e.message, 'error'); return; }
   if (!Array.isArray(games)) { toast('Must be a JSON array', 'error'); return; }
   const updates={};
-  const batch = db.batch();
-  games.forEach(g => {
-    const ref = g.id ? db.collection(COLLECTION).doc(g.id) : db.collection(COLLECTION).doc();
-    batch.set(ref, { ...g, id: ref.id });
-  });
-  batch.commit().then(()=>{ toast(`Imported ${games.length} assets!`, 'success'); document.getElementById('import-json-area').value=''; }).catch(e=>toast('Error: '+e.message,'error'));
+  games.forEach(g => { const id=g.id||db.collection(COLLECTION).doc().id; updates[`games/${id}`]={...g,id}; });
+  const ibatch = db.batch(); games.forEach(g => { const r = g.id ? db.collection(COLLECTION).doc(g.id) : db.collection(COLLECTION).doc(); ibatch.set(r, {...g, id: r.id}); }); ibatch.commit().then(()=>{ toast(`Imported ${games.length} assets!`, 'success'); document.getElementById('import-json-area').value=''; }).catch(e=>toast('Error: '+e.message,'error'));
 }
 
 
@@ -9649,11 +9241,7 @@ async function deleteDuplicates() {
 function nukeAllGames() {
   if (!confirm('DELETE ALL GAMES? This cannot be undone.')) return;
   if (!confirm('Are you absolutely sure?')) return;
-  db.collection(COLLECTION).get().then(snap => {
-    const batch = db.batch();
-    snap.forEach(doc => batch.delete(doc.ref));
-    return batch.commit();
-  }).then(()=>toast('All assets deleted', 'success')).catch(e=>toast('Delete failed: '+e.message,'error'));
+  db.collection(COLLECTION).get().then(snap => { const nb = db.batch(); snap.forEach(d => nb.delete(d.ref)); return nb.commit(); }).then(()=>toast('All assets deleted', 'success')).catch(e=>toast('Delete failed: '+e.message,'error'));
 }
 
 // Sync Supabase with Firebase — deletes orphan rows from Supabase
@@ -9767,7 +9355,6 @@ document.addEventListener('keydown', e => {
   }
 })();
 
-
 // ── LIBRARY / DRAFT VIEW TOGGLE ─────────────────
 let _libViewMode   = 'grid'; // 'grid' | 'list'
 let _draftViewMode = 'grid';
@@ -9803,29 +9390,7 @@ function toggleDraftView() {
     if (iconList) iconList.style.display = 'none';
   }
 }
-window.addEventListener('popstate', function(e) {
-  const state = e.state || {};
-  // If modal is open, close it (user pressed Back to exit modal)
-  const modal = document.getElementById('add-game-modal');
-  if (modal && modal.classList.contains('open')) {
-    modal.classList.remove('open');
-    modal.style.display = '';
-    document.body.style.overflow = '';
-    editingGameId = null;
-    return;
-  }
-  // Navigate to the view from history state
-  const viewName = state.view || window.location.hash.replace('#','') || 'library';
-  const validViews = ['library', 'drafts', 'taxonomy', 'bulk', 'io'];
-  if (validViews.includes(viewName)) {
-    const navEl = document.querySelector('.nav-item[onclick*="\'' + viewName + '\'"]');
-    // Suppress pushState to avoid duplicate history entries during back-navigation
-    const origPush = history.pushState;
-    history.pushState = () => {};
-    switchView(viewName, navEl);
-    history.pushState = origPush;
-  }
-});
+
 // On load: restore view from URL hash
 (function() {
   const hash = window.location.hash.replace('#','');
@@ -9880,7 +9445,7 @@ document.addEventListener('pointerdown', function(e) {
 /* ═══════════════════════════════════════════════
    PAGE TRANSITION LOADER
 ═══════════════════════════════════════════════ */
-let _loaderTimer = null;
+
 
 function showPageLoader() {
   const loader = document.getElementById('page-loader');
@@ -9905,6 +9470,10 @@ function hidePageLoader() {
 <div id="selection-bar">
   <span class="sel-count" id="sel-count">0 selected</span>
   <button class="btn btn-danger btn-sm" onclick="deleteSelected()">Delete Selected</button>
+  <button class="btn btn-secondary btn-sm" onclick="exportSelectedXML()" title="Export selected as WordPress XML">
+    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="margin-right:3px;vertical-align:-1px"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/></svg>
+    Export XML
+  </button>
   <button class="btn btn-secondary btn-sm" onclick="clearSelection()">Clear</button>
 </div>
 
@@ -9921,7 +9490,7 @@ function hidePageLoader() {
       <div class="agm-desc" id="agm-desc"></div>
       <div class="agm-grid" id="agm-grid"></div>
       <div class="agm-actions">
-        <button class="btn btn-primary" id="agm-edit-btn" onclick="">Edit Game</button>
+        <button class="btn btn-primary" id="agm-edit-btn" onclick="">Edit Asset</button>
         <button class="btn btn-danger" id="agm-del-btn" onclick="">Delete</button>
       </div>
     </div>
@@ -9934,124 +9503,153 @@ function hidePageLoader() {
     <div class="tool-modal-header">
       <span class="tool-modal-title" id="add-game-modal-title">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--neon)" stroke-width="2.5" stroke-linecap="round" style="margin-right:8px;vertical-align:-2px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-        Add Game
+        Add Asset
       </span>
       <div style="display:flex;align-items:center;gap:8px;margin-left:auto;">
-        <button id="refetch-btn" class="btn btn-secondary btn-sm" onclick="refetchCurrentGame()" style="display:none;gap:5px;">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
-          Refetch
-        </button>
         <button class="tool-modal-close" onclick="closeAddGameModal()">✕</button>
       </div>
     </div>
     <div class="tool-modal-body" id="add-game-modal-body">
       <div style="padding:20px;max-width:760px;margin:0 auto;width:100%;">
+        <input type="hidden" id="edit-game-id">
 
-          <!-- Paste Extracted Data -->
-          <div style="background:var(--surface);border:1px solid var(--border-act);border-radius:var(--r-lg);padding:14px 16px;margin-bottom:20px;">
-            <div style="font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;color:var(--neon);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:10px;display:flex;align-items:center;gap:6px;">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
-              Paste Extracted Data
-            </div>
-            <textarea id="f-paste-data" placeholder='{"title":"...","post_link":"...","price":"...","author":"..."}' style="min-height:60px;max-height:120px;font-family:'JetBrains Mono',monospace;font-size:11px;resize:vertical;width:100%;margin-bottom:8px;"></textarea>
-            <div style="display:flex;gap:8px;align-items:center;">
-              <button class="btn btn-secondary btn-sm" onclick="applyPastedData()">
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="margin-right:4px;vertical-align:-1px"><polyline points="20 6 9 17 4 12"/></svg>
-                Apply Data
-              </button>
-              <span id="paste-data-status" style="font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;"></span>
-            </div>
+        <!-- ① Paste Extracted Data -->
+        <div style="background:var(--surface);border:1px solid var(--border-act);border-radius:var(--r-lg);padding:14px 16px;margin-bottom:20px;">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;color:var(--neon);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:10px;display:flex;align-items:center;gap:6px;">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg>
+            Paste Extracted Data
           </div>
-
-          <input type="hidden" id="edit-game-id">
-          <div class="form-grid">
-
-            <div class="form-section">Basic Info</div>
-            <div class="field full">
-              <div class="field-label">Post Link <span class="req">*</span></div>
-              <input type="url" id="f-post-link" placeholder="https://fab.com/listings/... or assetstore.unity.com/... or cgtrader.com/...">
-            </div>
-            <div class="field full">
-              <div class="field-label">Title <span class="req">*</span></div>
-              <input type="text" id="f-title" placeholder="Asset title">
-            </div>
-            <div class="field">
-              <div class="field-label">Price</div>
-              <input type="text" id="f-price" placeholder="e.g. 29.99 or Free">
-            </div>
-            <div class="field">
-              <div class="field-label">Author / Creator</div>
-              <input type="text" id="f-author" placeholder="Creator or studio name">
-            </div>
-            <div class="field">
-              <div class="field-label">Category</div>
-              <div style="display:flex;gap:6px;">
-                <select id="f-category" style="flex:1;" onchange="if(this.value==='__new__')_promptNewCategory()">
-                  <option value="">— Select —</option>
-                </select>
-              </div>
-            </div>
-            <div class="field full">
-              <div class="field-label">Image</div>
-              <div style="display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap;">
-                <input type="url" id="f-cover" placeholder="Image URL (or upload)" style="flex:1;min-width:200px;">
-                <label class="btn btn-secondary btn-sm" style="cursor:pointer;white-space:nowrap;flex-shrink:0;">
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="margin-right:4px;vertical-align:-1px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                  Upload
-                  <input type="file" accept="image/*" onchange="_handleImageUpload(this)" style="display:none;">
-                </label>
-              </div>
-              <div id="f-image-preview" style="margin-top:8px;display:none;">
-                <img id="f-image-preview-img" src="" style="max-height:80px;border-radius:6px;border:1px solid var(--border);object-fit:cover;">
-              </div>
-            </div>
-
-            <div class="form-section">Description</div>
-            <div class="field full">
-              <div class="field-label">Description</div>
-              <textarea id="f-desc" placeholder="Short description..."></textarea>
-            </div>
-            <div class="field full">
-              <div class="field-label">Overview <span style="font-size:10px;color:var(--muted);font-weight:400;">optional</span></div>
-              <textarea id="f-overview" placeholder="Brief overview of what this asset includes…" style="min-height:72px;"></textarea>
-            </div>
-            <div class="field full">
-              <div class="field-label">Technical Details <span style="font-size:10px;color:var(--muted);font-weight:400;">optional</span></div>
-              <textarea id="f-technical" placeholder="File formats, poly count, compatibility, engine version…" style="min-height:72px;"></textarea>
-            </div>
-
-            <div class="form-section">Tags</div>
-            <div class="field full">
-              <div style="position:relative;">
-                <div class="paste-field" id="pf-usertags" onclick="this.querySelector('.paste-input-area').focus()">
-                  <div class="paste-tags" id="pt-usertags"></div>
-                  <textarea class="paste-input-area" id="pi-usertags" placeholder="Type tag and press comma or Enter…" rows="1" oninput="parsePaste('userTags');_showTagSuggestions('pi-usertags');" onblur="setTimeout(()=>_hideTagSuggestions('pi-usertags'),150)" onkeydown="_tagSuggestKey(event,'pi-usertags')"></textarea>
-                </div>
-                <div id="tag-suggest-pi-usertags" class="tag-suggest-dropdown" style="display:none;"></div>
-              </div>
-            </div>
-
-            <div class="form-section">Store Links</div>
-            <div class="field full">
-              <div class="field-label" style="display:flex;align-items:center;gap:6px;justify-content:space-between;">
-                <span>Store Links <span style="font-size:10px;color:var(--muted);font-weight:400;">(auto-detected from Post Link)</span></span>
-              </div>
-              <div id="store-link-rows" style="display:flex;flex-direction:column;gap:6px;margin-bottom:4px;"></div>
-              <button class="add-link-btn" onclick="addStoreLinkRow()">+ Add store link</button>
-              <input type="hidden" id="f-storelinks">
-            </div>
-
-          </div>
-
-          <div style="display:flex;align-items:center;gap:10px;margin-top:24px;padding-top:20px;border-top:1px solid var(--border);">
-            <button class="btn btn-primary" onclick="saveGame()" style="min-width:120px;">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-              Save Asset
+          <textarea id="f-paste-data" placeholder='{"title":"...","post_link":"...","price":"...","author":"...","category":"3D > Character > Human"}' style="min-height:60px;max-height:120px;font-family:'JetBrains Mono',monospace;font-size:11px;resize:vertical;width:100%;margin-bottom:8px;"></textarea>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <button class="btn btn-secondary btn-sm" onclick="applyPastedData()">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="margin-right:4px;vertical-align:-1px"><polyline points="20 6 9 17 4 12"/></svg>
+              Apply Data
             </button>
-            <button class="btn btn-secondary" onclick="clearGameForm()">Clear</button>
-            <div id="save-status" style="font-family:'DM Mono',monospace;font-size:11px;color:var(--green);display:none;"></div>
+            <span id="paste-data-status" style="font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;"></span>
           </div>
         </div>
+
+        <div class="form-grid">
+          <!-- ② Basic Info -->
+          <div class="form-section full">Basic Info</div>
+          <div class="field full">
+            <div class="field-label">Post Link <span class="req">*</span></div>
+            <input type="url" id="f-post-link" placeholder="https://fab.com/listings/... or assetstore.unity.com/packages/..." oninput="_autoDetectStore(this.value)">
+            <div id="f-store-detected" style="margin-top:4px;font-size:11px;color:var(--neon);display:none;"></div>
+          </div>
+          <div class="field full">
+            <div class="field-label">Title <span class="req">*</span></div>
+            <input type="text" id="f-title" placeholder="Asset title">
+          </div>
+          <div class="field">
+            <div class="field-label">Price</div>
+            <input type="text" id="f-price" placeholder="e.g. 29.99 or Free" oninput="_autoCalcPriceRange()">
+          </div>
+          <div class="field">
+            <div class="field-label">Price Range</div>
+            <select id="f-price-range">
+              <option value="">Auto</option>
+              <option value="free">Free</option>
+              <option value="0-10">$0–10</option>
+              <option value="10-20">$10–20</option>
+              <option value="20-50">$20–50</option>
+              <option value="50-100">$50–100</option>
+              <option value="100+">$100+</option>
+            </select>
+          </div>
+          <div class="field">
+            <div class="field-label">Author / Creator</div>
+            <input type="text" id="f-author" placeholder="Creator or studio name">
+          </div>
+          <div class="field">
+            <div class="field-label">Category</div>
+            <select id="f-category" style="width:100%;" onchange="if(this.value==='__new__')_promptNewCategory()">
+              <option value="">— Select —</option>
+            </select>
+          </div>
+          <!-- Hierarchical category levels -->
+          <div class="field full">
+            <div class="field-label" style="margin-bottom:6px;">Category Path <span style="font-size:10px;color:var(--muted);font-weight:400;">(3D → Character → Human → Male)</span></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;">
+              <select id="f-cat-lvl1" style="font-size:12px;" onchange="_updateCatLevel(2)"><option value="">Level 1</option></select>
+              <select id="f-cat-lvl2" style="font-size:12px;" onchange="_updateCatLevel(3)"><option value="">Level 2</option></select>
+              <select id="f-cat-lvl3" style="font-size:12px;" onchange="_updateCatLevel(4)"><option value="">Level 3</option></select>
+              <select id="f-cat-lvl4" style="font-size:12px;"><option value="">Level 4</option></select>
+            </div>
+            <div style="margin-top:6px;display:flex;gap:6px;align-items:center;">
+              <input type="text" id="f-cat-bulk-input" placeholder="Or type: 3D > Character > Human > Male" style="flex:1;font-size:12px;">
+              <button class="btn btn-secondary btn-sm" onclick="_parseCategoryBulk()">Parse</button>
+              <button class="btn btn-secondary btn-sm" onclick="_showAddCategoryUI()">+ Add</button>
+            </div>
+          </div>
+          <!-- Image Upload -->
+          <div class="field full">
+            <div class="field-label">Image <span style="font-size:10px;color:var(--muted);font-weight:400;">(URL, upload, or paste CTRL+V)</span></div>
+            <div style="display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap;">
+              <input type="url" id="f-cover" placeholder="https://example.com/image.jpg (URL only — no base64)" style="flex:1;min-width:200px;" oninput="_showImagePreview(this.value); window._pendingImageFile=null;">
+              <label class="btn btn-secondary btn-sm" style="cursor:pointer;white-space:nowrap;flex-shrink:0;">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="margin-right:4px;vertical-align:-1px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                Upload
+                <input type="file" accept="image/*" onchange="_handleImageUpload(this)" style="display:none;">
+              </label>
+            </div>
+            <div id="f-image-preview" style="margin-top:8px;display:none;">
+              <img id="f-image-preview-img" src="" style="max-height:100px;border-radius:6px;border:1px solid var(--border);object-fit:cover;">
+              <div id="f-image-upload-badge" style="display:none;margin-top:4px;font-size:10px;color:var(--amber);font-family:'JetBrains Mono',monospace;">📁 File selected — will upload on save</div>
+            </div>
+          </div>
+
+          <!-- ③ Description Block -->
+          <div class="form-section full">Description</div>
+          <div class="field full">
+            <div class="field-label">Description</div>
+            <textarea id="f-desc" placeholder="Short description..."></textarea>
+          </div>
+          <div class="field full">
+            <div class="field-label">Overview <span style="font-size:10px;color:var(--muted);font-weight:400;">optional</span></div>
+            <textarea id="f-overview" placeholder="Brief overview of what this asset includes…" style="min-height:70px;"></textarea>
+          </div>
+          <div class="field full">
+            <div class="field-label">Technical Details <span style="font-size:10px;color:var(--muted);font-weight:400;">optional</span></div>
+            <textarea id="f-technical" placeholder="File formats, poly count, engine version, requirements…" style="min-height:70px;"></textarea>
+          </div>
+
+          <!-- ④ Tags -->
+          <div class="form-section full">Tags</div>
+          <div class="field full">
+            <div style="position:relative;">
+              <div class="paste-field" id="pf-usertags" onclick="this.querySelector('.paste-input-area').focus()">
+                <div class="paste-tags" id="pt-usertags"></div>
+                <textarea class="paste-input-area" id="pi-usertags" placeholder="Type tag and press comma or Enter…" rows="1" oninput="parsePaste('userTags');_showTagSuggestions('pi-usertags');" onblur="setTimeout(()=>_hideTagSuggestions('pi-usertags'),150)" onkeydown="_tagSuggestKey(event,'pi-usertags')"></textarea>
+              </div>
+              <div id="tag-suggest-pi-usertags" class="tag-suggest-dropdown" style="display:none;"></div>
+            </div>
+          </div>
+
+          <!-- ⑤ Store Links (auto only) -->
+          <div class="form-section full">Store Links <span style="font-size:10px;color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0;">(auto-detected from Post Link)</span></div>
+          <div class="field full">
+            <div id="f-auto-store-preview" style="font-size:12px;color:var(--muted);padding:8px;background:var(--surface);border-radius:var(--r);border:1px solid var(--border);min-height:36px;">
+              Enter Post Link above to auto-detect store
+            </div>
+            <div style="margin-top:6px;">
+              <div id="store-link-rows" style="display:flex;flex-direction:column;gap:6px;margin-bottom:4px;"></div>
+              <button class="add-link-btn" onclick="addStoreLinkRow()">+ Add manual link</button>
+              <input type="hidden" id="f-storelinks">
+            </div>
+          </div>
+          <input type="hidden" id="f-deals">
+        </div>
+
+        <div style="display:flex;align-items:center;gap:10px;margin-top:24px;padding-top:20px;border-top:1px solid var(--border);">
+          <button class="btn btn-primary" onclick="saveGame()" style="min-width:120px;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            Save Asset
+          </button>
+          <button class="btn btn-secondary" onclick="clearGameForm()">Clear</button>
+          <div id="save-status" style="font-family:'DM Mono',monospace;font-size:11px;color:var(--green);display:none;"></div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
