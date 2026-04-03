@@ -9708,7 +9708,38 @@ function hidePageLoader() {
     💾  Save Progress
   </button>
 </div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const addBtn = document.querySelector('.btn-primary'); // زرار الإضافة
+    const tableBody = document.querySelector('table tbody'); // الجدول
 
+    if(addBtn) {
+        addBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            // كود بسيط يفتح اختيار الملفات ويضيف سطر جديد في الجدول بالصورة
+            let input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.onchange = e => { 
+                let file = e.target.files[0];
+                let reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = readerEvent => {
+                    let content = readerEvent.target.result;
+                    let newRow = `<tr>
+                        <td><img src="${content}" style="width:50px; height:50px; object-fit:cover; border-radius:5px;"></td>
+                        <td>New Asset</td>
+                        <td>${new Date().toLocaleDateString()}</td>
+                        <td><span class="badge bg-success">Active</span></td>
+                    </tr>`;
+                    tableBody.insertAdjacentHTML('afterbegin', newRow);
+                }
+            }
+            input.click();
+        });
+    }
+});
+</script>
 
 
 </body>
