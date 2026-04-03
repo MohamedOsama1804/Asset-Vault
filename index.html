@@ -7095,26 +7095,39 @@ function _addStoreSource() {
 
 function clearGameForm() {
   editingGameId = null;
-  document.getElementById('edit-game-id').value = '';
-  ['f-title','f-post-link','f-author','f-cover','f-desc','f-overview','f-technical','f-popularity','f-price'].forEach(id => {
-    const el = document.getElementById(id); if (el) el.value = '';
-  });
-  const prEl = document.getElementById('f-price-range'); if (prEl) prEl.value = '';
-  const catEl = document.getElementById('f-category'); if (catEl) catEl.value = '';
-  const prevEl = document.getElementById('f-image-preview'); if (prevEl) prevEl.style.display = 'none';
-  const eaEl = document.getElementById('f-ea'); if (eaEl) eaEl.value = 'false';
-  const spEl = document.getElementById('f-sponsored'); if (spEl) spEl.value = 'false';
-  const lfEl = document.getElementById('f-lf'); if (lfEl) lfEl.value = 'false';
-  ['f-difficulty','f-length','f-period','f-rating','f-visual'].forEach(id => { const e=document.getElementById(id); if(e) e.value=''; });
-  clearPasteField('userTags');
   window._pendingImageFile = null;
-  ['f-cat-lvl1','f-cat-lvl2','f-cat-lvl3','f-cat-lvl4'].forEach(id => { const el = document.getElementById(id); if (el) { el.innerHTML = '<option value="">—</option>'; } });
-  const slr = document.getElementById('store-link-rows'); if (slr) slr.innerHTML = '';
-  const dlr = document.getElementById('deals-link-rows'); if (dlr) dlr.innerHTML = '';
-  addStoreLinkRow(); addDealLinkRow();
-  buildAllCheckboxGrids(); buildFormSelects();
-  _populateCategorySelect('');
+  const ids = ['edit-game-id','f-title','f-post-link','f-author','f-cover',
+    'f-desc','f-overview','f-technical','f-price','f-paste-data'];
+  ids.forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  const prEl = document.getElementById('f-price-range'); if (prEl) prEl.value = '';
+  // Image preview
+  const prevEl = document.getElementById('f-image-preview');
+  if (prevEl) prevEl.style.display = 'none';
+  const badge = document.getElementById('f-image-upload-badge');
+  if (badge) badge.style.display = 'none';
+  // Paste status
+  const ps = document.getElementById('paste-data-status'); if (ps) ps.textContent = '';
+  // Tags
+  if (typeof clearPasteField === 'function') clearPasteField('userTags');
+  // Category levels
+  ['f-cat-lvl1','f-cat-lvl2','f-cat-lvl3','f-cat-lvl4'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = '<option value="">—</option>';
+  });
+  const catEl = document.getElementById('f-category');
+  if (catEl && typeof _populateCategorySelect === 'function') _populateCategorySelect('');
+  // Store links
+  const slr = document.getElementById('store-link-rows');
+  if (slr) { slr.innerHTML = ''; if (typeof addStoreLinkRow === 'function') addStoreLinkRow(); }
+  // Store detection reset
+  const storeDetEl = document.getElementById('f-store-detected');
+  if (storeDetEl) storeDetEl.style.display = 'none';
+  const storePreview = document.getElementById('f-auto-store-preview');
+  if (storePreview) storePreview.textContent = 'Enter Post Link above to auto-detect store';
+  // Save status
   const ss = document.getElementById('save-status'); if (ss) ss.style.display = 'none';
+  // Category dropdowns
+  if (typeof _populateCatLevel === 'function') _populateCatLevel(1, []);
 }
 
 /* ═══════════════════════════════════════════════
@@ -7305,26 +7318,26 @@ async function saveGame() {
   if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
 
   try {
-    // ── IMAGE: never store base64, only URL
+    // ── IMAGE: Upload file to Firebase Storage → store URL only (never base64)
     let coverUrl = (document.getElementById('f-cover')?.value || '').trim();
-    // If it's base64, clear it — only URLs allowed in Firestore
-    if (coverUrl.startsWith('data:')) {
-      coverUrl = '';
-      console.warn('[saveGame] Base64 image detected — clearing. Upload to Firebase Storage instead.');
-    }
-    // Upload pending file to Firebase Storage
+    if (coverUrl.startsWith('data:')) coverUrl = ''; // reject base64
     if (window._pendingImageFile) {
       try {
         toast('Uploading image…', 'info');
         const file = window._pendingImageFile;
-        const ref = firebase.storage().ref().child('covers/' + Date.now() + '_' + file.name);
-        await ref.put(file);
-        coverUrl = await ref.getDownloadURL();
+        const storageRef = storage.ref('covers/' + Date.now() + '_' + file.name.replace(/[^a-zA-Z0-9._-]/g,'_'));
+        const uploadTask = await storageRef.put(file);
+        coverUrl = await uploadTask.ref.getDownloadURL();
         window._pendingImageFile = null;
-        console.log('[saveGame] Image uploaded:', coverUrl);
+        // Update the cover input so it shows the real URL
+        const coverInput = document.getElementById('f-cover');
+        if (coverInput) coverInput.value = coverUrl;
+        // Update preview to use the real URL (not base64)
+        _showImagePreview(coverUrl);
+        console.log('[saveGame] Image uploaded to Storage:', coverUrl);
       } catch(imgErr) {
         console.error('[saveGame] Image upload failed:', imgErr);
-        toast('Image upload failed: ' + imgErr.message, 'error');
+        toast('Image upload failed — asset saved without image. ' + imgErr.message, 'error');
         coverUrl = '';
       }
     }
@@ -8280,387 +8293,199 @@ document.addEventListener('click', e => {
 
 async function startBulkFetch() {
   _syncFileEntriesToQueue();
-  // ── Build source IDs: queue files + paste + session resume ──
-  const pasteRaw = document.getElementById('bulk-ids-area').value.trim();
-  // ── NDJSON / URL direct import ─────────────────────────────────────────
+  const pasteRaw = (document.getElementById('bulk-ids-area')?.value || '').trim();
+
+  /* ── helper: build asset object from a parsed JSON object ── */
+  function _buildAssetFromJson(parsed, extraTags) {
+    const imgUrl = (parsed.cover||parsed.image||'').startsWith('data:') ? '' : (parsed.cover||parsed.image||'');
+    const cat = (parsed.category||'').trim();
+    const catParts = cat ? cat.split('>').map(p=>p.trim()).filter(Boolean) : [];
+    if (catParts.length && typeof addCategoryPath === 'function') addCategoryPath(catParts);
+    let sl = parsed.storeLinks || {};
+    const pl = (parsed.post_link||'').trim();
+    if (pl && !Object.keys(sl).length) {
+      if (pl.includes('assetstore.unity.com')) sl = {'Unity Asset Store': pl};
+      else if (pl.includes('cgtrader.com'))    sl = {'CGTrader': pl};
+      else if (pl.includes('fab.com'))          sl = {'Fab': pl};
+      else if (pl.includes('unrealengine.com')) sl = {'Unreal Marketplace': pl};
+      else if (pl.includes('turbosquid.com'))   sl = {'TurboSquid': pl};
+      else if (pl.includes('sketchfab.com'))    sl = {'Sketchfab': pl};
+    }
+    return {
+      title:            parsed.title || pl || '',
+      post_link:        pl,
+      author:           parsed.author || '',
+      price:            parsed.price || '',
+      price_range:      parsed.price_range || (parsed.price ? _calcPriceRange(parsed.price) : ''),
+      category:         cat,
+      category_lvl1:    catParts[0]||'', category_lvl2: catParts[1]||'',
+      category_lvl3:    catParts[2]||'', category_lvl4: catParts[3]||'',
+      cover:            imgUrl, image: imgUrl,
+      description:      parsed.description || '',
+      overview:         parsed.overview || '',
+      technicalDetails: parsed.technicalDetails || parsed.technical_details || '',
+      userTags:         [...(Array.isArray(parsed.tags)?parsed.tags:[]), ...(extraTags||[])],
+      storeLinks:       sl,
+      status:           'published',
+      createdAt:        Date.now(),
+      updatedAt:        Date.now(),
+    };
+  }
+
+  /* ── helper: build asset from a plain URL ── */
+  function _buildAssetFromUrl(url, extraTags) {
+    let sn = '';
+    if (url.includes('assetstore.unity.com')) sn = 'Unity Asset Store';
+    else if (url.includes('cgtrader.com'))    sn = 'CGTrader';
+    else if (url.includes('fab.com'))          sn = 'Fab';
+    else if (url.includes('unrealengine.com')) sn = 'Unreal Marketplace';
+    else if (url.includes('turbosquid.com'))   sn = 'TurboSquid';
+    else if (url.includes('sketchfab.com'))    sn = 'Sketchfab';
+    return {
+      title: url, post_link: url, author: '', price: '', price_range: '', category: '',
+      cover: '', image: '', description: '', overview: '', technicalDetails: '',
+      userTags: [...(extraTags||[])], storeLinks: sn ? {[sn]: url} : {},
+      status: 'published', createdAt: Date.now(), updatedAt: Date.now(),
+    };
+  }
+
+  /* ── helper: save one asset with dedup check ── */
+  const _normUrl = u => (u||'').toLowerCase().trim().replace(/\/+$/, '');
+  async function _saveAsset(asset) {
+    if (asset.post_link && allGames.some(g => _normUrl(g.post_link) === _normUrl(asset.post_link))) return 'skip';
+    const docRef = db.collection(COLLECTION).doc();
+    asset.id = docRef.id;
+    await docRef.set(asset);
+    return 'ok';
+  }
+
+  /* ── Collect all lines to process ── */
+  // From paste textarea
   const pasteLines = pasteRaw ? pasteRaw.split(/[\r\n]+/).map(s=>s.trim()).filter(Boolean) : [];
-  if (pasteLines.length && !_bulkQueue.length) {
-    const allDirectImport = pasteLines.every(l => l.startsWith('{') || /^https?:\/\//.test(l));
-    if (allDirectImport) {
-      toast('Importing ' + pasteLines.length + ' items…', 'info');
-      let ok = 0, fail = 0;
-      for (const line of pasteLines) {
-        let asset = null;
-        if (line.startsWith('{')) {
-          try {
-            const parsed = JSON.parse(line);
-            if (!parsed.post_link && !parsed.title) { fail++; continue; }
-            const imgUrl = (parsed.cover || parsed.image || '').startsWith('data:') ? '' : (parsed.cover || parsed.image || '');
-            asset = {
-              title: parsed.title || parsed.post_link || '',
-              post_link: parsed.post_link || '',
-              author: parsed.author || '',
-              price: parsed.price || '',
-              price_range: parsed.price_range || '',
-              category: parsed.category || '',
-              cover: imgUrl, image: imgUrl,
-              description: parsed.description || '',
-              overview: parsed.overview || '',
-              technicalDetails: parsed.technicalDetails || parsed.technical_details || '',
-              userTags: Array.isArray(parsed.tags) ? parsed.tags : [],
-              storeLinks: parsed.storeLinks || {},
-              status: 'published', createdAt: Date.now(), updatedAt: Date.now(),
-            };
-          } catch(e) { fail++; continue; }
-        } else if (/^https?:\/\//.test(line)) {
-          let storeName = '';
-          if (line.includes('assetstore.unity.com')) storeName = 'Unity Asset Store';
-          else if (line.includes('cgtrader.com')) storeName = 'CGTrader';
-          else if (line.includes('fab.com')) storeName = 'Fab';
-          asset = {
-            title: line, post_link: line,
-            author: '', price: '', price_range: '', category: '',
-            cover: '', image: '', description: '', overview: '', technicalDetails: '',
-            userTags: [], storeLinks: storeName ? { [storeName]: line } : {},
-            status: 'published', createdAt: Date.now(), updatedAt: Date.now(),
-          };
-        } else { fail++; continue; }
-        // Dedup check
-        const _normUrl = u => (u||'').toLowerCase().trim().replace(/\/+$/, '');
-        if (asset.post_link && allGames.some(g => _normUrl(g.post_link) === _normUrl(asset.post_link))) { fail++; continue; }
-        try {
-          const docRef = db.collection(COLLECTION).doc();
-          asset.id = docRef.id;
-          await docRef.set(asset);
-          ok++;
-        } catch(e) { console.error('[bulk]', e); fail++; }
-      }
-      invalidateFilterCache();
-      renderLibrary(); updateNavBadges();
-      document.getElementById('bulk-ids-area').value = '';
-      toast('Imported ' + ok + ' asset' + (ok!==1?'s':'') + (fail?' · '+fail+' skipped':''), ok>0?'success':'error');
-      return;
+  // From file queue entries
+  const queueLines = [];
+  const queueTagsMap = new Map(); // line -> extraTags
+  for (const q of _bulkQueue) {
+    for (const line of (q.ids||[])) {
+      queueLines.push(line);
+      queueTagsMap.set(line, q.tags || []);
     }
   }
 
-  // ── Process file queue with JSON/links directly ──
-  if (_bulkQueue.length > 0) {
-    const jsonQueues = _bulkQueue.filter(q => q.isJson || (q.ids.length && q.ids.every(l => l.startsWith('{') || /^https?:\/\//.test(l))));
-    if (jsonQueues.length > 0) {
-      let ok = 0, fail = 0, total = jsonQueues.reduce((s,q) => s+q.ids.length, 0);
-      toast('Importing ' + total + ' items from files…', 'info');
-      for (const queue of jsonQueues) {
-        for (const line of queue.ids) {
-          let asset = null;
-          if (line.startsWith('{')) {
-            try {
-              const parsed = JSON.parse(line);
-              if (!parsed.post_link && !parsed.title) { fail++; continue; }
-              const imgUrl = (parsed.cover||parsed.image||'').startsWith('data:') ? '' : (parsed.cover||parsed.image||'');
-              const cat = parsed.category || '';
-              const catParts = cat ? cat.split('>').map(p=>p.trim()).filter(Boolean) : [];
-              if (catParts.length && typeof addCategoryPath === 'function') addCategoryPath(catParts);
-              let sl = parsed.storeLinks || {};
-              const pl = parsed.post_link || '';
-              if (pl && !Object.keys(sl).length) {
-                if (pl.includes('assetstore.unity.com')) sl = {'Unity Asset Store': pl};
-                else if (pl.includes('cgtrader.com')) sl = {'CGTrader': pl};
-                else if (pl.includes('fab.com')) sl = {'Fab': pl};
-              }
-              asset = {
-                title: parsed.title||pl||'', post_link: pl, author: parsed.author||'',
-                price: parsed.price||'', price_range: parsed.price_range||(parsed.price?_calcPriceRange(parsed.price):''),
-                category: cat, category_lvl1: catParts[0]||'', category_lvl2: catParts[1]||'',
-                category_lvl3: catParts[2]||'', category_lvl4: catParts[3]||'',
-                cover: imgUrl, image: imgUrl, description: parsed.description||'',
-                overview: parsed.overview||'', technicalDetails: parsed.technicalDetails||parsed.technical_details||'',
-                userTags: [...(Array.isArray(parsed.tags)?parsed.tags:[]), ...queue.tags],
-                storeLinks: sl, status: 'published', createdAt: Date.now(), updatedAt: Date.now(),
-              };
-            } catch(e) { fail++; continue; }
-          } else if (/^https?:\/\//.test(line)) {
-            let sn = '';
-            if (line.includes('assetstore.unity.com')) sn = 'Unity Asset Store';
-            else if (line.includes('cgtrader.com')) sn = 'CGTrader';
-            else if (line.includes('fab.com')) sn = 'Fab';
-            asset = {
-              title: line, post_link: line, author: '', price: '', price_range: '', category: '',
-              cover: '', image: '', description: '', overview: '', technicalDetails: '',
-              userTags: [...queue.tags], storeLinks: sn ? {[sn]: line} : {},
-              status: 'published', createdAt: Date.now(), updatedAt: Date.now(),
-            };
-          } else { fail++; continue; }
-          const _n = u => (u||'').toLowerCase().trim().replace(/\/+$/, '');
-          if (asset.post_link && allGames.some(g => _n(g.post_link) === _n(asset.post_link))) { fail++; continue; }
-          try {
-            const docRef = db.collection(COLLECTION).doc();
-            asset.id = docRef.id;
-            await docRef.set(asset);
-            ok++;
-          } catch(e) { console.error('[bulk file]', e); fail++; }
-        }
-      }
-      invalidateFilterCache(); renderLibrary(); updateNavBadges();
-      toast('Imported ' + ok + ' asset' + (ok!==1?'s':'') + (fail?' · '+fail+' skipped':''), ok>0?'success':'error');
-      return;
-    }
+  const allLines = [...pasteLines, ...queueLines];
+  if (!allLines.length) {
+    toast('Add files or paste links / JSON to import', 'error');
+    return;
   }
 
-  const pasteIds = pasteRaw ? pasteRaw.split(/[\n\r]+/).map(s=>s.trim()).filter(Boolean) : [];
-
-  let allSourceIds = [];
-  let resumeFrom   = 0;
-
-  // Check for saved session
-  const savedSession = _bulkLoadSession();
-  if (savedSession && savedSession.remaining && savedSession.remaining.length > 0) {
-    const doResume = confirm(`Saved session found: ${savedSession.done.toLocaleString()} done, ${savedSession.remaining.length.toLocaleString()} remaining.
-
-Resume where you left off?`);
-    if (doResume) {
-      allSourceIds = savedSession.remaining;
-      resumeFrom   = savedSession.done;
-    } else {
-      _bulkClearSession();
-    }
-  }
-
-  if (!allSourceIds.length) {
-    if (_bulkQueue.length > 0) allSourceIds = _bulkQueue.flatMap(q => q.ids);
-    if (pasteIds.length)       allSourceIds = [...allSourceIds, ...pasteIds];
-  }
-
-  if (!allSourceIds.length) { toast('Add files or paste links / JSON to import', 'error'); return; }
-
-  bulkRunning = true;
-  bulkPaused  = false;
-
-  const startBtn   = document.getElementById('bulk-start-btn');
-  const stopBtn    = document.getElementById('bulk-stop-btn');
-  const pauseBtn   = document.getElementById('bulk-pause-btn');
-  const progWrap   = document.getElementById('bulk-progress-wrap');
-  const progBar    = document.getElementById('bulk-progress-bar');
-  const progText   = document.getElementById('bulk-progress-text');
-  const summaryEl  = document.getElementById('bulk-summary-text');
-  const btGame     = document.getElementById('bt-game');
-  const btOk       = document.getElementById('bt-ok');
-  const btSkip     = document.getElementById('bt-skip');
-  const btFail     = document.getElementById('bt-fail');
-  const btProgress = document.getElementById('bt-progress');
-  const btBar     = document.getElementById('bt-bar');
-
-  if (!startBtn) { toast('Open Bulk modal first', 'error'); bulkRunning = false; return; }
-
-  // define live-state elements early
+  // ── Show live UI ──
   const inputState = document.getElementById('bulk-input-state');
   const liveState  = document.getElementById('bulk-live-state');
   const blkLog     = document.getElementById('blk-log');
   const blkPhase   = document.getElementById('blk-phase');
   const blkDot     = document.getElementById('blk-dot');
-  const btRate     = document.getElementById('bt-rate');
+  const btOk       = document.getElementById('bt-ok');
+  const btSkip     = document.getElementById('bt-skip');
+  const btFail     = document.getElementById('bt-fail');
+  const btProgress = document.getElementById('bt-progress');
+  const startBtn   = document.getElementById('bulk-start-btn');
+  const stopBtn    = document.getElementById('bulk-stop-btn');
+  const pauseBtn   = document.getElementById('bulk-pause-btn');
 
-  // switch to live state — keep input visible above
-  if (liveState)  liveState.style.display  = 'flex';
-  if (blkLog)     blkLog.innerHTML = '';
-  if (startBtn)   startBtn.style.disabled = true; startBtn.style.opacity = '.4'; startBtn.style.pointerEvents = 'none';
-  if (stopBtn)   stopBtn.style.display  = 'inline-flex';
-  if (pauseBtn)  pauseBtn.style.display = 'inline-flex';
-  if (progWrap)  progWrap.style.display = 'block';
-  if (progBar)   progBar.style.width    = '0%';
-  if (btOk)      btOk.textContent   = '0';
-  if (btSkip)    btSkip.textContent = '0';
-  if (btFail)    btFail.textContent = '0';
+  if (liveState) liveState.style.display = 'flex';
+  if (blkLog)    blkLog.innerHTML = '';
+  if (blkPhase)  blkPhase.textContent = 'IMPORTING';
+  if (blkDot)    blkDot.className = 'blk-dot';
+  if (startBtn)  { startBtn.disabled = true; startBtn.style.opacity = '.4'; startBtn.style.pointerEvents = 'none'; }
+  if (stopBtn)   stopBtn.style.display = 'inline-flex';
+  if (pauseBtn)  pauseBtn.style.display = 'none'; // no pause needed for direct import
 
-  // ── PRE-SCAN: fetch fresh data from Firebase then build Sets ──
-  if (blkPhase) blkPhase.textContent = 'SCANNING';
-  if (btGame) { btGame.textContent = 'Loading fresh data from Firebase…'; btGame.style.color = 'var(--neon)'; }
-  await new Promise(r => setTimeout(r, 50));
+  bulkRunning = true;
+  bulkPaused  = false;
 
-  // Use in-memory allGames (real-time listener keeps it current) — instant, no network call
-  if (btGame) { btGame.textContent = `Building index from ${allGames.length} games…`; btGame.style.color = 'var(--neon)'; }
-  await new Promise(r => setTimeout(r, 30));
+  let ok = 0, skipped = 0, fail = 0;
+  const total = allLines.length;
 
-  const existingSteamIds = new Set();
-  const existingTitles   = new Set();
-  for (const g of allGames) {
-    if (g.steamAppId) existingSteamIds.add(String(g.steamAppId));
-    for (const url of Object.values(g.storeLinks || {})) {
-      const m = String(url).match(/\/app\/(\d+)/);
-      if (m) existingSteamIds.add(m[1]);
-    }
-    if (g.title) existingTitles.add(g.title.toLowerCase().trim());
-  }
-
-  // seenInBatch: tracks IDs saved in THIS run so we don't double-save
-  const seenInBatch = new Set();
-
-  // filter input list against fresh DB data
-  const cleanIds = [];
-  let preskip = 0;
-  for (const appId of allSourceIds) {
-    const detected = detectPlatform(appId);
-    const isSteam  = detected?.store?.name === 'Steam';
-    const steamId  = isSteam ? detected?.parsed?.id : null;
-    const batchKey = steamId || appId.toLowerCase().trim();
-    const isDup = seenInBatch.has(batchKey) || (steamId
-      ? existingSteamIds.has(steamId)
-      : existingTitles.has(appId.toLowerCase().trim()));
-    if (isDup) { preskip++; }
-    else { cleanIds.push(appId); seenInBatch.add(batchKey); }
-  }
-
-  const scanMsg = `Scan done — ${cleanIds.length} new, ${preskip} duplicate${preskip!==1?'s':''} skipped`;
-  if (btGame) { btGame.textContent = scanMsg; btGame.style.color = 'var(--green)'; }
-  if (btSkip) btSkip.textContent = preskip;
-  if (btProgress) btProgress.textContent = `0 / ${cleanIds.length}`;
-  if (summaryEl) summaryEl.textContent = `Skipped ${preskip} duplicate${preskip!==1?'s':''}`;
-
-  // update ticker title to show scan summary
-  const tickerTitle = document.querySelector('.bulk-ticker-title');
-  if (tickerTitle) tickerTitle.textContent = `${preskip} dupes skipped · ${cleanIds.length} to fetch`;
-
-  // pause so user reads scan result before fetch starts
-  await new Promise(r => setTimeout(r, 2000));
-
-  let done=0, ok=0, skip=preskip, fail=0;  // start skip from preskip count
-  const recentRatings = [];
-
-  const _fetchStart = Date.now();
-
-  const tick = (title, status='') => {
-    const col = status==='ok'?'#10b981':status==='skip'?'#eab308':status==='fail'?'#ef4444':'var(--text)';
-    if (btGame) { btGame.textContent = title; btGame.style.color = col; }
-    if (btOk)   btOk.textContent   = ok;
-    if (btSkip) btSkip.textContent = skip;
-    if (btFail) btFail.textContent = fail;
-    if (btProgress) btProgress.textContent = `${done} / ${cleanIds.length}`;
-    if (btBar)   btBar.style.width = Math.round(done/cleanIds.length*100)+'%';
-    if (progBar) progBar.style.width = Math.round(done/cleanIds.length*100)+'%';
-    if (progText) progText.textContent = `${done} / ${cleanIds.length}`;
-    // rate per minute
-    if (btRate && done > 0) {
-      const mins = (Date.now() - _fetchStart) / 60000;
-      btRate.textContent = Math.round(ok / Math.max(mins, 0.01)) + '/m';
-    }
-    // cycle — show only last 1 entry so window stays compact
-    if (status && blkLog) {
-      const labels = { ok:'SAVED', skip:'SKIP', fail:'FAIL' };
-      blkLog.innerHTML = `<div class="blk-log-item ${status}"><span class="bli-status">${labels[status]||status}</span><span class="bli-title">${title}</span></div>`;
-    }
+  const _log = (msg, type) => {
+    if (!blkLog) return;
+    const colors = { ok:'#10b981', skip:'#eab308', fail:'#ef4444', info:'var(--muted)' };
+    const el = document.createElement('div');
+    el.style.cssText = `font-size:11px;color:${colors[type]||colors.info};padding:1px 0;font-family:'JetBrains Mono',monospace;`;
+    el.textContent = msg;
+    blkLog.appendChild(el);
+    blkLog.scrollTop = blkLog.scrollHeight;
   };
 
-  // save initial session
-  _bulkSaveSession({ total: cleanIds.length + resumeFrom, done: resumeFrom, remaining: cleanIds });
-
-  for (const appId of cleanIds) {
+  for (let i = 0; i < allLines.length; i++) {
     if (!bulkRunning) break;
-    // pause wait
-    while (bulkPaused && bulkRunning) await new Promise(r => setTimeout(r, 300));
-    if (!bulkRunning) break;
-    const label = appId.length > 40 ? appId.slice(0,37)+'…' : appId;
-    tick(label);
+    while (bulkPaused) await new Promise(r => setTimeout(r, 300));
 
+    const line = allLines[i];
+    const extraTags = queueTagsMap.get(line) || [];
+    if (btProgress) btProgress.textContent = `${i+1} / ${total}`;
+
+    let asset = null;
     try {
-      const detected = detectPlatform(appId);
-      const isSteam  = detected?.store?.name === 'Steam';
-      const steamId  = isSteam ? detected.parsed.id : null;
-
-      const gameData = isSteam ? await bulkFetchSingleGame(steamId) : await bulkFetchFromStore(detected);
-
-      if (gameData) {
-        // skip Mixed / Negative BEFORE inheriting from recentRatings
-        if (gameData.rating === 'Mixed' || gameData.rating === 'Negative') {
-          skip++; done++;
-          tick(`${gameData.title || label} — ${gameData.rating}`, 'skip');
-          await new Promise(r => setTimeout(r, 100));
-          continue;
-        }
-        if (!gameData.rating && recentRatings.length > 0) gameData.rating = recentRatings[recentRatings.length-1];
-        // skip if inherited rating is also Mixed/Negative
-        if (gameData.rating === 'Mixed' || gameData.rating === 'Negative') {
-          skip++; done++;
-          tick(`${gameData.title || label} — ${gameData.rating} (inherited)`, 'skip');
-          await new Promise(r => setTimeout(r, 100));
-          continue;
-        }
-        if (gameData.rating) { recentRatings.push(gameData.rating); if (recentRatings.length > 5) recentRatings.shift(); }
-
-        gameData.status = 'published';
-        if (!gameData.trailer && gameData.steamAppId) {
-          const st = await fetchSteamTrailer(gameData.steamAppId).catch(()=>null);
-          if (st) gameData.trailer = st;
-        }
-        if (!gameData.trailer) {
-          const yt = await fetchYouTubeTrailer(gameData.title).catch(()=>null);
-          if (yt) gameData.trailer = yt;
-        }
-        // normalize all fields against taxonomy before saving
-        const normalized = normalizeTaxFields(gameData);
-        // Merge tags: existing → queue tags → global tags (global has priority)
-        const queueTags   = _bulkQueue[0]?.tags || [];
-        const globalTags  = _bulkGlobalTags || [];
-        const allExtra    = [...new Set([...queueTags, ...globalTags])];
-        if (allExtra.length) {
-          const existing = normalized.userTags || [];
-          // Global tags override duplicates — merge with global last
-          const merged = [...new Set([
-            ...existing.filter(t => !globalTags.includes(t)),
-            ...queueTags,
-            ...globalTags,
-          ])];
-          normalized.userTags = merged;
-        }
-        const id = db.collection(COLLECTION).doc().id;
-        await db.collection(COLLECTION).doc(id).set({...normalized, id, createdAt: Date.now(), updatedAt: Date.now()});
-        logAction('game_added', normalized.title, id, null, {...normalized, id});
-        // keep sets updated so later IDs in this same run don't duplicate
-        // add to sets immediately so next iteration catches it
-        if (normalized.steamAppId) {
-          existingSteamIds.add(String(normalized.steamAppId));
-          seenInBatch.add(String(normalized.steamAppId));
-        }
-        if (normalized.title) {
-          existingTitles.add(normalized.title.toLowerCase().trim());
-          seenInBatch.add(normalized.title.toLowerCase().trim());
-        }
-        ok++; done++; tick(normalized.title || label, 'ok');
-        // update session progress
-        const _remaining = cleanIds.slice(done);
-        _bulkSaveSession({ total: cleanIds.length + resumeFrom, done: resumeFrom + done, remaining: _remaining });
+      if (line.startsWith('{')) {
+        // JSON line (from extension NDJSON)
+        const parsed = JSON.parse(line);
+        if (!parsed.post_link && !parsed.title) { fail++; _log('✕ skip: no title/link — ' + line.slice(0,50), 'skip'); if (btFail) btFail.textContent = fail; continue; }
+        asset = _buildAssetFromJson(parsed, extraTags);
+      } else if (/^https?:\/\//.test(line)) {
+        // Plain URL
+        asset = _buildAssetFromUrl(line, extraTags);
       } else {
-        fail++; done++; tick(label, 'fail');
+        // Not a URL or JSON — skip (no Steam fallback)
+        skipped++;
+        _log('✕ skip: not a URL or JSON — ' + line.slice(0,60), 'skip');
+        if (btSkip) btSkip.textContent = skipped;
+        continue;
+      }
+
+      const result = await _saveAsset(asset);
+      if (result === 'skip') {
+        skipped++;
+        _log('↷ dup: ' + (asset.title||asset.post_link).slice(0,60), 'skip');
+        if (btSkip) btSkip.textContent = skipped;
+      } else {
+        ok++;
+        _log('✓ ' + (asset.title||asset.post_link).slice(0,60), 'ok');
+        if (btOk) btOk.textContent = ok;
       }
     } catch(e) {
-      fail++; done++; tick(label, 'fail');
+      fail++;
+      _log('✕ error: ' + e.message + ' — ' + line.slice(0,40), 'fail');
+      if (btFail) btFail.textContent = fail;
+      console.error('[bulk]', e, line);
     }
-    await new Promise(r => setTimeout(r, 700));
+
+    // Batch pause every 20 items to keep UI responsive
+    if (i % 20 === 19) await new Promise(r => setTimeout(r, 50));
   }
 
+  // ── Done ──
   bulkRunning = false;
-  bulkPaused  = false;
-  if (stopBtn)   stopBtn.style.display   = 'none';
-  if (pauseBtn)  pauseBtn.style.display  = 'none';
-  if (btGame)    { btGame.textContent = `Done — ${ok} saved, ${skip} skipped, ${fail} failed`; btGame.style.color = ok > 0 ? '#10b981' : 'var(--muted)'; }
-  if (blkPhase)  { blkPhase.textContent = 'COMPLETE'; blkPhase.style.color = '#10b981'; }
-  if (blkDot)    blkDot.classList.add('done');
-  if (btRate && ok > 0) { const mins=(Date.now()-_fetchStart)/60000; btRate.textContent=Math.round(ok/Math.max(mins,0.01))+'/m'; }
-  if (progBar)   progBar.style.width = '100%';
-  toast(`Bulk fetch complete — ${ok} saved!`, 'success');
-  _bulkClearSession();
-  if (_bulkQueue.length > 0) _bulkQueue.shift();
-  setTimeout(() => {
-    if (liveState)  liveState.style.display  = 'none';
-    if (startBtn) { startBtn.disabled = false; startBtn.style.opacity = ''; startBtn.style.pointerEvents = ''; }
-    const resumeBtn2 = document.getElementById('bulk-resume-btn');
-    if (resumeBtn2) resumeBtn2.style.display = 'none';
-    document.getElementById('bulk-ids-area').value = '';
-    _bulkQueueRender();
-    if (_bulkQueue.length > 0) {
-      toast(`Starting next: ${_bulkQueue[0].name}`, 'info');
-      setTimeout(startBulkFetch, 1500);
-    }
-  }, 3000);
+  if (blkPhase) blkPhase.textContent = 'DONE';
+  if (blkDot)   blkDot.className = 'blk-dot idle';
+  if (startBtn) { startBtn.disabled = false; startBtn.style.opacity = ''; startBtn.style.pointerEvents = ''; }
+  if (stopBtn)  stopBtn.style.display = 'none';
+  if (pauseBtn) pauseBtn.style.display = 'none';
+
+  invalidateFilterCache();
+  renderLibrary();
+  updateNavBadges();
+
+  if (pasteLines.length) document.getElementById('bulk-ids-area').value = '';
+  _bulkQueue = [];
+
+  toast(
+    `Imported ${ok} asset${ok!==1?'s':''}` +
+    (skipped ? ` · ${skipped} skipped` : '') +
+    (fail ? ` · ${fail} failed` : ''),
+    ok > 0 ? 'success' : 'error'
+  );
 }
+
 function stopBulkFetch() {
   bulkRunning = false;
   bulkPaused  = false;
