@@ -476,11 +476,11 @@ select option { background: var(--card); }
 
 /* Game grid */
 .game-grid-wrap { flex: 1; overflow-y: auto; overflow-x: hidden; min-height: 0;
- padding: 16px 20px; }
+ padding: 20px 24px; }
 .game-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: 16px;
   isolation: isolate;
 }
 
@@ -512,6 +512,7 @@ select option { background: var(--card); }
   overflow: hidden;
   aspect-ratio: 16/9;
   flex-shrink: 0;
+  min-height: 200px;
 }
 .game-card-cover {
   width: 100%; height: 100%;
@@ -529,16 +530,16 @@ select option { background: var(--card); }
 
 /* body */
 .game-card-body {
-  padding: 9px 10px 10px;
+  padding: 12px 14px 14px;
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 6px;
   border-radius: 0 0 var(--r-lg) var(--r-lg);
   background: var(--card);
   flex: 1;
 }
 .game-card-title {
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 700;
   color: var(--text);
   white-space: nowrap;
@@ -889,7 +890,7 @@ select option { background: var(--card); }
   min-height: 0;
   padding: 24px;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
   gap: 20px;
   align-content: start;
 }
@@ -1820,8 +1821,8 @@ select option { background: var(--card); }
 /* ── BIGGER GAME CARDS ─────────────────────────── */
 .game-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: 16px;
 }
 .game-card { cursor: pointer; position: relative; pointer-events: all; }
 
@@ -2431,7 +2432,7 @@ select option { background: var(--card); }
   min-height: 0;
   padding: 24px;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
   gap: 20px;
   align-content: start;
 }
@@ -3362,8 +3363,8 @@ select option { background: var(--card); }
 /* ── BIGGER GAME CARDS ─────────────────────────── */
 .game-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: 16px;
 }
 .game-card { cursor: pointer; position: relative; pointer-events: all; }
 
@@ -4353,10 +4354,7 @@ select option { background: var(--card); }
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
             <input class="lib-search" id="lib-search" placeholder="Search games..." oninput="_debounceLib()">
           </div>
-          <div class="filter-pill active" id="fp-all" onclick="setLibFilter('all',this)">All</div>
-          <div class="filter-pill" id="fp-live" onclick="setLibFilter('live',this)">Live</div>
-          <div class="filter-pill" id="fp-feat" onclick="setLibFilter('featured',this)">Featured</div>
-          <div class="filter-pill" id="fp-ea" onclick="setLibFilter('ea',this)">Early Access</div>
+
           <div class="lib-count" id="lib-count">0 assets</div>
           <button class="btn btn-secondary btn-sm" id="lib-select-all-btn" onclick="selectAllCards()">Select All</button>
           <button class="btn btn-secondary btn-sm" id="filter-toggle-btn" onclick="toggleAdminFilter()" style="margin-left:auto;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;vertical-align:-1px"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg> Filter</button>
@@ -4434,7 +4432,7 @@ https://cgtrader.com/3d-models/..."
               <label class="btn btn-secondary btn-sm" style="cursor:pointer;margin:0;" title="Add TXT/CSV files to queue">
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/></svg>
                 Add Files
-                <input type="file" accept=".txt,.csv" onchange="bulkLoadFile(this)" multiple style="display:none;">
+                <input type="file" accept=".txt,.csv,.json,.ndjson" onchange="bulkLoadFile(this)" multiple style="display:none;">
               </label>
               <button class="btn btn-secondary btn-sm" onclick="bulkClearAll()" id="bulk-clear-btn" style="display:none;color:#ef4444;border-color:rgba(239,68,68,0.3);">
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
@@ -4828,7 +4826,7 @@ async function fetchHLTB(title) {
 let libFilter = 'all';
 let _libPage   = 1;
 let _draftPage = 1;
-const PAGE_SIZE = 56;
+const PAGE_SIZE = 48;
 let currentView = 'library';
 let drawerGameId = null;
 let bulkRunning  = false;
@@ -4922,7 +4920,7 @@ const VIEW_META = {
   library:  { title: 'Library',        sub: 'All published assets' },
   drafts:   { title: 'Drafts',         sub: 'Assets pending review' },
   add:      { title: 'Add Asset',      sub: 'Add manually' },
-  bulk:     { title: 'Bulk Import',    sub: 'Import multiple assets via store IDs or URLs' },
+  bulk:     { title: 'Bulk Import',    sub: 'Import multiple assets via links, JSON from extension, or .txt/.json files' },
   taxonomy: { title: 'Taxonomy',       sub: 'Manage filter categories and tags' },
   io:       { title: 'Import / Export',sub: 'Backup and restore your catalog' },
   updates:  { title: 'Recent Updates', sub: 'History of all admin actions' },
@@ -5839,10 +5837,6 @@ function closeAddGameModal() {
   m.classList.remove('open');
   m.style.display = '';
   document.body.style.overflow = '';
-  // Go back if we pushed modal state
-  if (history.state && history.state.adminModal) {
-    history.back();
-  }
 }
 
 function openBulkModal() {
@@ -6980,16 +6974,33 @@ function _handleImageUpload(input) {
   const file = input.files?.[0];
   if (!file) return;
   handleImageFile(file);
+  input.value = '';
+}
+
+function _handleImageDrop(event) {
+  event.preventDefault();
+  const zone = document.getElementById('img-drop-zone');
+  if (zone) { zone.style.borderColor = 'var(--border-act)'; zone.style.background = 'var(--surface)'; }
+  const file = event.dataTransfer.files?.[0];
+  if (file && file.type.startsWith('image/')) handleImageFile(file);
+}
+
+function _clearImageInput() {
+  window._pendingImageFile = null;
+  const coverEl = document.getElementById('f-cover');
+  if (coverEl) coverEl.value = '';
+  const prevEl = document.getElementById('f-image-preview');
+  if (prevEl) prevEl.style.display = 'none';
+  const badge = document.getElementById('f-image-upload-badge');
+  if (badge) badge.style.display = 'none';
 }
 
 function handleImageFile(file) {
   if (!file || !file.type.startsWith('image/')) return;
-  if (file.size > 10 * 1024 * 1024) { toast('Image too large (max 10MB)', 'error'); return; }
-  // Preview only — do NOT store base64 in Firestore
+  if (file.size > 15 * 1024 * 1024) { toast('Image too large (max 15MB)', 'error'); return; }
   const reader = new FileReader();
   reader.onload = e => {
     _showImagePreview(e.target.result);
-    // Clear URL input — we'll upload on save
     const coverEl = document.getElementById('f-cover');
     if (coverEl) coverEl.value = '';
   };
@@ -6997,7 +7008,7 @@ function handleImageFile(file) {
   window._pendingImageFile = file;
   const badge = document.getElementById('f-image-upload-badge');
   if (badge) badge.style.display = 'block';
-  toast('Image ready — will upload on save', 'info');
+  toast(`Image "${file.name}" ready — will upload on save`, 'success');
 }
 
 // Paste support — user can CTRL+C an image and paste it into the modal
@@ -8030,12 +8041,21 @@ function bulkLoadFile(input) {
   files.forEach(file => {
     const reader = new FileReader();
     reader.onload = e => {
-      const ids = e.target.result.split(/[\n\r]+/).map(s=>s.trim()).filter(Boolean);
-      _bulkQueue.push({ name: file.name, ids, tags: [] });
+      const text = e.target.result.trim();
+      let items = [];
+      let isJson = false;
+      if (text.startsWith('[')) {
+        try { const arr = JSON.parse(text); items = arr.map(x => typeof x === 'string' ? x : JSON.stringify(x)); isJson = true; }
+        catch { items = text.split(/[\n\r]+/).map(s=>s.trim()).filter(Boolean); }
+      } else {
+        items = text.split(/[\n\r]+/).map(s=>s.trim()).filter(Boolean);
+        isJson = items.length > 0 && items.some(l => l.startsWith('{'));
+      }
+      _bulkQueue.push({ name: file.name, ids: items, tags: [], isJson });
       loaded++;
       if (loaded === files.length) {
         _bulkQueueRender();
-        toast(`${files.length} file${files.length>1?'s':''} added to queue`, 'success');
+        toast(`${files.length} file${files.length>1?'s':''} added (${items.length} items)`, 'success');
       }
     };
     reader.readAsText(file);
@@ -8099,17 +8119,17 @@ function _renderFileEntries() {
       <div style="display:flex;align-items:center;gap:6px;">
         ${dot}
         <span style="font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${entry.name || 'No file selected'}</span>
-        ${entry.ids.length ? `<span style="font-size:10px;color:var(--dim);font-family:'JetBrains Mono',monospace;">${entry.ids.length.toLocaleString()} IDs</span>` : ''}
+        ${entry.ids.length ? `<span style="font-size:10px;color:var(--dim);font-family:'JetBrains Mono',monospace;">${entry.ids.length.toLocaleString()} items</span>` : ''}
         <label style="font-size:10px;padding:3px 8px;border-radius:5px;border:1px dashed rgba(0,212,255,0.3);color:var(--neon);cursor:pointer;flex-shrink:0;">
           ${entry.name ? 'Change' : 'Choose file'}
-          <input type="file" accept=".txt,.csv" style="display:none;" onchange="_feLoadFile(${entry.id},this)">
+          <input type="file" accept=".txt,.csv,.json,.ndjson" style="display:none;" onchange="_feLoadFile(${entry.id},this)">
         </label>
         ${_fileEntries.length > 1 ? `<button onclick="_removeFileEntry(${entry.id})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:0 2px;flex-shrink:0;">×</button>` : ''}
       </div>
       <div style="display:flex;flex-wrap:wrap;gap:3px;align-items:center;">
         ${pills}
         <div style="position:relative;display:inline-block;">
-          <input class="bulk-tag-input-field" id="fe-tag-in-${entry.id}" type="text" placeholder="+ Tag…"
+          <input class="bulk-tag-input-field" id="fe-tag-in-${entry.id}" type="text" placeholder="+ Tag or Category…"
             onfocus="_feShowDrop(${entry.id},this)"
             oninput="_feFilterDrop(${entry.id},this.value)"
             onkeydown="if(event.key==='Enter'){_feAddTagFromInput(${entry.id},this);}">
@@ -8126,9 +8146,23 @@ function _feLoadFile(id, input) {
   const entry = _fileEntries.find(e => e.id === id); if (!entry) return;
   const reader = new FileReader();
   reader.onload = ev => {
-    const ids = ev.target.result.split(/[\n\r]+/).map(s => s.trim()).filter(Boolean);
-    entry.file = file; entry.name = file.name; entry.ids = ids;
+    const text = ev.target.result.trim();
+    let items = [];
+    // Try to parse as JSON array first
+    if (text.startsWith('[')) {
+      try {
+        const arr = JSON.parse(text);
+        items = arr.map(x => typeof x === 'string' ? x : JSON.stringify(x));
+        entry.isJson = true;
+      } catch(e) { items = text.split(/[\n\r]+/).map(s => s.trim()).filter(Boolean); }
+    } else {
+      // NDJSON or plain links
+      items = text.split(/[\n\r]+/).map(s => s.trim()).filter(Boolean);
+      entry.isJson = items.some(l => l.startsWith('{'));
+    }
+    entry.file = file; entry.name = file.name; entry.ids = items;
     _renderFileEntries();
+    toast(`Loaded ${items.length} items from ${file.name}`, 'success');
   };
   reader.readAsText(file);
 }
@@ -8151,7 +8185,17 @@ function _feToggleDrop(id) {
 function _feShowDrop(id, input) { _feFilterDrop(id, input ? input.value : ''); }
 function _feFilterDrop(id, query) {
   const drop = document.getElementById('fe-drop-' + id); if (!drop) return;
-  const all = [...new Set([...(TAXONOMY.userTags||[]),...(TAXONOMY.genres||[]),...(TAXONOMY.themes||[])])];
+  // Build flat list of all category paths + tags for bulk tagging
+  const catPaths = [];
+  function _flattenCats(obj, prefix) {
+    for (const k of Object.keys(obj||{})) {
+      const path = prefix ? prefix + ' > ' + k : k;
+      catPaths.push(path);
+      _flattenCats(obj[k], path);
+    }
+  }
+  _flattenCats(TAXONOMY.assetCategories || {}, '');
+  const all = [...new Set([...catPaths, ...(TAXONOMY.userTags||[]),...(TAXONOMY.themes||[])])];
   const q = (query||'').toLowerCase();
   const filtered = q ? all.filter(t => t.toLowerCase().includes(q)).slice(0,20) : all.slice(0,20);
   if (!filtered.length) { drop.style.display = 'none'; return; }
@@ -8168,11 +8212,11 @@ document.addEventListener('click', e => {
 });
 
 function _syncFileEntriesToQueue() {
-  const entries = _fileEntries.filter(e => e.ids.length > 0);
-  if (entries.length) {
-    _bulkQueue = entries.map(e => ({ name: e.name, ids: e.ids, tags: e.tags }));
-  }
+  _bulkQueue = _fileEntries
+    .filter(e => e.ids && e.ids.length)
+    .map(e => ({ name: e.name, ids: e.ids, tags: e.tags, isJson: !!e.isJson }));
 }
+
 
 
 // ── Global Bulk Tags ─────────────────────────────────────────────────────
@@ -8299,6 +8343,69 @@ async function startBulkFetch() {
     }
   }
 
+  // ── Process file queue with JSON/links directly ──
+  if (_bulkQueue.length > 0) {
+    const jsonQueues = _bulkQueue.filter(q => q.isJson || (q.ids.length && q.ids.every(l => l.startsWith('{') || /^https?:\/\//.test(l))));
+    if (jsonQueues.length > 0) {
+      let ok = 0, fail = 0, total = jsonQueues.reduce((s,q) => s+q.ids.length, 0);
+      toast('Importing ' + total + ' items from files…', 'info');
+      for (const queue of jsonQueues) {
+        for (const line of queue.ids) {
+          let asset = null;
+          if (line.startsWith('{')) {
+            try {
+              const parsed = JSON.parse(line);
+              if (!parsed.post_link && !parsed.title) { fail++; continue; }
+              const imgUrl = (parsed.cover||parsed.image||'').startsWith('data:') ? '' : (parsed.cover||parsed.image||'');
+              const cat = parsed.category || '';
+              const catParts = cat ? cat.split('>').map(p=>p.trim()).filter(Boolean) : [];
+              if (catParts.length && typeof addCategoryPath === 'function') addCategoryPath(catParts);
+              let sl = parsed.storeLinks || {};
+              const pl = parsed.post_link || '';
+              if (pl && !Object.keys(sl).length) {
+                if (pl.includes('assetstore.unity.com')) sl = {'Unity Asset Store': pl};
+                else if (pl.includes('cgtrader.com')) sl = {'CGTrader': pl};
+                else if (pl.includes('fab.com')) sl = {'Fab': pl};
+              }
+              asset = {
+                title: parsed.title||pl||'', post_link: pl, author: parsed.author||'',
+                price: parsed.price||'', price_range: parsed.price_range||(parsed.price?_calcPriceRange(parsed.price):''),
+                category: cat, category_lvl1: catParts[0]||'', category_lvl2: catParts[1]||'',
+                category_lvl3: catParts[2]||'', category_lvl4: catParts[3]||'',
+                cover: imgUrl, image: imgUrl, description: parsed.description||'',
+                overview: parsed.overview||'', technicalDetails: parsed.technicalDetails||parsed.technical_details||'',
+                userTags: [...(Array.isArray(parsed.tags)?parsed.tags:[]), ...queue.tags],
+                storeLinks: sl, status: 'published', createdAt: Date.now(), updatedAt: Date.now(),
+              };
+            } catch(e) { fail++; continue; }
+          } else if (/^https?:\/\//.test(line)) {
+            let sn = '';
+            if (line.includes('assetstore.unity.com')) sn = 'Unity Asset Store';
+            else if (line.includes('cgtrader.com')) sn = 'CGTrader';
+            else if (line.includes('fab.com')) sn = 'Fab';
+            asset = {
+              title: line, post_link: line, author: '', price: '', price_range: '', category: '',
+              cover: '', image: '', description: '', overview: '', technicalDetails: '',
+              userTags: [...queue.tags], storeLinks: sn ? {[sn]: line} : {},
+              status: 'published', createdAt: Date.now(), updatedAt: Date.now(),
+            };
+          } else { fail++; continue; }
+          const _n = u => (u||'').toLowerCase().trim().replace(/\/+$/, '');
+          if (asset.post_link && allGames.some(g => _n(g.post_link) === _n(asset.post_link))) { fail++; continue; }
+          try {
+            const docRef = db.collection(COLLECTION).doc();
+            asset.id = docRef.id;
+            await docRef.set(asset);
+            ok++;
+          } catch(e) { console.error('[bulk file]', e); fail++; }
+        }
+      }
+      invalidateFilterCache(); renderLibrary(); updateNavBadges();
+      toast('Imported ' + ok + ' asset' + (ok!==1?'s':'') + (fail?' · '+fail+' skipped':''), ok>0?'success':'error');
+      return;
+    }
+  }
+
   const pasteIds = pasteRaw ? pasteRaw.split(/[\n\r]+/).map(s=>s.trim()).filter(Boolean) : [];
 
   let allSourceIds = [];
@@ -8323,7 +8430,7 @@ Resume where you left off?`);
     if (pasteIds.length)       allSourceIds = [...allSourceIds, ...pasteIds];
   }
 
-  if (!allSourceIds.length) { toast('Enter Steam IDs or add files to queue first', 'error'); return; }
+  if (!allSourceIds.length) { toast('Add files or paste links / JSON to import', 'error'); return; }
 
   bulkRunning = true;
   bulkPaused  = false;
@@ -9584,18 +9691,29 @@ function hidePageLoader() {
           </div>
           <!-- Image Upload -->
           <div class="field full">
-            <div class="field-label">Image <span style="font-size:10px;color:var(--muted);font-weight:400;">(URL, upload, or paste CTRL+V)</span></div>
-            <div style="display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap;">
-              <input type="url" id="f-cover" placeholder="https://example.com/image.jpg (URL only — no base64)" style="flex:1;min-width:200px;" oninput="_showImagePreview(this.value); window._pendingImageFile=null;">
-              <label class="btn btn-secondary btn-sm" style="cursor:pointer;white-space:nowrap;flex-shrink:0;">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="margin-right:4px;vertical-align:-1px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                Upload
-                <input type="file" accept="image/*" onchange="_handleImageUpload(this)" style="display:none;">
-              </label>
+            <div class="field-label">Image <span style="font-size:10px;color:var(--muted);font-weight:400;">(upload PNG/JPG, paste CTRL+V, or enter URL)</span></div>
+            <!-- Drop zone -->
+            <div id="img-drop-zone" onclick="document.getElementById('img-file-input').click()"
+              style="border:2px dashed var(--border-act);border-radius:var(--r-lg);padding:20px;text-align:center;cursor:pointer;transition:all 0.2s;background:var(--surface);"
+              ondragover="event.preventDefault();this.style.borderColor='var(--neon)';this.style.background='var(--neon-dim)';"
+              ondragleave="this.style.borderColor='var(--border-act)';this.style.background='var(--surface)';"
+              ondrop="_handleImageDrop(event)">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--neon)" stroke-width="1.5" stroke-linecap="round" style="margin-bottom:6px;opacity:0.7;"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              <div style="font-size:12px;color:var(--muted);">Click to upload or drag & drop PNG/JPG</div>
+              <div style="font-size:10px;color:var(--dim);margin-top:3px;">or paste image with CTRL+V</div>
+              <input type="file" id="img-file-input" accept="image/png,image/jpeg,image/webp,image/gif" style="display:none;" onchange="_handleImageUpload(this)">
+            </div>
+            <!-- URL fallback -->
+            <div style="display:flex;align-items:center;gap:6px;margin-top:6px;">
+              <span style="font-size:10px;color:var(--dim);white-space:nowrap;">or URL:</span>
+              <input type="url" id="f-cover" placeholder="https://..." style="flex:1;font-size:12px;" oninput="_showImagePreview(this.value);window._pendingImageFile=null;document.getElementById('f-image-upload-badge').style.display='none';">
             </div>
             <div id="f-image-preview" style="margin-top:8px;display:none;">
-              <img id="f-image-preview-img" src="" style="max-height:100px;border-radius:6px;border:1px solid var(--border);object-fit:cover;">
-              <div id="f-image-upload-badge" style="display:none;margin-top:4px;font-size:10px;color:var(--amber);font-family:'JetBrains Mono',monospace;">📁 File selected — will upload on save</div>
+              <div style="position:relative;display:inline-block;">
+                <img id="f-image-preview-img" src="" style="max-height:120px;border-radius:6px;border:1px solid var(--border);object-fit:cover;display:block;">
+                <button onclick="_clearImageInput()" style="position:absolute;top:4px;right:4px;background:rgba(0,0,0,0.7);border:none;color:#fff;border-radius:50%;width:20px;height:20px;cursor:pointer;font-size:12px;line-height:20px;text-align:center;">×</button>
+              </div>
+              <div id="f-image-upload-badge" style="display:none;margin-top:4px;font-size:11px;color:var(--amber);font-family:'JetBrains Mono',monospace;">📁 File ready — will upload to Firebase Storage on save</div>
             </div>
           </div>
 
