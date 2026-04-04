@@ -476,7 +476,7 @@ select option { background: var(--card); }
 
 /* Game grid */
 .game-grid-wrap { flex: 1; overflow-y: auto; overflow-x: hidden; min-height: 0;
- padding: 20px 24px; }
+ padding: 16px 20px; }
 .game-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
@@ -4405,129 +4405,64 @@ select option { background: var(--card); }
       <!-- ── BULK IMPORT VIEW ── -->
       <div class="view" id="view-bulk" style="display:none">
         <div class="bulk-fetch-panel">
-
-          <!-- INPUT STATE -->
           <div id="bulk-input-state">
 
+            <!-- File queue with tag/category assignment -->
             <div id="bulk-file-entries" style="display:flex;flex-direction:column;gap:5px;margin-bottom:8px;"></div>
-
             <button onclick="_addFileEntry()" class="btn btn-secondary btn-sm" style="width:100%;border-style:dashed;color:var(--muted);margin-bottom:10px;justify-content:center;gap:5px;">
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              Add File
+              Add File Entry
             </button>
 
-            <div style="font-size:10px;color:var(--dim);text-align:center;margin:4px 0;font-family:'JetBrains Mono',monospace;">— or paste links / NDJSON directly —</div>
+            <div style="font-size:10px;color:var(--dim);text-align:center;margin:6px 0;font-family:'JetBrains Mono',monospace;">— or paste JSON / URLs directly —</div>
             <textarea id="bulk-ids-area"
-              placeholder="Paste links or NDJSON (one per line):
-https://fab.com/listings/...
-https://cgtrader.com/3d-models/..."
-              style="min-height:70px;max-height:160px;font-family:'JetBrains Mono',monospace;font-size:12px;resize:vertical;"></textarea>
+              placeholder="Paste JSON from extension (one per line or JSON array):&#10;{&quot;post_link&quot;:&quot;https://assetstore.unity.com/...&quot;,&quot;title&quot;:&quot;My Asset&quot;,&quot;price&quot;:&quot;49.99&quot;,...}&#10;&#10;Or plain URLs:&#10;https://fab.com/listings/...&#10;https://cgtrader.com/3d-models/..."
+              style="min-height:120px;max-height:220px;font-family:'JetBrains Mono',monospace;font-size:11px;resize:vertical;"></textarea>
+            <div id="bulk-file-list" style="font-size:10px;color:var(--neon);font-family:'JetBrains Mono',monospace;margin-top:4px;"></div>
 
-            <!-- Actions -->
             <div style="margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
               <button class="btn btn-primary" onclick="startBulkFetch()" id="bulk-start-btn">
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                Start Fetch
+                Import
               </button>
-              <label class="btn btn-secondary btn-sm" style="cursor:pointer;margin:0;" title="Add TXT/CSV files to queue">
+              <label class="btn btn-secondary btn-sm" style="cursor:pointer;margin:0;">
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/></svg>
                 Add Files
-                <input type="file" accept=".txt,.csv,.json,.ndjson" onchange="bulkLoadFile(this)" multiple style="display:none;">
+                <input type="file" accept=".txt,.csv,.json,.ndjson" tabindex="-1" onchange="bulkLoadFile(this)" multiple style="display:none;">
               </label>
               <button class="btn btn-secondary btn-sm" onclick="bulkClearAll()" id="bulk-clear-btn" style="display:none;color:#ef4444;border-color:rgba(239,68,68,0.3);">
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
                 Clear
               </button>
-              <button class="btn btn-secondary btn-sm" onclick="startBulkFetch()" id="bulk-resume-btn" style="display:none;color:#10b981;border-color:rgba(16,185,129,0.3);">
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                Resume
-              </button>
-              <span id="bulk-saved-info" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--neon);margin-left:auto;display:none;cursor:pointer;" onclick="startBulkFetch()" title="Click to resume"></span>
             </div>
           </div>
 
-          <!-- LIVE STATE (shown during fetch) -->
+          <!-- Live state -->
           <div id="bulk-live-state" style="display:none;flex-direction:column;gap:0;flex:1;min-height:0;">
-
             <div class="blk-header">
               <div class="blk-header-left">
                 <div class="blk-dot" id="blk-dot"></div>
-                <span class="blk-label" id="blk-phase">Scanning…</span>
+                <span class="blk-label" id="blk-phase">Importing…</span>
               </div>
               <div class="blk-header-right">
                 <span class="blk-progress" id="bt-progress">0 / 0</span>
-                <button class="btn btn-secondary btn-sm" onclick="pauseResumeBulk()" id="bulk-pause-btn" style="display:none;">
-                  <svg id="pause-icon" width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
-                  <span id="pause-label">Pause</span>
-                </button>
                 <button class="btn btn-secondary btn-sm" onclick="stopBulkFetch()" id="bulk-stop-btn">
                   <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
                   Stop
                 </button>
               </div>
             </div>
-
             <div class="blk-bar-wrap"><div class="blk-bar" id="bulk-progress-bar" style="width:0%"></div></div>
-
-            <div class="blk-current" id="bt-game">Initializing…</div>
-
-            <div class="blk-log" id="blk-log"></div>
-
-            <div class="blk-stats">
-              <div class="blk-stat">
-                <span class="blk-stat-val" id="bt-ok" style="color:#10b981;">0</span>
-                <span class="blk-stat-lbl" style="color:#10b981;">Saved</span>
-              </div>
-              <div class="blk-stat-sep"></div>
-              <div class="blk-stat">
-                <span class="blk-stat-val" id="bt-skip" style="color:#eab308;">0</span>
-                <span class="blk-stat-lbl" style="color:#eab308;">Skipped</span>
-              </div>
-              <div class="blk-stat-sep"></div>
-              <div class="blk-stat">
-                <span class="blk-stat-val" id="bt-fail" style="color:#ef4444;">0</span>
-                <span class="blk-stat-lbl" style="color:#ef4444;">Failed</span>
-              </div>
-              <div class="blk-stat-sep"></div>
-              <div class="blk-stat">
-                <span class="blk-stat-val" id="bt-rate" style="color:var(--muted);">—</span>
-                <span class="blk-stat-lbl" style="color:var(--muted);">Rate</span>
-              </div>
+            <div class="blk-stats-row">
+              <div class="blk-stat"><span id="bt-ok" style="color:var(--green);">0</span><span class="blk-stat-l">OK</span></div>
+              <div class="blk-stat"><span id="bt-skip" style="color:#eab308;">0</span><span class="blk-stat-l">Skip</span></div>
+              <div class="blk-stat"><span id="bt-fail" style="color:var(--red);">0</span><span class="blk-stat-l">Fail</span></div>
             </div>
-
-          </div>
-
-        </div>
-      </div>
-
-      <!-- ── TAXONOMY VIEW ── -->
-      <div class="view" id="view-taxonomy" style="display:none">
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 20px 0;gap:10px;">
-          <div style="font-size:12px;color:var(--muted);">Manage filter categories — toggle visibility or add/remove items</div>
-          <div style="display:flex;gap:8px;flex-shrink:0;">
-            <button class="btn btn-danger btn-sm" onclick="cleanBadTaxKeys()" title="Remove invalid/test categories"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;vertical-align:-1px"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg> Clean Bad Keys</button>
-            <button class="btn btn-primary btn-sm" onclick="showAddCategoryModal()">+ New Category</button>
-          </div>
-        </div>
-        <div class="tax-grid" id="tax-grid"></div>
-
-        <!-- Add Category Modal -->
-        <div id="add-cat-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9999;align-items:center;justify-content:center;">
-          <div style="background:#0d1117;border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:28px;width:380px;box-shadow:0 24px 60px rgba(0,0,0,0.8);">
-            <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:15px;margin-bottom:16px;">New Category</div>
-            <div class="field-label" style="margin-bottom:6px;">Category Key (no spaces, e.g. <code>mood</code>)</div>
-            <input type="text" id="new-cat-key" placeholder="e.g. mood" style="width:100%;margin-bottom:12px;">
-            <div class="field-label" style="margin-bottom:6px;">Display Label</div>
-            <input type="text" id="new-cat-label" placeholder="e.g. Mood" style="width:100%;margin-bottom:16px;">
-            <div style="display:flex;gap:8px;justify-content:flex-end;">
-              <button class="btn btn-secondary btn-sm" onclick="document.getElementById('add-cat-modal').style.display='none'">Cancel</button>
-              <button class="btn btn-primary btn-sm" onclick="createNewCategory()">Create</button>
-            </div>
+            <div class="blk-log-wrap"><div id="blk-log" class="blk-log"></div></div>
           </div>
         </div>
       </div>
 
-      <!-- ── IMPORT / EXPORT VIEW ── -->
       <div class="view" id="view-io" style="display:none">
         <div class="io-grid">
           <div class="io-card">
@@ -4640,20 +4575,19 @@ https://cgtrader.com/3d-models/..."
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 <script>
 /* ═══════════════════════════════════════════════
-   CONFIG — Firestore
+   CONFIG
 ═══════════════════════════════════════════════ */
 const firebaseConfig = {
   apiKey: "AIzaSyDbg8fnVjVe7badJ7eXaDGWnAus7QxFkUs",
   authDomain: "assets-vault-9ec2b.firebaseapp.com",
+  databaseURL: "https://assets-vault-9ec2b-default-rtdb.firebaseio.com",
   projectId: "assets-vault-9ec2b",
-  storageBucket: "assets-vault-9ec2b.appspot.com",
+  storageBucket: "assets-vault-9ec2b.firebasestorage.app",
   messagingSenderId: "656390855397",
   appId: "1:656390855397:web:791bce333961e9abf6120c"
 };
 
 const COLLECTION = "assets_dev";
-
-/* EARLY DECLARATIONS — must be before any function */
 let _loaderTimer = null;
 let db, storage;
 window._pendingImageFile = null;
@@ -4826,7 +4760,7 @@ async function fetchHLTB(title) {
 let libFilter = 'all';
 let _libPage   = 1;
 let _draftPage = 1;
-const PAGE_SIZE = 48;
+const PAGE_SIZE = 56;
 let currentView = 'library';
 let drawerGameId = null;
 let bulkRunning  = false;
@@ -4836,15 +4770,515 @@ const BULK_STORAGE_KEY = 'gamescout_bulk_session';
 let editingGameId = null;
 
 /* ═══════════════════════════════════════════════
+   IMAGE UPLOAD SYSTEM
+═══════════════════════════════════════════════ */
+function _handleImageUpload(input) {
+  const file = input.files && input.files[0];
+  if (file) handleImageFile(file);
+  try { input.value = ''; } catch(e) {}
+}
+function _handleImageDrop(event) {
+  event.preventDefault();
+  const file = event.dataTransfer.files && event.dataTransfer.files[0];
+  if (file) handleImageFile(file);
+}
+function _clearImageInput() {
+  window._pendingImageFile = null;
+  const ci = document.getElementById('f-cover'); if (ci) ci.value = '';
+  const pr = document.getElementById('f-image-preview'); if (pr) pr.style.display = 'none';
+  const bg = document.getElementById('f-image-upload-badge'); if (bg) bg.style.display = 'none';
+}
+function handleImageFile(file) {
+  if (!file) return;
+  if (file.size > 15*1024*1024) { toast('Image too large (max 15MB)','error'); return; }
+  window._pendingImageFile = file;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const url = e.target.result;
+    const pr  = document.getElementById('f-image-preview');
+    const img = document.getElementById('f-image-preview-img');
+    const bg  = document.getElementById('f-image-upload-badge');
+    const ci  = document.getElementById('f-cover');
+    if (img) { img.src = url; img.style.display = 'block'; }
+    if (pr)  { pr.style.display = 'block'; pr.style.visibility = 'visible'; }
+    if (bg)  { bg.textContent = '[FILE] '+file.name+' ('+Math.round(file.size/1024)+'KB)'; bg.style.display = 'block'; }
+    if (ci)  ci.value = '';
+  };
+  reader.readAsDataURL(file);
+  toast('"'+file.name+'" ready — will save on Submit','success');
+}
+function _showImagePreview(url) {
+  const pr  = document.getElementById('f-image-preview');
+  const img = document.getElementById('f-image-preview-img');
+  const bg  = document.getElementById('f-image-upload-badge');
+  if (!pr || !img) return;
+  if (url && url.length > 5) {
+    img.src = url; img.style.display = 'block';
+    pr.style.display = 'block'; pr.style.visibility = 'visible';
+  } else {
+    pr.style.display = 'none';
+  }
+  if (bg) bg.style.display = window._pendingImageFile ? 'block' : 'none';
+}
+document.addEventListener('paste', e => {
+  const m = document.getElementById('add-game-modal');
+  if (!m || !m.classList.contains('open')) return;
+  const items = e.clipboardData && e.clipboardData.items;
+  if (!items) return;
+  for (let i=0;i<items.length;i++) {
+    if (items[i].type.includes('image')) {
+      e.preventDefault();
+      const f = items[i].getAsFile();
+      if (f) handleImageFile(f);
+      break;
+    }
+  }
+});
+
+/* ═══════════════════════════════════════════════
+   MODAL OPEN / CLOSE / CLEAR
+═══════════════════════════════════════════════ */
+function openAddGameModal(id) {
+  window._pendingImageFile = null;
+  editingGameId = id || null;
+  if (id) {
+    loadGameIntoForm(id);
+    const t = document.getElementById('add-game-modal-title');
+    if (t) t.innerHTML = t.innerHTML.replace('Add Asset','Edit Asset');
+  } else {
+    clearGameForm();
+    const t = document.getElementById('add-game-modal-title');
+    if (t) t.innerHTML = t.innerHTML.replace('Edit Asset','Add Asset');
+  }
+  document.getElementById('add-game-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeAddGameModal() {
+  window._pendingImageFile = null;
+  const m = document.getElementById('add-game-modal');
+  if (m) { m.classList.remove('open'); m.style.display = ''; }
+  document.body.style.overflow = '';
+}
+function clearGameForm() {
+  editingGameId = null;
+  window._pendingImageFile = null;
+  ['edit-game-id','f-title','f-post-link','f-author','f-cover','f-desc',
+   'f-overview','f-technical','f-price','f-paste-data'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  const prEl = document.getElementById('f-price-range'); if (prEl) prEl.value = '';
+  const pr = document.getElementById('f-image-preview'); if (pr) pr.style.display = 'none';
+  const bg = document.getElementById('f-image-upload-badge'); if (bg) bg.style.display = 'none';
+  const ps = document.getElementById('paste-data-status'); if (ps) ps.textContent = '';
+  const sd = document.getElementById('f-store-detected'); if (sd) sd.style.display = 'none';
+  const sp = document.getElementById('f-auto-store-preview'); if (sp) sp.textContent = 'Enter Post Link above to auto-detect store';
+  if (typeof clearPasteField === 'function') clearPasteField('userTags');
+  ['f-cat-lvl1','f-cat-lvl2','f-cat-lvl3','f-cat-lvl4'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = '<option value="">—</option>';
+  });
+  const ci = document.getElementById('f-cat-bulk-input'); if (ci) ci.value = '';
+  const slr = document.getElementById('store-link-rows');
+  if (slr) { slr.innerHTML = ''; if (typeof addStoreLinkRow === 'function') addStoreLinkRow(); }
+  if (typeof _populateCatLevel === 'function') _populateCatLevel(1, []);
+  const ss = document.getElementById('save-status'); if (ss) ss.style.display = 'none';
+}
+
+/* ═══════════════════════════════════════════════
+   STORE AUTO-DETECTION
+═══════════════════════════════════════════════ */
+function _autoDetectStore(url) {
+  const sd = document.getElementById('f-store-detected');
+  const sp = document.getElementById('f-auto-store-preview');
+  if (!url) {
+    if (sd) sd.style.display = 'none';
+    if (sp) sp.textContent = 'Enter Post Link above to auto-detect store';
+    return;
+  }
+  let name = '';
+  if (url.includes('assetstore.unity.com')) name = 'Unity Asset Store';
+  else if (url.includes('cgtrader.com'))    name = 'CGTrader';
+  else if (url.includes('fab.com'))         name = 'Fab';
+  else if (url.includes('turbosquid.com'))  name = 'TurboSquid';
+  else if (url.includes('sketchfab.com'))   name = 'Sketchfab';
+  else if (url.includes('unrealengine.com'))name = 'Unreal Marketplace';
+  else if (url.includes('artstation.com'))  name = 'ArtStation';
+  if (sd) { if (name) { sd.textContent = '✓ Detected: '+name; sd.style.display='block'; } else sd.style.display='none'; }
+  if (sp) sp.innerHTML = name ? '<span style="color:var(--green);">✓ Auto: <strong>'+name+'</strong></span>' : 'Custom URL — saved as-is';
+}
+
+/* ═══════════════════════════════════════════════
+   APPLY PASTED DATA (Extension JSON)
+═══════════════════════════════════════════════ */
+function applyPastedData() {
+  const raw = (document.getElementById('f-paste-data')?.value||'').trim();
+  const st  = document.getElementById('paste-data-status');
+  if (!raw) { if (st) { st.textContent='✕ Nothing to parse'; st.style.color='var(--red)'; } return; }
+  let parsed;
+  try { parsed = JSON.parse(raw); } catch(e) {
+    if (st) { st.textContent='✕ Invalid JSON'; st.style.color='var(--red)'; }
+    return;
+  }
+  const sv = (id,v) => { const el=document.getElementById(id); if (el&&v!=null&&v!=='') el.value=v; };
+  if (parsed.title)       sv('f-title', parsed.title);
+  if (parsed.post_link) { sv('f-post-link', parsed.post_link); _autoDetectStore(parsed.post_link); }
+  if (parsed.price)       sv('f-price', parsed.price);
+  if (parsed.author)      sv('f-author', parsed.author);
+  if (parsed.description) sv('f-desc', parsed.description);
+  if (parsed.overview)    sv('f-overview', parsed.overview);
+  if (parsed.technicalDetails || parsed.technical_details) sv('f-technical', parsed.technicalDetails||parsed.technical_details);
+  const img = (parsed.cover||parsed.image||'');
+  if (img && !img.startsWith('data:')) { sv('f-cover', img); _showImagePreview(img); }
+  if (parsed.category) {
+    const parts = parsed.category.split('>').map(p=>p.trim()).filter(Boolean);
+    if (typeof addCategoryPath === 'function') addCategoryPath(parts);
+    if (typeof _initCatDropdowns === 'function') _initCatDropdowns(parts[0],parts[1],parts[2],parts[3]);
+  }
+  if (Array.isArray(parsed.tags) && typeof addPasteTag === 'function')
+    parsed.tags.forEach(t => { if(t) addPasteTag('userTags', t, ''); });
+  if (st) { st.textContent='✓ Fields filled'; st.style.color='var(--green)'; setTimeout(()=>st.textContent='',3000); }
+}
+
+/* ═══════════════════════════════════════════════
+   HIERARCHICAL CATEGORY SYSTEM
+═══════════════════════════════════════════════ */
+function _getCategoryTree() {
+  const c = TAXONOMY.assetCategories;
+  if (!c || typeof c !== 'object' || Array.isArray(c)) return {};
+  return c;
+}
+function _populateCatLevel(level, parentPath) {
+  const sel = document.getElementById('f-cat-lvl'+level); if (!sel) return;
+  let node = _getCategoryTree();
+  for (const p of parentPath) { if (node&&node[p]) node=node[p]; else { node=null; break; } }
+  const keys = node ? Object.keys(node) : [];
+  sel.innerHTML = '<option value="">Lvl '+level+'</option>' + keys.map(k=>'<option value="'+k+'">'+k+'</option>').join('');
+  sel.style.opacity = keys.length ? '1' : '0.4';
+}
+function _updateCatLevel(level) {
+  const v1=(document.getElementById('f-cat-lvl1')?.value||'');
+  const v2=(document.getElementById('f-cat-lvl2')?.value||'');
+  const v3=(document.getElementById('f-cat-lvl3')?.value||'');
+  if (level===2) { _populateCatLevel(2,[v1]); _populateCatLevel(3,[]); _populateCatLevel(4,[]); }
+  else if (level===3) { _populateCatLevel(3,[v1,v2]); _populateCatLevel(4,[]); }
+  else if (level===4) { _populateCatLevel(4,[v1,v2,v3]); }
+}
+function _initCatDropdowns(v1,v2,v3,v4) {
+  _populateCatLevel(1,[]);
+  const s1=document.getElementById('f-cat-lvl1'); if(s1&&v1){s1.value=v1;_populateCatLevel(2,[v1]);}
+  const s2=document.getElementById('f-cat-lvl2'); if(s2&&v2){s2.value=v2;_populateCatLevel(3,[v1,v2]);}
+  const s3=document.getElementById('f-cat-lvl3'); if(s3&&v3){s3.value=v3;_populateCatLevel(4,[v1,v2,v3]);}
+  const s4=document.getElementById('f-cat-lvl4'); if(s4&&v4) s4.value=v4;
+}
+function _parseCategoryBulk() {
+  const inp = document.getElementById('f-cat-bulk-input'); if (!inp||!inp.value) return;
+  const parts = inp.value.split('>').map(p=>p.trim()).filter(Boolean);
+  addCategoryPath(parts);
+  _initCatDropdowns(parts[0],parts[1],parts[2],parts[3]);
+  inp.value = '';
+  toast('Category set: '+parts.join(' > '),'success');
+}
+function _showAddCategoryUI() {
+  const path = prompt('Category path (e.g. 3D > Character > Human):');
+  if (!path) return;
+  const parts = path.split('>').map(p=>p.trim()).filter(Boolean);
+  if (!parts.length) return;
+  addCategoryPath(parts);
+  _initCatDropdowns(parts[0],parts[1],parts[2],parts[3]);
+  toast('Category added','success');
+}
+function addCategoryPath(pathArray) {
+  if (!TAXONOMY.assetCategories||typeof TAXONOMY.assetCategories!=='object'||Array.isArray(TAXONOMY.assetCategories)) TAXONOMY.assetCategories={};
+  let ref=TAXONOMY.assetCategories;
+  for (const p of pathArray) { if(!ref[p]) ref[p]={}; ref=ref[p]; }
+  if (typeof saveTaxonomy==='function') saveTaxonomy();
+}
+function _promptNewCategory() {
+  const name = prompt('New category name:');
+  if (!name) { const s=document.getElementById('f-category'); if(s) s.value=''; return; }
+  if (!TAXONOMY.assetCategories) TAXONOMY.assetCategories={};
+  if (!TAXONOMY.assetCategories[name]) TAXONOMY.assetCategories[name]={};
+  if (typeof saveTaxonomy==='function') saveTaxonomy();
+  if (typeof _populateCategorySelect==='function') _populateCategorySelect(name);
+}
+
+/* ═══════════════════════════════════════════════
+   BULK IMPORT — startBulkFetch (direct, no Steam)
+═══════════════════════════════════════════════ */
+function openBulkModal() {
+  if (!_fileEntries||!_fileEntries.length) {
+    _fileEntries = [{id:0,tags:[],ids:[],name:''}];
+    _feNextId = 1;
+    setTimeout(_renderFileEntries, 50);
+  }
+  const bm = document.getElementById('bulk-modal');
+  if (!bm) {
+    const src = document.getElementById('view-bulk');
+    if (src) { src.style.display='flex'; src.classList.add('active'); return; }
+  }
+  if (bm) { bm.classList.add('open'); document.body.style.overflow='hidden'; }
+}
+
+function bulkLoadFile(input) {
+  const files = Array.from(input.files); if (!files.length) return;
+  let loaded=0, totalItems=0;
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const text = e.target.result.trim();
+      let items=[], isJson=false;
+      if (text.startsWith('[')) {
+        try { const arr=JSON.parse(text); items=arr.map(x=>typeof x==='string'?x:JSON.stringify(x)); isJson=true; }
+        catch { items=text.split(/[\r\n]+/).map(s=>s.trim()).filter(Boolean); }
+      } else if (text.startsWith('{')) {
+        try { JSON.parse(text); items=[text]; isJson=true; }
+        catch { items=text.split(/[\r\n]+/).map(s=>s.trim()).filter(Boolean); isJson=true; }
+      } else {
+        items=text.split(/[\r\n]+/).map(s=>s.trim()).filter(Boolean);
+        isJson=items.some(l=>l.startsWith('{'));
+      }
+      _bulkQueue.push({name:file.name,ids:items,tags:[],isJson});
+      totalItems+=items.length; loaded++;
+      if (loaded===files.length) {
+        const listEl=document.getElementById('bulk-file-list');
+        if (listEl) { listEl.innerHTML=_bulkQueue.map(q=>'<span>✓ '+q.name+' ('+q.ids.length+' items)</span>').join(' &nbsp;'); }
+        toast(files.length+' file'+(files.length>1?'s':'')+' loaded: '+totalItems+' items','success');
+      }
+    };
+    reader.readAsText(file);
+  });
+  try { input.value=''; } catch(e) {}
+}
+
+function _syncFileEntriesToQueue() {
+  if (_fileEntries&&_fileEntries.length) {
+    const fileQ = _fileEntries.filter(e=>e.ids&&e.ids.length).map(e=>({name:e.name,ids:e.ids,tags:e.tags,isJson:!!e.isJson}));
+    _bulkQueue = [..._bulkQueue.filter(q=>!fileQ.find(f=>f.name===q.name)), ...fileQ];
+  }
+}
+
+async function startBulkFetch() {
+  _syncFileEntriesToQueue();
+  const pasteRaw = (document.getElementById('bulk-ids-area')?.value||'').trim();
+  const nu = u=>(u||'').toLowerCase().trim().replace(/\/+$/,'');
+
+  // Build asset from JSON
+  function fromJson(parsed, extraTags) {
+    const img=(parsed.cover||parsed.image||'').startsWith('data:')?'':(parsed.cover||parsed.image||'');
+    const cat=(parsed.category||'').trim();
+    const parts=cat?cat.split('>').map(p=>p.trim()).filter(Boolean):[];
+    if(parts.length&&typeof addCategoryPath==='function') addCategoryPath(parts);
+    let sl=parsed.storeLinks||{};
+    const pl=(parsed.post_link||'').trim();
+    if(pl&&!Object.keys(sl).length){
+      if(pl.includes('assetstore.unity.com')) sl={'Unity Asset Store':pl};
+      else if(pl.includes('cgtrader.com'))    sl={'CGTrader':pl};
+      else if(pl.includes('fab.com'))          sl={'Fab':pl};
+    }
+    return {title:parsed.title||pl||'',post_link:pl,author:parsed.author||'',
+      price:parsed.price||'',price_range:parsed.price_range||(parsed.price?_calcPriceRange(parsed.price):''),
+      category:cat,category_lvl1:parts[0]||'',category_lvl2:parts[1]||'',
+      category_lvl3:parts[2]||'',category_lvl4:parts[3]||'',
+      cover:img,image:img,description:parsed.description||'',
+      overview:parsed.overview||'',technicalDetails:parsed.technicalDetails||parsed.technical_details||'',
+      userTags:[...(Array.isArray(parsed.tags)?parsed.tags:[]),...(extraTags||[])],
+      storeLinks:sl,status:'published',createdAt:Date.now(),updatedAt:Date.now()};
+  }
+
+  // Build asset from URL
+  function fromUrl(url, extraTags) {
+    let sn='';
+    if(url.includes('assetstore.unity.com')) sn='Unity Asset Store';
+    else if(url.includes('cgtrader.com'))    sn='CGTrader';
+    else if(url.includes('fab.com'))          sn='Fab';
+    return {title:url,post_link:url,author:'',price:'',price_range:'',category:'',
+      cover:'',image:'',description:'',overview:'',technicalDetails:'',
+      userTags:[...(extraTags||[])],storeLinks:sn?{[sn]:url}:{},
+      status:'published',createdAt:Date.now(),updatedAt:Date.now()};
+  }
+
+  // Parse paste input (handles single JSON, array, NDJSON, URLs)
+  let pasteLines = [];
+  if (pasteRaw) {
+    const t=pasteRaw.trim();
+    if (t.startsWith('[')) {
+      try { const arr=JSON.parse(t); pasteLines=arr.map(x=>typeof x==='string'?x:JSON.stringify(x)); }
+      catch { pasteLines=t.split(/[\r\n]+/).map(s=>s.trim()).filter(Boolean); }
+    } else if (t.startsWith('{')) {
+      try { JSON.parse(t); pasteLines=[t]; }
+      catch { pasteLines=t.split(/[\r\n]+/).map(s=>s.trim()).filter(Boolean); }
+    } else {
+      pasteLines=t.split(/[\r\n]+/).map(s=>s.trim()).filter(Boolean);
+    }
+  }
+
+  const queueLines=[], qTagsMap=new Map();
+  for (const q of _bulkQueue) {
+    for (const line of (q.ids||[])) { queueLines.push(line); qTagsMap.set(line,q.tags||[]); }
+  }
+  const allLines=[...pasteLines,...queueLines];
+  if (!allLines.length) { toast('Paste JSON or URLs, then click Import','error'); return; }
+
+  // UI
+  const liveState=document.getElementById('bulk-live-state');
+  const blkLog=document.getElementById('blk-log');
+  const blkPhase=document.getElementById('blk-phase');
+  const blkDot=document.getElementById('blk-dot');
+  const btOk=document.getElementById('bt-ok');
+  const btSkip=document.getElementById('bt-skip');
+  const btFail=document.getElementById('bt-fail');
+  const btProg=document.getElementById('bt-progress');
+  const startBtn=document.getElementById('bulk-start-btn');
+  const stopBtn=document.getElementById('bulk-stop-btn');
+  if(liveState) liveState.style.display='flex';
+  if(blkLog) blkLog.innerHTML='';
+  if(blkPhase) blkPhase.textContent='IMPORTING';
+  if(startBtn) {startBtn.disabled=true;startBtn.style.opacity='.4';startBtn.style.pointerEvents='none';}
+  if(stopBtn) stopBtn.style.display='inline-flex';
+  bulkRunning=true; bulkPaused=false;
+  let ok=0,skipped=0,fail=0;
+
+  const log=(msg,type)=>{
+    if(!blkLog) return;
+    const colors={ok:'#10b981',skip:'#eab308',fail:'#ef4444'};
+    const el=document.createElement('div');
+    el.style.cssText='font-size:11px;color:'+(colors[type]||'var(--muted)')+';padding:1px 0;font-family:monospace;';
+    el.textContent=msg; blkLog.appendChild(el); blkLog.scrollTop=blkLog.scrollHeight;
+  };
+
+  for (let i=0;i<allLines.length;i++) {
+    if (!bulkRunning) break;
+    const line=allLines[i];
+    const extraTags=qTagsMap.get(line)||[];
+    if(btProg) btProg.textContent=(i+1)+' / '+allLines.length;
+    let asset=null;
+    try {
+      if (line.startsWith('{')) {
+        const parsed=JSON.parse(line);
+        if (!parsed.post_link&&!parsed.title) {fail++;log('✕ skip: no title/link — '+line.slice(0,50),'skip');if(btFail)btFail.textContent=fail;continue;}
+        asset=fromJson(parsed,extraTags);
+      } else if (/^https?:\/\//.test(line)) {
+        asset=fromUrl(line,extraTags);
+      } else {
+        skipped++;log('↷ skip: not URL or JSON — '+line.slice(0,50),'skip');if(btSkip)btSkip.textContent=skipped;continue;
+      }
+      const dup=allGames.find(g=>g.post_link&&nu(g.post_link)===nu(asset.post_link));
+      if(dup) {skipped++;log('↷ dup: '+(asset.title||asset.post_link).slice(0,60),'skip');if(btSkip)btSkip.textContent=skipped;continue;}
+      const docRef=db.collection(COLLECTION).doc();
+      asset.id=docRef.id;
+      await docRef.set(asset);
+      ok++;log('✓ '+(asset.title||asset.post_link).slice(0,60),'ok');if(btOk)btOk.textContent=ok;
+    } catch(e) {
+      fail++;log('✕ error: '+e.message+' — '+line.slice(0,40),'fail');if(btFail)btFail.textContent=fail;
+      console.error('[bulk]',e,line);
+    }
+    if(i%20===19) await new Promise(r=>setTimeout(r,50));
+  }
+
+  bulkRunning=false;
+  if(blkPhase) blkPhase.textContent='DONE';
+  if(startBtn){startBtn.disabled=false;startBtn.style.opacity='';startBtn.style.pointerEvents='';}
+  if(stopBtn) stopBtn.style.display='none';
+  invalidateFilterCache(); renderLibrary(); updateNavBadges();
+  if(pasteLines.length) { const ta=document.getElementById('bulk-ids-area'); if(ta) ta.value=''; }
+  toast('Imported '+ok+' asset'+(ok!==1?'s':'')+(skipped?' · '+skipped+' skipped':'')+(fail?' · '+fail+' failed':''),ok>0?'success':'error');
+}
+
+/* ═══════════════════════════════════════════════
+   MISC FIXES
+═══════════════════════════════════════════════ */
+// Remove history.pushState from openAddGameModal area — handled in new function above
+function closeBulkModal() {
+  const bm=document.getElementById('bulk-modal');
+  if(bm){bm.classList.remove('open');bm.style.display='';}
+  const vb=document.getElementById('view-bulk');
+  if(vb&&vb.classList.contains('active')) { document.querySelector('.view.active:not(#view-bulk)')?.dispatchEvent(new Event('activate')); }
+  document.body.style.overflow='';
+}
+
+// addDealLinkRow safe wrapper
+function addDealLinkRow(name='',url='',discount='') {
+  const dlr=document.getElementById('deals-link-rows'); if(!dlr) return;
+  const row=document.createElement('div'); row.className='link-row';
+  row.innerHTML=`<input type="text" placeholder="Partner" value="${name}" style="max-width:110px;" oninput="syncDealLinks()"><input type="url" placeholder="URL" value="${url}" style="flex:2;" oninput="syncDealLinks()"><input type="text" placeholder="-70%" value="${discount}" style="max-width:80px;" oninput="syncDealLinks()"><button class="link-row-del" onclick="this.closest('.link-row').remove();syncDealLinks()"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>`;
+  dlr.appendChild(row);
+}
+
+// WordPress XML fix — empty attachment URL when no image
+function exportToWordPressXML(data) {
+  if (!data||!data.length) { toast('No assets to export','error'); return; }
+  const _x = s => String(s==null?'':s).trim()
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  const now = new Date().toUTCString();
+  const items = data.map(g => {
+    const title = _x(g.title), link = _x(g.post_link||''), author = _x(g.author||'');
+    const cat = _x(g.category||''), price = _x(g.price||'');
+    const image = (g.cover && !g.cover.startsWith('data:')) ? g.cover.trim() : '';
+    const tags = [...(g.userTags||[])].filter(Boolean);
+    const tagEls = tags.map(t =>
+      '      <category domain="post_tag" nicename="'+_x(t.toLowerCase().replace(/\s+/g,'-'))+'"><![CDATA['+t+']]></category>'
+    ).join('\n');
+    const catEl = cat ? '      <category domain="category" nicename="'+_x(cat.toLowerCase().replace(/\s+/g,'-'))+'"><![CDATA['+cat+']]></category>' : '';
+    const body = [];
+    if (image) body.push('<img src="'+image.replace(/"/g,'&quot;')+'" alt="'+title+'" style="max-width:100%;" />');
+    if (g.description) body.push('<p>'+_x(g.description)+'</p>');
+    if (price) body.push('<p><strong>Price:</strong> '+price+'</p>');
+    if (link) body.push('<p><a href="'+link.replace(/"/g,'&quot;')+'">View Asset</a></p>');
+    const lines = [
+      '    <item>',
+      '      <title>'+title+'</title>',
+      '      <link>'+link+'</link>',
+      '      <pubDate>'+now+'</pubDate>',
+      '      <dc:creator><![CDATA['+author+']]></dc:creator>',
+      catEl, tagEls,
+      '      <wp:post_type>post</wp:post_type>',
+      '      <wp:status>publish</wp:status>',
+      '      <wp:attachment_url>'+image+'</wp:attachment_url>',
+      '      <content:encoded><![CDATA[',
+      body.join('\n'),
+      '      ]]></content:encoded>',
+      '    </item>'
+    ];
+    return lines.join('\n');
+  }).join('\n');
+  const xml = [
+    '<?xml version="1.0" encoding="UTF-8" ?>',
+    '<rss version="2.0"',
+    '  xmlns:content="http://purl.org/rss/1.0/modules/content/"',
+    '  xmlns:dc="http://purl.org/dc/elements/1.1/"',
+    '  xmlns:wp="http://wordpress.org/export/1.2/">',
+    '  <channel>',
+    '    <title>AssetScout Export</title>',
+    '    <pubDate>'+now+'</pubDate>',
+    '    <wp:wxr_version>1.2</wp:wxr_version>',
+    items,
+    '  </channel>',
+    '</rss>'
+  ].join('\n');
+  const blob = new Blob([xml], {type:'application/xml;charset=utf-8'});
+  const u = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = u; a.download = 'assets-export.xml'; a.click();
+  URL.revokeObjectURL(u);
+  toast('WordPress XML exported ('+data.length+' assets)','success');
+}
+
+function exportSelectedXML() {
+  exportToWordPressXML(selectedIds&&selectedIds.size>0?allGames.filter(g=>selectedIds.has(g.id)):allGames);
+}
+
+// mergeTaxonomyDefaults: ensure assetCategories is object
+const _origMergeTax = typeof mergeTaxonomyDefaults === 'function' ? mergeTaxonomyDefaults : null;
+
+
+/* ═══════════════════════════════════════════════
    INIT
 ═══════════════════════════════════════════════ */
 function initFirebase() {
-  if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
-  }
+  if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
   db = firebase.firestore();
   storage = firebase.storage();
-  console.log('[Firebase] Firestore initialized, collection:', COLLECTION);
+  console.log("[Firebase] Firestore ready, collection:", COLLECTION);
   showApp();
 }
 
@@ -4869,49 +5303,24 @@ function invalidateFilterCache() {
   window._cachedFiltered = null;
 }
 
-async function _loadRemaining() {
-  // Firestore: data fully loaded via onSnapshot in loadData
-  _adminAllLoaded = true;
-}
+async function _loadRemaining() { _adminAllLoaded = true; }
 
 function loadData() {
-  if (!db) { console.error('[loadData] db not initialized'); return; }
-  if (_dataListenersAttached) return;
+  if (!db || _dataListenersAttached) return;
   _dataListenersAttached = true;
-
-  // Real-time Firestore listener on assets collection
-  db.collection(COLLECTION).onSnapshot(snapshot => {
+  db.collection(COLLECTION).onSnapshot(snap => {
     allGames = [];
-    snapshot.forEach(doc => {
-      const v = doc.data();
-      if (v && v.title) allGames.push({ ...v, id: doc.id });
-    });
-    _rebuildIndex();
-    invalidateFilterCache();
+    snap.forEach(doc => { const v=doc.data(); if(v&&v.title) allGames.push({...v,id:doc.id}); });
+    _rebuildIndex(); invalidateFilterCache();
     updateStats(); renderLibrary(); renderDrafts(); updateNavBadges();
     _adminAllLoaded = true;
-    console.log('[loadData] Firestore loaded', allGames.length, 'assets');
-  }, err => {
-    console.error('[loadData] Firestore error:', err);
-    toast('Failed to load data: ' + err.message, 'error');
-  });
-
-  // Taxonomy listener
+  }, err => { console.error('[loadData]', err); toast('Load failed: '+err.message,'error'); });
   db.collection('meta').doc('taxonomy').onSnapshot(snap => {
     TAXONOMY = snap.exists ? snap.data() : {};
-    mergeTaxonomyDefaults();
-    buildFormSelects();
-    buildAllCheckboxGrids();
-    populateStoresMultiselect();
-    renderTaxonomy();
-    const panel = document.getElementById('admin-filter-panel');
-    if (panel && panel.classList.contains('open')) buildAdminFilterPanel();
-  }, () => {
     mergeTaxonomyDefaults(); buildFormSelects(); buildAllCheckboxGrids();
     populateStoresMultiselect(); renderTaxonomy();
-  });
+  }, () => { mergeTaxonomyDefaults(); });
 }
-
 
 /* ═══════════════════════════════════════════════
    VIEW SWITCHING
@@ -4920,7 +5329,7 @@ const VIEW_META = {
   library:  { title: 'Library',        sub: 'All published assets' },
   drafts:   { title: 'Drafts',         sub: 'Assets pending review' },
   add:      { title: 'Add Asset',      sub: 'Add manually' },
-  bulk:     { title: 'Bulk Import',    sub: 'Import multiple assets via links, JSON from extension, or .txt/.json files' },
+  bulk:     { title: 'Bulk Import',    sub: 'Import multiple assets via store IDs or URLs' },
   taxonomy: { title: 'Taxonomy',       sub: 'Manage filter categories and tags' },
   io:       { title: 'Import / Export',sub: 'Backup and restore your catalog' },
   updates:  { title: 'Recent Updates', sub: 'History of all admin actions' },
@@ -4985,7 +5394,7 @@ async function logAction(actionType, gameTitle, gameId, previousData, newData) {
       changes,
       ts:           Date.now(),
     };
-    await db.collection('activityLog').add(entry).catch(e => console.warn('[logAction]', e));
+    await db.collection('activityLog').add(entry).catch(()=>{});
   } catch(e) { /* silent */ }
 }
 
@@ -5008,7 +5417,7 @@ async function renderActivityLog(append=false) {
   }
   try {
     if (!append || !_updAllEntries.length) {
-      const snap = await db.collection('activityLog').orderBy('ts', 'desc').limit(200).get();
+      const snap = await db.collection('activityLog').orderBy('ts','desc').limit(200).get();
       _updAllEntries = [];
       snap.forEach(child => { const v = child.val(); if (v) _updAllEntries.push({ ...v, _key: child.key }); });
       _updAllEntries.sort((a,b) => (b.ts||0) - (a.ts||0));
@@ -5154,8 +5563,8 @@ function toggleUpdatesView() {
 /* ── Undo a single field ──────────────────────────────── */
 async function undoField(logKey, fieldKey) {
   try {
-    const snap = await db.collection('activityLog').doc(logKey).get();
-    const e = snap.val();
+    const snap = await db.collection('activityLog').add('value');
+    const e = snap.exists ? snap.data() : null;
     if (!e || !e.gameId) { toast('Log entry not found', 'error'); return; }
     const change = (e.changes || []).find(c => c.field === fieldKey);
     if (!change) { toast('Field change not found', 'error'); return; }
@@ -5171,14 +5580,14 @@ async function undoField(logKey, fieldKey) {
       restoreVal = parseInt(change.oldValue) || 0;
     }
 
-    await db.collection(COLLECTION).doc(e.gameId).update({ [fieldKey]: restoreVal });
-    await db.collection(COLLECTION).doc(e.gameId).update({ updatedAt: Date.now() });
+    await db.collection(COLLECTION).doc(e.gameId).update({[fieldKey]:restoreVal});
+    await db.collection(COLLECTION).doc(e.gameId).update({updatedAt:Date.now()});
     toast(`"${change.label}" restored for "${e.gameTitle}"`, 'success');
 
     // Mark the specific change as undone
     const updatedChanges = (e.changes || []).map(c => c.field === fieldKey ? {...c, undone: true} : c);
     const allUndone = updatedChanges.every(c => c.undone);
-    await db.collection('activityLog').doc(logKey).update({
+    await db.collection('activityLog').add({
       changes: updatedChanges,
       ...(allUndone ? { undone: true, undoneAt: Date.now() } : {})
     });
@@ -5191,14 +5600,14 @@ async function undoField(logKey, fieldKey) {
 /* Keep old undoAction for backwards compatibility with older log entries */
 async function undoAction(logKey) {
   try {
-    const snap = await db.collection('activityLog').doc(logKey).get();
-    const e = snap.val();
+    const snap = await db.collection('activityLog').add('value');
+    const e = snap.exists ? snap.data() : null;
     if (!e) { toast('Log entry not found', 'error'); return; }
     if (e.actionType === 'game_updated' && e.previousData && e.gameId) {
       await db.collection(COLLECTION).doc(e.gameId).set(e.previousData);
       toast(`Restored "${e.gameTitle}"`, 'success');
     }
-    await db.collection('activityLog').doc(logKey).update({ undone: true, undoneAt: Date.now() });
+    await db.collection('activityLog').add({ undone: true, undoneAt: Date.now() });
     const row = document.getElementById(`log-entry-${logKey}`);
     if (row) { row.style.opacity = '0.35'; row.querySelector('button')?.remove(); }
   } catch(err) { toast('Undo failed: ' + err.message, 'error'); }
@@ -5207,15 +5616,15 @@ async function undoAction(logKey) {
 
 async function undoDelete(logKey) {
   try {
-    const snap = await db.collection('activityLog').doc(logKey).get();
-    const e = snap.val();
+    const snap = await db.collection('activityLog').add('value');
+    const e = snap.exists ? snap.data() : null;
     if (!e) { toast('Log entry not found', 'error'); return; }
     if (e.actionType !== 'game_deleted') { toast('Not a delete action', 'error'); return; }
     if (!e.previousData || !e.gameId) { toast('No data to restore', 'error'); return; }
     // Restore game with original ID
     await db.collection(COLLECTION).doc(e.gameId).set(e.previousData);
     // Mark log entry as undone
-    await db.collection('activityLog').doc(logKey).update({ undone: true, undoneAt: Date.now() });
+    await db.collection('activityLog').add({ undone: true, undoneAt: Date.now() });
     // Update UI
     const row = document.getElementById(`log-entry-${logKey}`);
     if (row) {
@@ -5237,7 +5646,7 @@ async function undoDelete(logKey) {
 
 async function clearActivityLog() {
   if (!confirm('Clear entire activity log?')) return;
-  const colSnap2 = await db.collection('activityLog').get(); const batch2 = db.batch(); colSnap2.forEach(doc => batch2.delete(doc.ref)); await batch2.commit();
+  const cas=await db.collection('activityLog').get();const cab=db.batch();cas.forEach(d=>cab.delete(d.ref));await cab.commit();
   renderActivityLog();
   toast('Log cleared', 'info');
 }
@@ -5287,6 +5696,31 @@ function renderQualityDashboard() {
         </div>
       </div>
 
+      <!-- B: Mass Replace Links -->
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;color:var(--amber);text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;display:flex;align-items:center;gap:8px;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/></svg>
+          Mass Replace Domain
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+          <div>
+            <div class="field-label" style="margin-bottom:5px;">Old Domain</div>
+            <input type="text" id="mt-old-domain" placeholder="cgtrader.com" style="width:100%;">
+          </div>
+          <div>
+            <div class="field-label" style="margin-bottom:5px;">New Domain</div>
+            <input type="text" id="mt-new-domain" placeholder="fab.com" style="width:100%;">
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <button class="btn btn-secondary" onclick="mtReplaceDomain()">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="margin-right:4px;vertical-align:-1px"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/></svg>
+            Replace Domain
+          </button>
+          <div id="mt-replace-status" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);"></div>
+        </div>
+        <div style="margin-top:10px;font-size:11px;color:var(--dim);">Replaces domain in post_link and all storeLinks across all assets.</div>
+      </div>
 
       <!-- C: Mass Image Fix -->
       <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px;">
@@ -5370,6 +5804,44 @@ async function mtApplyAffiliate() {
   status.textContent = `✓ Updated ${updated} asset${updated!==1?'s':''}${failed?' · '+failed+' failed':''}`;
   status.style.color = updated > 0 ? 'var(--green)' : 'var(--red)';
   toast(`Affiliate applied to ${updated} assets`, updated>0?'success':'error');
+}
+
+async function mtReplaceDomain() {
+  const oldD = document.getElementById('mt-old-domain').value.trim();
+  const newD = document.getElementById('mt-new-domain').value.trim();
+  const status = document.getElementById('mt-replace-status');
+  if (!oldD || !newD) { status.textContent = '✕ Fill both fields'; status.style.color = 'var(--red)'; return; }
+  status.textContent = 'Processing…'; status.style.color = 'var(--muted)';
+  let updated = 0;
+  const matches = allGames.filter(g => {
+    const inLink = g.post_link && g.post_link.includes(oldD);
+    const inStore = g.storeLinks && Object.values(g.storeLinks).some(u => u && u.includes(oldD));
+    return inLink || inStore;
+  });
+  if (!matches.length) { status.textContent = '— No matches for "' + oldD + '"'; status.style.color = 'var(--amber)'; return; }
+  const BATCH = 10;
+  for (let i = 0; i < matches.length; i += BATCH) {
+    const chunk = matches.slice(i, i + BATCH);
+    await Promise.all(chunk.map(async g => {
+      try {
+        const patch = {};
+        if (g.post_link && g.post_link.includes(oldD)) patch.post_link = g.post_link.split(oldD).join(newD);
+        const newSL = { ...(g.storeLinks || {}) };
+        for (const [k, v] of Object.entries(newSL)) if (v && v.includes(oldD)) newSL[k] = v.split(oldD).join(newD);
+        patch.storeLinks = newSL;
+        patch.updatedAt = Date.now();
+        await db.collection(COLLECTION).doc(g.id).update(patch);
+        const idx = _gamesIndex.get(g.id);
+        if (idx !== undefined) allGames[idx] = { ...allGames[idx], ...patch };
+        updated++;
+      } catch(e) { console.error('[mtReplace]', e); }
+    }));
+    if (i + BATCH < matches.length) await new Promise(r => setTimeout(r, 200));
+  }
+  invalidateFilterCache();
+  status.textContent = `✓ Updated ${updated} asset${updated!==1?'s':''}`;
+  status.style.color = 'var(--green)';
+  toast(`Domain replaced in ${updated} assets`, 'success');
 }
 
 async function mtFixImages() {
@@ -5690,7 +6162,6 @@ let adminFilters = {};
 ═══════════════════════════════════════════════ */
 
 function loadGameIntoForm(id) {
-  window._pendingImageFile = null;
   const g = allGames.find(x => x.id === id);
   if (!g) return;
   editingGameId = id;
@@ -5710,14 +6181,10 @@ function loadGameIntoForm(id) {
   set('f-period',      g.period);
   set('f-rating',      g.rating);
   set('f-visual',      g.visual);
-  _populateCategorySelect(g.category || '');
-  // Populate hierarchical category dropdowns
+  if (typeof _populateCategorySelect === 'function') _populateCategorySelect(g.category||'');
   if (typeof _initCatDropdowns === 'function') {
-    _initCatDropdowns(g.category_lvl1||'', g.category_lvl2||'', g.category_lvl3||'', g.category_lvl4||'');
-    if (!g.category_lvl1 && g.category) {
-      const parts = g.category.split('>').map(p => p.trim()).filter(Boolean);
-      _initCatDropdowns(parts[0]||'', parts[1]||'', parts[2]||'', parts[3]||'');
-    }
+    if (g.category_lvl1) _initCatDropdowns(g.category_lvl1,g.category_lvl2,g.category_lvl3,g.category_lvl4);
+    else if (g.category) { const p=g.category.split('>').map(x=>x.trim()); _initCatDropdowns(p[0],p[1],p[2],p[3]); }
   }
   _showImagePreview(g.cover || g.image || '');
   buildFormSelects(g);
@@ -5816,7 +6283,6 @@ async function refetchCurrentGame() {
   }
 }
 function openAddGameModal(id) {
-  window._pendingImageFile = null;
   if (id) {
     editingGameId = id;
     loadGameIntoForm(id);
@@ -5832,11 +6298,14 @@ function openAddGameModal(id) {
   document.body.style.overflow = 'hidden';
 }
 function closeAddGameModal() {
-  window._pendingImageFile = null;
   const m = document.getElementById('add-game-modal');
   m.classList.remove('open');
   m.style.display = '';
   document.body.style.overflow = '';
+  // Go back if we pushed modal state
+  if (history.state && history.state.adminModal) {
+    history.back();
+  }
 }
 
 function openBulkModal() {
@@ -6868,7 +7337,7 @@ function _selectTagSuggestion(inputId, val) {
   if (!(TAXONOMY.userTags||[]).includes(val)) {
     if (!TAXONOMY.userTags) TAXONOMY.userTags = [];
     TAXONOMY.userTags.push(val);
-    if (db) db.collection('meta').doc('taxonomy').update({ userTags: TAXONOMY.userTags }).catch(()=>{});
+    if(db) db.collection('meta').doc('taxonomy').update({userTags:TAXONOMY.userTags}).catch(()=>{});
   }
 }
 
@@ -6953,7 +7422,7 @@ function _promptNewCategory() {
   if (!TAXONOMY.assetCategories) TAXONOMY.assetCategories = [];
   if (!TAXONOMY.assetCategories.includes(cat)) {
     TAXONOMY.assetCategories.push(cat);
-    if (db) db.collection('meta').doc('taxonomy').set(TAXONOMY).catch(e => console.warn('[taxonomy]', e));
+    if (db) db.collection('meta').doc('taxonomy').set(TAXONOMY).catch(()=>{});
   }
   _populateCategorySelect(cat);
 }
@@ -6973,58 +7442,16 @@ function _showImagePreview(url) {
 function _handleImageUpload(input) {
   const file = input.files?.[0];
   if (!file) return;
-  handleImageFile(file);
-  input.value = '';
-}
-
-function _handleImageDrop(event) {
-  event.preventDefault();
-  const zone = document.getElementById('img-drop-zone');
-  if (zone) { zone.style.borderColor = 'var(--border-act)'; zone.style.background = 'var(--surface)'; }
-  const file = event.dataTransfer.files?.[0];
-  if (file && file.type.startsWith('image/')) handleImageFile(file);
-}
-
-function _clearImageInput() {
-  window._pendingImageFile = null;
-  const coverEl = document.getElementById('f-cover');
-  if (coverEl) coverEl.value = '';
-  const prevEl = document.getElementById('f-image-preview');
-  if (prevEl) prevEl.style.display = 'none';
-  const badge = document.getElementById('f-image-upload-badge');
-  if (badge) badge.style.display = 'none';
-}
-
-function handleImageFile(file) {
-  if (!file || !file.type.startsWith('image/')) return;
-  if (file.size > 15 * 1024 * 1024) { toast('Image too large (max 15MB)', 'error'); return; }
+  if (file.size > 2 * 1024 * 1024) { toast('Image too large (max 2MB)', 'error'); return; }
   const reader = new FileReader();
   reader.onload = e => {
-    _showImagePreview(e.target.result);
+    const b64 = e.target.result;
     const coverEl = document.getElementById('f-cover');
-    if (coverEl) coverEl.value = '';
+    if (coverEl) coverEl.value = b64;
+    _showImagePreview(b64);
   };
   reader.readAsDataURL(file);
-  window._pendingImageFile = file;
-  const badge = document.getElementById('f-image-upload-badge');
-  if (badge) badge.style.display = 'block';
-  toast(`Image "${file.name}" ready — will upload on save`, 'success');
 }
-
-// Paste support — user can CTRL+C an image and paste it into the modal
-document.addEventListener('paste', e => {
-  const modal = document.getElementById('add-game-modal');
-  if (!modal || !modal.classList.contains('open')) return;
-  const items = e.clipboardData?.items || [];
-  for (const item of items) {
-    if (item.type.includes('image')) {
-      e.preventDefault();
-      const file = item.getAsFile();
-      if (file) handleImageFile(file);
-      break;
-    }
-  }
-});
 
 // Cover URL input live preview
 (function _attachCoverPreview() {
@@ -7058,7 +7485,7 @@ function _getStoreSources() {
 
 function _saveStoreSources(list) {
   try { localStorage.setItem('assetscout_stores', JSON.stringify(list)); } catch(e) {}
-  if (db) db.collection('meta').doc('storeSources').set({ list }).catch(() => {});
+  if(db) db.collection('meta').doc('storeSources').set({list}).catch(()=>{});
 }
 
 function renderStoreSourcesEditor() {
@@ -7095,340 +7522,165 @@ function _addStoreSource() {
 
 function clearGameForm() {
   editingGameId = null;
-  window._pendingImageFile = null;
-  const ids = ['edit-game-id','f-title','f-post-link','f-author','f-cover',
-    'f-desc','f-overview','f-technical','f-price','f-paste-data'];
-  ids.forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
-  const prEl = document.getElementById('f-price-range'); if (prEl) prEl.value = '';
-  // Image preview
-  const prevEl = document.getElementById('f-image-preview');
-  if (prevEl) prevEl.style.display = 'none';
-  const badge = document.getElementById('f-image-upload-badge');
-  if (badge) badge.style.display = 'none';
-  // Paste status
-  const ps = document.getElementById('paste-data-status'); if (ps) ps.textContent = '';
-  // Tags
-  if (typeof clearPasteField === 'function') clearPasteField('userTags');
-  // Category levels
-  ['f-cat-lvl1','f-cat-lvl2','f-cat-lvl3','f-cat-lvl4'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.innerHTML = '<option value="">—</option>';
+  document.getElementById('edit-game-id').value = '';
+  ['f-title','f-post-link','f-author','f-cover','f-desc','f-overview','f-technical','f-popularity','f-price'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
   });
-  const catEl = document.getElementById('f-category');
-  if (catEl && typeof _populateCategorySelect === 'function') _populateCategorySelect('');
-  // Store links
-  const slr = document.getElementById('store-link-rows');
-  if (slr) { slr.innerHTML = ''; if (typeof addStoreLinkRow === 'function') addStoreLinkRow(); }
-  // Store detection reset
-  const storeDetEl = document.getElementById('f-store-detected');
-  if (storeDetEl) storeDetEl.style.display = 'none';
-  const storePreview = document.getElementById('f-auto-store-preview');
-  if (storePreview) storePreview.textContent = 'Enter Post Link above to auto-detect store';
-  // Save status
+  const prEl = document.getElementById('f-price-range'); if (prEl) prEl.value = '';
+  const catEl = document.getElementById('f-category'); if (catEl) catEl.value = '';
+  const prevEl = document.getElementById('f-image-preview'); if (prevEl) prevEl.style.display = 'none';
+  const eaEl = document.getElementById('f-ea'); if (eaEl) eaEl.value = 'false';
+  const spEl = document.getElementById('f-sponsored'); if (spEl) spEl.value = 'false';
+  const lfEl = document.getElementById('f-lf'); if (lfEl) lfEl.value = 'false';
+  ['f-difficulty','f-length','f-period','f-rating','f-visual'].forEach(id => { const e=document.getElementById(id); if(e) e.value=''; });
+  clearPasteField('userTags');
+  const slr = document.getElementById('store-link-rows'); if (slr) slr.innerHTML = '';
+  const dlr = document.getElementById('deals-link-rows'); if (dlr) dlr.innerHTML = '';
+  addStoreLinkRow(); addDealLinkRow();
+  buildAllCheckboxGrids(); buildFormSelects();
+  _populateCategorySelect('');
   const ss = document.getElementById('save-status'); if (ss) ss.style.display = 'none';
-  // Category dropdowns
-  if (typeof _populateCatLevel === 'function') _populateCatLevel(1, []);
 }
-
-/* ═══════════════════════════════════════════════
-   HIERARCHICAL CATEGORY SYSTEM
-═══════════════════════════════════════════════ */
-function _getCategoryTree() {
-  const cats = TAXONOMY.assetCategories;
-  if (!cats || typeof cats !== 'object' || Array.isArray(cats)) return {};
-  return cats;
-}
-
-function _populateCatLevel(level, parentPath) {
-  const sel = document.getElementById('f-cat-lvl' + level);
-  if (!sel) return;
-  let node = _getCategoryTree();
-  for (const part of parentPath) {
-    if (node && node[part]) node = node[part];
-    else { node = null; break; }
-  }
-  const keys = node ? Object.keys(node) : [];
-  sel.innerHTML = '<option value="">— Level ' + level + ' —</option>' +
-    keys.map(k => `<option value="${k}">${k}</option>`).join('');
-  if (keys.length === 0) sel.style.opacity = '0.4';
-  else sel.style.opacity = '1';
-}
-
-function _initCatDropdowns(v1, v2, v3, v4) {
-  _populateCatLevel(1, []);
-  const s1 = document.getElementById('f-cat-lvl1');
-  if (s1 && v1) { s1.value = v1; _populateCatLevel(2, [v1]); }
-  const s2 = document.getElementById('f-cat-lvl2');
-  if (s2 && v2) { s2.value = v2; _populateCatLevel(3, [v1, v2]); }
-  const s3 = document.getElementById('f-cat-lvl3');
-  if (s3 && v3) { s3.value = v3; _populateCatLevel(4, [v1, v2, v3]); }
-  const s4 = document.getElementById('f-cat-lvl4');
-  if (s4 && v4) s4.value = v4;
-}
-
-function _updateCatLevel(level) {
-  const v1 = document.getElementById('f-cat-lvl1')?.value || '';
-  const v2 = document.getElementById('f-cat-lvl2')?.value || '';
-  const v3 = document.getElementById('f-cat-lvl3')?.value || '';
-  if (level === 2) _populateCatLevel(2, [v1]);
-  if (level === 3) _populateCatLevel(3, [v1, v2]);
-  if (level === 4) _populateCatLevel(4, [v1, v2, v3]);
-  // Clear deeper levels on change
-  if (level <= 2) { const s = document.getElementById('f-cat-lvl2'); if (s) s.value = ''; _populateCatLevel(3, []); _populateCatLevel(4, []); }
-  if (level <= 3) { const s = document.getElementById('f-cat-lvl3'); if (s) s.value = ''; _populateCatLevel(4, []); }
-  if (level <= 4) { const s = document.getElementById('f-cat-lvl4'); if (s) s.value = ''; }
-}
-
-function _parseCategoryBulk() {
-  const input = (document.getElementById('f-cat-bulk-input')?.value || '').trim();
-  if (!input) return;
-  const parts = input.split('>').map(p => p.trim()).filter(Boolean);
-  // Auto-create nodes in taxonomy
-  addCategoryPath(parts);
-  // Fill dropdowns
-  _initCatDropdowns(parts[0], parts[1], parts[2], parts[3]);
-  const el = document.getElementById('f-cat-bulk-input');
-  if (el) el.value = '';
-  toast('Category path set: ' + parts.join(' > '), 'success');
-}
-
-function addCategoryPath(pathArray) {
-  if (!TAXONOMY.assetCategories || typeof TAXONOMY.assetCategories !== 'object' || Array.isArray(TAXONOMY.assetCategories)) {
-    TAXONOMY.assetCategories = {};
-  }
-  let ref = TAXONOMY.assetCategories;
-  for (const p of pathArray) {
-    if (!ref[p]) ref[p] = {};
-    ref = ref[p];
-  }
-  saveTaxonomy();
-}
-
-function _showAddCategoryUI() {
-  const path = prompt('Enter category path (e.g. 3D > Character > Human > Male):');
-  if (!path) return;
-  const parts = path.split('>').map(p => p.trim()).filter(Boolean);
-  if (!parts.length) return;
-  addCategoryPath(parts);
-  _initCatDropdowns(parts[0], parts[1], parts[2], parts[3]);
-  toast('Category added: ' + parts.join(' > '), 'success');
-}
-
-/* ═══════════════════════════════════════════════
-   AUTO STORE DETECTION
-═══════════════════════════════════════════════ */
-function _autoDetectStore(url) {
-  const detectedEl = document.getElementById('f-store-detected');
-  const previewEl = document.getElementById('f-auto-store-preview');
-  if (!url) {
-    if (detectedEl) detectedEl.style.display = 'none';
-    if (previewEl) previewEl.textContent = 'Enter Post Link above to auto-detect store';
-    return;
-  }
-  let storeName = '';
-  if (url.includes('assetstore.unity.com') || url.includes('unity.com/packages')) storeName = 'Unity Asset Store';
-  else if (url.includes('cgtrader.com')) storeName = 'CGTrader';
-  else if (url.includes('fab.com/listings')) storeName = 'Fab';
-  else if (url.includes('unrealengine.com/marketplace') || url.includes('fab.com')) storeName = 'Fab / Unreal Marketplace';
-  else if (url.includes('turbosquid.com')) storeName = 'TurboSquid';
-  else if (url.includes('sketchfab.com/3d-models')) storeName = 'Sketchfab';
-  else if (url.includes('artstation.com/marketplace')) storeName = 'ArtStation';
-
-  if (detectedEl) {
-    if (storeName) {
-      detectedEl.textContent = '✓ Detected: ' + storeName;
-      detectedEl.style.display = 'block';
-    } else {
-      detectedEl.style.display = 'none';
-    }
-  }
-  if (previewEl) {
-    previewEl.innerHTML = storeName
-      ? `<span style="color:var(--green);">✓ Auto: <strong>${storeName}</strong> → ${url.slice(0, 60)}${url.length > 60 ? '…' : ''}</span>`
-      : 'Custom link — will be saved as-is';
-  }
-}
-
-/* ═══════════════════════════════════════════════
-   APPLY PASTED DATA (Extension integration)
-═══════════════════════════════════════════════ */
-function applyPastedData() {
-  const raw = (document.getElementById('f-paste-data')?.value || '').trim();
-  const status = document.getElementById('paste-data-status');
-  if (!raw) { if (status) { status.textContent = '✕ Nothing to parse'; status.style.color = 'var(--red)'; } return; }
-  let parsed;
-  try { parsed = JSON.parse(raw); } catch(e) {
-    if (status) { status.textContent = '✕ Invalid JSON'; status.style.color = 'var(--red)'; }
-    return;
-  }
-  const sv = (id, val) => { const el = document.getElementById(id); if (el && val != null && val !== '') el.value = val; };
-  if (parsed.title)       sv('f-title', parsed.title);
-  if (parsed.post_link) { sv('f-post-link', parsed.post_link); _autoDetectStore(parsed.post_link); }
-  if (parsed.price)       sv('f-price', parsed.price);
-  if (parsed.price_range) sv('f-price-range', parsed.price_range);
-  else if (parsed.price)  sv('f-price-range', _calcPriceRange(parsed.price));
-  if (parsed.author)      sv('f-author', parsed.author);
-  if (parsed.description) sv('f-desc', parsed.description);
-  if (parsed.overview)    sv('f-overview', parsed.overview);
-  if (parsed.technicalDetails || parsed.technical_details)
-    sv('f-technical', parsed.technicalDetails || parsed.technical_details);
-  const imgUrl = parsed.cover || parsed.image || '';
-  if (imgUrl && !imgUrl.startsWith('data:')) { sv('f-cover', imgUrl); _showImagePreview(imgUrl); }
-  // Category path
-  if (parsed.category) {
-    const parts = parsed.category.split('>').map(p => p.trim()).filter(Boolean);
-    addCategoryPath(parts);
-    _initCatDropdowns(parts[0], parts[1], parts[2], parts[3]);
-    sv('f-category', parts[0] || parsed.category);
-  }
-  // Tags
-  if (parsed.author && typeof addPasteTag === 'function') {
-    const ex = typeof getPasteValues === 'function' ? getPasteValues('userTags', '') : [];
-    if (!ex.includes(parsed.author)) addPasteTag('userTags', parsed.author, '');
-  }
-  if (Array.isArray(parsed.tags) && typeof addPasteTag === 'function')
-    parsed.tags.forEach(t => { if (t) addPasteTag('userTags', t, ''); });
-  if (status) { status.textContent = '✓ Fields filled'; status.style.color = 'var(--green)'; setTimeout(() => { status.textContent = ''; }, 3000); }
-}
-
-/* Update _initCatDropdowns call after taxonomy loads */
-const _origBuildFormSelects = typeof buildFormSelects === 'function' ? buildFormSelects : null;
-
 
 let _saving = false;
 async function saveGame() {
   if (_saving) return;
-  const title = (document.getElementById('f-title')?.value || '').trim();
-  const postLink = (document.getElementById('f-post-link')?.value || '').trim();
-  if (!title) { toast('Title is required', 'error'); return; }
-  if (!postLink) { toast('Post Link is required', 'error'); return; }
-
-  console.log('[saveGame] Starting save for:', title);
+  const title    = (document.getElementById('f-title')?.value||'').trim();
+  const postLink = (document.getElementById('f-post-link')?.value||'').trim();
+  if (!title)    { toast('Title is required','error'); return; }
+  if (!postLink) { toast('Post Link is required','error'); return; }
 
   const isNew = !editingGameId;
   if (isNew) {
-    const _normUrl = u => (u||'').toLowerCase().trim().replace(/\/+$/, '');
-    const normLink = _normUrl(postLink);
-    const dup = allGames.find(g => g.post_link && _normUrl(g.post_link) === normLink);
-    if (dup) { toast(`Duplicate: post_link already exists in "${dup.title}"`, 'error'); return; }
+    const nu = u=>(u||'').toLowerCase().trim().replace(/\/+$/,'');
+    const dup = allGames.find(g=>g.post_link && nu(g.post_link)===nu(postLink));
+    if (dup) { toast(`Duplicate: "${dup.title}" already exists`,'error'); return; }
   }
 
   _saving = true;
   const btn = document.querySelector('#add-game-modal-body .btn-primary[onclick*="saveGame"]');
-  if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+  if (btn) { btn.disabled=true; btn.textContent='Saving…'; }
 
   try {
-    // ── IMAGE: Upload file to Firebase Storage → store URL only (never base64)
-    let coverUrl = (document.getElementById('f-cover')?.value || '').trim();
-    if (coverUrl.startsWith('data:')) coverUrl = ''; // reject base64
+    // ── IMAGE ──────────────────────────────────────────────────
+    let coverUrl = (document.getElementById('f-cover')?.value||'').trim();
+    if (coverUrl.startsWith('data:')) coverUrl = ''; // never store large base64
+
     if (window._pendingImageFile) {
-      try {
-        toast('Uploading image…', 'info');
-        const file = window._pendingImageFile;
-        const storageRef = storage.ref('covers/' + Date.now() + '_' + file.name.replace(/[^a-zA-Z0-9._-]/g,'_'));
-        const uploadTask = await storageRef.put(file);
-        coverUrl = await uploadTask.ref.getDownloadURL();
-        window._pendingImageFile = null;
-        // Update the cover input so it shows the real URL
-        const coverInput = document.getElementById('f-cover');
-        if (coverInput) coverInput.value = coverUrl;
-        // Update preview to use the real URL (not base64)
-        _showImagePreview(coverUrl);
-        console.log('[saveGame] Image uploaded to Storage:', coverUrl);
-      } catch(imgErr) {
-        console.error('[saveGame] Image upload failed:', imgErr);
-        toast('Image upload failed — asset saved without image. ' + imgErr.message, 'error');
-        coverUrl = '';
+      const file = window._pendingImageFile;
+      let done = false;
+      // Try Firebase Storage
+      if (storage) {
+        try {
+          toast('Uploading image…','info');
+          const fname = Date.now()+'_'+file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
+          const snap  = await storage.ref('covers/'+fname).put(file);
+          coverUrl    = await snap.ref.getDownloadURL();
+          done = true;
+          console.log('[saveGame] Storage upload OK:', coverUrl);
+        } catch(se) {
+          console.warn('[saveGame] Storage failed:', se.message);
+        }
       }
+      // Fallback: base64 for small files (≤800KB)
+      if (!done) {
+        if (file.size <= 800*1024) {
+          coverUrl = await new Promise(res=>{
+            const r=new FileReader();
+            r.onload=e=>res(e.target.result);
+            r.onerror=()=>res('');
+            r.readAsDataURL(file);
+          });
+          console.log('[saveGame] base64 fallback, size:', Math.round(coverUrl.length/1024)+'KB');
+        } else {
+          toast('Image too large for offline storage (max 800KB) — use a URL instead','error');
+        }
+      }
+      window._pendingImageFile = null;
     }
 
-    syncStoreLinks();
-    const rawPrice = (document.getElementById('f-price')?.value || '').trim();
-    const priceRange = (document.getElementById('f-price-range')?.value) || _calcPriceRange(rawPrice);
+    // ── STORE LINKS ────────────────────────────────────────────
+    const autoSL = {};
+    if (postLink.includes('assetstore.unity.com')) autoSL['Unity Asset Store'] = postLink;
+    else if (postLink.includes('cgtrader.com'))    autoSL['CGTrader'] = postLink;
+    else if (postLink.includes('fab.com'))         autoSL['Fab'] = postLink;
+    else if (postLink.includes('turbosquid.com'))  autoSL['TurboSquid'] = postLink;
+    else if (postLink.includes('sketchfab.com'))   autoSL['Sketchfab'] = postLink;
+    else if (postLink.includes('unrealengine.com'))autoSL['Unreal Marketplace'] = postLink;
+    else if (postLink.includes('artstation.com'))  autoSL['ArtStation'] = postLink;
+    let manualSL = {};
+    try {
+      if (typeof syncStoreLinks === 'function') syncStoreLinks();
+      const slEl = document.getElementById('f-storelinks');
+      if (slEl && slEl.value) manualSL = JSON.parse(slEl.value)||{};
+    } catch(e) {}
+    const storeLinks = {...autoSL, ...manualSL};
 
-    // Auto-detect store from post_link
-    const autoStoreLinks = {};
-    if (postLink.includes('assetstore.unity.com') || postLink.includes('unity.com/packages')) {
-      autoStoreLinks['Unity Asset Store'] = postLink;
-    } else if (postLink.includes('cgtrader.com')) {
-      autoStoreLinks['CGTrader'] = postLink;
-    } else if (postLink.includes('fab.com')) {
-      autoStoreLinks['Fab'] = postLink;
-    } else if (postLink.includes('unrealengine.com') || postLink.includes('unrealengine.com/marketplace')) {
-      autoStoreLinks['Unreal Marketplace'] = postLink;
-    } else if (postLink.includes('turbosquid.com')) {
-      autoStoreLinks['TurboSquid'] = postLink;
-    } else if (postLink.includes('sketchfab.com')) {
-      autoStoreLinks['Sketchfab'] = postLink;
-    } else if (postLink.includes('artstation.com')) {
-      autoStoreLinks['ArtStation'] = postLink;
-    }
-    const manualStoreLinks = (() => { try { const el = document.getElementById('f-storelinks'); return JSON.parse((el?.value)||'{}'); } catch { return {}; } })();
-    const storeLinks = { ...autoStoreLinks, ...manualStoreLinks };
+    // ── CATEGORY LEVELS ────────────────────────────────────────
+    const lvl1 = (document.getElementById('f-cat-lvl1')?.value||'').trim();
+    const lvl2 = (document.getElementById('f-cat-lvl2')?.value||'').trim();
+    const lvl3 = (document.getElementById('f-cat-lvl3')?.value||'').trim();
+    const lvl4 = (document.getElementById('f-cat-lvl4')?.value||'').trim();
+    const catPath = [lvl1,lvl2,lvl3,lvl4].filter(Boolean).join(' > ');
 
-    // Category levels
-    const catLvl1 = (document.getElementById('f-cat-lvl1')?.value || '').trim();
-    const catLvl2 = (document.getElementById('f-cat-lvl2')?.value || '').trim();
-    const catLvl3 = (document.getElementById('f-cat-lvl3')?.value || '').trim();
-    const catLvl4 = (document.getElementById('f-cat-lvl4')?.value || '').trim();
-    const categoryPath = [catLvl1, catLvl2, catLvl3, catLvl4].filter(Boolean).join(' > ');
-
-    const gameData = {
+    // ── DATA ───────────────────────────────────────────────────
+    const rawPrice  = (document.getElementById('f-price')?.value||'').trim();
+    const priceRange= document.getElementById('f-price-range')?.value || _calcPriceRange(rawPrice);
+    const gameData  = {
       title,
       post_link:        postLink,
-      author:           (document.getElementById('f-author')?.value || '').trim(),
-      category:         categoryPath || (document.getElementById('f-category')?.value || ''),
-      category_lvl1:    catLvl1,
-      category_lvl2:    catLvl2,
-      category_lvl3:    catLvl3,
-      category_lvl4:    catLvl4,
+      author:           (document.getElementById('f-author')?.value||'').trim(),
+      category:         catPath || (document.getElementById('f-category')?.value||''),
+      category_lvl1:    lvl1, category_lvl2: lvl2,
+      category_lvl3:    lvl3, category_lvl4: lvl4,
       cover:            coverUrl,
       image:            coverUrl,
-      description:      (document.getElementById('f-desc')?.value || '').trim(),
-      overview:         (document.getElementById('f-overview')?.value || '').trim(),
-      technicalDetails: (document.getElementById('f-technical')?.value || '').trim(),
-      userTags:         getPasteValues('userTags'),
+      description:      (document.getElementById('f-desc')?.value||'').trim(),
+      overview:         (document.getElementById('f-overview')?.value||'').trim(),
+      technicalDetails: (document.getElementById('f-technical')?.value||'').trim(),
+      userTags:         typeof getPasteValues==='function' ? getPasteValues('userTags') : [],
       price:            rawPrice,
       price_range:      priceRange,
       storeLinks,
+      deals:            [],
       status:           'published',
     };
 
-    const docId = editingGameId || db.collection(COLLECTION).doc().id;
-    const existing = isNew ? null : allGames.find(g => g.id === docId);
+    // Reject base64 > 900KB (Firestore 1MB doc limit)
+    if (gameData.cover && gameData.cover.startsWith('data:') && gameData.cover.length > 900000) {
+      toast('Image too large for database — saved without image','error');
+      gameData.cover = ''; gameData.image = '';
+    }
+
+    const docId   = editingGameId || db.collection(COLLECTION).doc().id;
+    const existing= isNew ? null : allGames.find(g=>g.id===docId);
     const finalData = {
-      ...(existing || {}),
-      ...gameData,
-      id: docId,
+      ...(existing||{}), ...gameData, id: docId,
       createdAt: existing?.createdAt || Date.now(),
       updatedAt: Date.now(),
     };
 
-    console.log('[saveGame] Writing to Firestore doc:', docId);
+    console.log('[saveGame] Writing:', docId, '| cover:', finalData.cover ? (finalData.cover.startsWith('data:') ? 'base64 '+Math.round(finalData.cover.length/1024)+'KB' : finalData.cover.slice(0,60)) : 'none');
     await db.collection(COLLECTION).doc(docId).set(finalData);
-    console.log('[saveGame] Saved successfully:', docId);
-    toast(`"${title}" saved!`, 'success');
+    console.log('[saveGame] Success:', docId);
 
-    try {
-      await logAction(isNew ? 'game_added' : 'game_updated', title, docId,
-        isNew ? null : (existing || null), finalData);
-    } catch(logErr) { console.warn('[Firebase] logAction failed:', logErr); }
-
+    try { await logAction(isNew?'game_added':'game_updated',title,docId,existing,finalData); } catch(e) {}
     _sbUpsert(finalData);
 
+    // Update preview with final URL
+    if (finalData.cover) _showImagePreview(finalData.cover);
+
+    toast(`"${title}" saved!`+(finalData.cover?'':' (no image)'),'success');
     const ss = document.getElementById('save-status');
-    if (ss) {
-      ss.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:5px;vertical-align:-2px"><polyline points="20 6 9 17 4 12"/></svg>Saved successfully';
-      ss.style.display = 'block';
-      setTimeout(() => { ss.style.display = 'none'; }, 3000);
-    }
+    if (ss) { ss.innerHTML='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg> Saved'; ss.style.display='block'; setTimeout(()=>ss.style.display='none',3000); }
     closeAddGameModal();
-  } catch(e) {
-    console.error('[Firebase] saveGame write failed:', e);
-    toast('Save failed: ' + (e.message || 'Firebase write error'), 'error');
+
+  } catch(err) {
+    console.error('[saveGame] FAILED:', err);
+    toast('Save failed: '+(err.message||err),'error');
   } finally {
     _saving = false;
-    if (btn) { btn.disabled = false; btn.textContent = 'Save Asset'; }
+    if (btn) { btn.disabled=false; btn.textContent='Save Asset'; }
   }
 }
 
@@ -8054,21 +8306,12 @@ function bulkLoadFile(input) {
   files.forEach(file => {
     const reader = new FileReader();
     reader.onload = e => {
-      const text = e.target.result.trim();
-      let items = [];
-      let isJson = false;
-      if (text.startsWith('[')) {
-        try { const arr = JSON.parse(text); items = arr.map(x => typeof x === 'string' ? x : JSON.stringify(x)); isJson = true; }
-        catch { items = text.split(/[\n\r]+/).map(s=>s.trim()).filter(Boolean); }
-      } else {
-        items = text.split(/[\n\r]+/).map(s=>s.trim()).filter(Boolean);
-        isJson = items.length > 0 && items.some(l => l.startsWith('{'));
-      }
-      _bulkQueue.push({ name: file.name, ids: items, tags: [], isJson });
+      const ids = e.target.result.split(/[\r\n]+/).map(s=>s.trim()).filter(Boolean);
+      _bulkQueue.push({ name: file.name, ids, tags: [] });
       loaded++;
       if (loaded === files.length) {
         _bulkQueueRender();
-        toast(`${files.length} file${files.length>1?'s':''} added (${items.length} items)`, 'success');
+        toast(`${files.length} file${files.length>1?'s':''} added to queue`, 'success');
       }
     };
     reader.readAsText(file);
@@ -8085,7 +8328,7 @@ function handleBulkDrop(e) {
   files.forEach(file => {
     const reader = new FileReader();
     reader.onload = ev => {
-      const ids = ev.target.result.split(/[\n\r]+/).map(s=>s.trim()).filter(Boolean);
+      const ids = ev.target.result.split(/[\r\n]+/).map(s=>s.trim()).filter(Boolean);
       _bulkQueue.push({ name: file.name, ids, tags: [] });
       loaded++;
       if (loaded === files.length) { _bulkQueueRender(); toast(`${files.length} file${files.length>1?'s':''} queued`, 'success'); }
@@ -8132,17 +8375,17 @@ function _renderFileEntries() {
       <div style="display:flex;align-items:center;gap:6px;">
         ${dot}
         <span style="font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${entry.name || 'No file selected'}</span>
-        ${entry.ids.length ? `<span style="font-size:10px;color:var(--dim);font-family:'JetBrains Mono',monospace;">${entry.ids.length.toLocaleString()} items</span>` : ''}
+        ${entry.ids.length ? `<span style="font-size:10px;color:var(--dim);font-family:'JetBrains Mono',monospace;">${entry.ids.length.toLocaleString()} IDs</span>` : ''}
         <label style="font-size:10px;padding:3px 8px;border-radius:5px;border:1px dashed rgba(0,212,255,0.3);color:var(--neon);cursor:pointer;flex-shrink:0;">
           ${entry.name ? 'Change' : 'Choose file'}
-          <input type="file" accept=".txt,.csv,.json,.ndjson" style="display:none;" onchange="_feLoadFile(${entry.id},this)">
+          <input type="file" accept=".txt,.csv" style="display:none;" onchange="_feLoadFile(${entry.id},this)">
         </label>
         ${_fileEntries.length > 1 ? `<button onclick="_removeFileEntry(${entry.id})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:0 2px;flex-shrink:0;">×</button>` : ''}
       </div>
       <div style="display:flex;flex-wrap:wrap;gap:3px;align-items:center;">
         ${pills}
         <div style="position:relative;display:inline-block;">
-          <input class="bulk-tag-input-field" id="fe-tag-in-${entry.id}" type="text" placeholder="+ Tag or Category…"
+          <input class="bulk-tag-input-field" id="fe-tag-in-${entry.id}" type="text" placeholder="+ Tag…"
             onfocus="_feShowDrop(${entry.id},this)"
             oninput="_feFilterDrop(${entry.id},this.value)"
             onkeydown="if(event.key==='Enter'){_feAddTagFromInput(${entry.id},this);}">
@@ -8159,23 +8402,9 @@ function _feLoadFile(id, input) {
   const entry = _fileEntries.find(e => e.id === id); if (!entry) return;
   const reader = new FileReader();
   reader.onload = ev => {
-    const text = ev.target.result.trim();
-    let items = [];
-    // Try to parse as JSON array first
-    if (text.startsWith('[')) {
-      try {
-        const arr = JSON.parse(text);
-        items = arr.map(x => typeof x === 'string' ? x : JSON.stringify(x));
-        entry.isJson = true;
-      } catch(e) { items = text.split(/[\n\r]+/).map(s => s.trim()).filter(Boolean); }
-    } else {
-      // NDJSON or plain links
-      items = text.split(/[\n\r]+/).map(s => s.trim()).filter(Boolean);
-      entry.isJson = items.some(l => l.startsWith('{'));
-    }
-    entry.file = file; entry.name = file.name; entry.ids = items;
+    const ids = ev.target.result.split(/[\r\n]+/).map(s => s.trim()).filter(Boolean);
+    entry.file = file; entry.name = file.name; entry.ids = ids;
     _renderFileEntries();
-    toast(`Loaded ${items.length} items from ${file.name}`, 'success');
   };
   reader.readAsText(file);
 }
@@ -8198,17 +8427,7 @@ function _feToggleDrop(id) {
 function _feShowDrop(id, input) { _feFilterDrop(id, input ? input.value : ''); }
 function _feFilterDrop(id, query) {
   const drop = document.getElementById('fe-drop-' + id); if (!drop) return;
-  // Build flat list of all category paths + tags for bulk tagging
-  const catPaths = [];
-  function _flattenCats(obj, prefix) {
-    for (const k of Object.keys(obj||{})) {
-      const path = prefix ? prefix + ' > ' + k : k;
-      catPaths.push(path);
-      _flattenCats(obj[k], path);
-    }
-  }
-  _flattenCats(TAXONOMY.assetCategories || {}, '');
-  const all = [...new Set([...catPaths, ...(TAXONOMY.userTags||[]),...(TAXONOMY.themes||[])])];
+  const all = [...new Set([...(TAXONOMY.userTags||[]),...(TAXONOMY.genres||[]),...(TAXONOMY.themes||[])])];
   const q = (query||'').toLowerCase();
   const filtered = q ? all.filter(t => t.toLowerCase().includes(q)).slice(0,20) : all.slice(0,20);
   if (!filtered.length) { drop.style.display = 'none'; return; }
@@ -8225,11 +8444,11 @@ document.addEventListener('click', e => {
 });
 
 function _syncFileEntriesToQueue() {
-  _bulkQueue = _fileEntries
-    .filter(e => e.ids && e.ids.length)
-    .map(e => ({ name: e.name, ids: e.ids, tags: e.tags, isJson: !!e.isJson }));
+  const entries = _fileEntries.filter(e => e.ids.length > 0);
+  if (entries.length) {
+    _bulkQueue = entries.map(e => ({ name: e.name, ids: e.ids, tags: e.tags }));
+  }
 }
-
 
 
 // ── Global Bulk Tags ─────────────────────────────────────────────────────
@@ -8293,199 +8512,263 @@ document.addEventListener('click', e => {
 
 async function startBulkFetch() {
   _syncFileEntriesToQueue();
-  const pasteRaw = (document.getElementById('bulk-ids-area')?.value || '').trim();
+  // ── Build source IDs: queue files + paste + session resume ──
+  const pasteRaw = document.getElementById('bulk-ids-area').value.trim();
+  const pasteIds = pasteRaw ? pasteRaw.split(/[\r\n]+/).map(s=>s.trim()).filter(Boolean) : [];
 
-  /* ── helper: build asset object from a parsed JSON object ── */
-  function _buildAssetFromJson(parsed, extraTags) {
-    const imgUrl = (parsed.cover||parsed.image||'').startsWith('data:') ? '' : (parsed.cover||parsed.image||'');
-    const cat = (parsed.category||'').trim();
-    const catParts = cat ? cat.split('>').map(p=>p.trim()).filter(Boolean) : [];
-    if (catParts.length && typeof addCategoryPath === 'function') addCategoryPath(catParts);
-    let sl = parsed.storeLinks || {};
-    const pl = (parsed.post_link||'').trim();
-    if (pl && !Object.keys(sl).length) {
-      if (pl.includes('assetstore.unity.com')) sl = {'Unity Asset Store': pl};
-      else if (pl.includes('cgtrader.com'))    sl = {'CGTrader': pl};
-      else if (pl.includes('fab.com'))          sl = {'Fab': pl};
-      else if (pl.includes('unrealengine.com')) sl = {'Unreal Marketplace': pl};
-      else if (pl.includes('turbosquid.com'))   sl = {'TurboSquid': pl};
-      else if (pl.includes('sketchfab.com'))    sl = {'Sketchfab': pl};
-    }
-    return {
-      title:            parsed.title || pl || '',
-      post_link:        pl,
-      author:           parsed.author || '',
-      price:            parsed.price || '',
-      price_range:      parsed.price_range || (parsed.price ? _calcPriceRange(parsed.price) : ''),
-      category:         cat,
-      category_lvl1:    catParts[0]||'', category_lvl2: catParts[1]||'',
-      category_lvl3:    catParts[2]||'', category_lvl4: catParts[3]||'',
-      cover:            imgUrl, image: imgUrl,
-      description:      parsed.description || '',
-      overview:         parsed.overview || '',
-      technicalDetails: parsed.technicalDetails || parsed.technical_details || '',
-      userTags:         [...(Array.isArray(parsed.tags)?parsed.tags:[]), ...(extraTags||[])],
-      storeLinks:       sl,
-      status:           'published',
-      createdAt:        Date.now(),
-      updatedAt:        Date.now(),
-    };
-  }
+  let allSourceIds = [];
+  let resumeFrom   = 0;
 
-  /* ── helper: build asset from a plain URL ── */
-  function _buildAssetFromUrl(url, extraTags) {
-    let sn = '';
-    if (url.includes('assetstore.unity.com')) sn = 'Unity Asset Store';
-    else if (url.includes('cgtrader.com'))    sn = 'CGTrader';
-    else if (url.includes('fab.com'))          sn = 'Fab';
-    else if (url.includes('unrealengine.com')) sn = 'Unreal Marketplace';
-    else if (url.includes('turbosquid.com'))   sn = 'TurboSquid';
-    else if (url.includes('sketchfab.com'))    sn = 'Sketchfab';
-    return {
-      title: url, post_link: url, author: '', price: '', price_range: '', category: '',
-      cover: '', image: '', description: '', overview: '', technicalDetails: '',
-      userTags: [...(extraTags||[])], storeLinks: sn ? {[sn]: url} : {},
-      status: 'published', createdAt: Date.now(), updatedAt: Date.now(),
-    };
-  }
+  // Check for saved session
+  const savedSession = _bulkLoadSession();
+  if (savedSession && savedSession.remaining && savedSession.remaining.length > 0) {
+    const doResume = confirm(`Saved session found: ${savedSession.done.toLocaleString()} done, ${savedSession.remaining.length.toLocaleString()} remaining.
 
-  /* ── helper: save one asset with dedup check ── */
-  const _normUrl = u => (u||'').toLowerCase().trim().replace(/\/+$/, '');
-  async function _saveAsset(asset) {
-    if (asset.post_link && allGames.some(g => _normUrl(g.post_link) === _normUrl(asset.post_link))) return 'skip';
-    const docRef = db.collection(COLLECTION).doc();
-    asset.id = docRef.id;
-    await docRef.set(asset);
-    return 'ok';
-  }
-
-  /* ── Collect all lines to process ── */
-  // From paste textarea
-  const pasteLines = pasteRaw ? pasteRaw.split(/[\r\n]+/).map(s=>s.trim()).filter(Boolean) : [];
-  // From file queue entries
-  const queueLines = [];
-  const queueTagsMap = new Map(); // line -> extraTags
-  for (const q of _bulkQueue) {
-    for (const line of (q.ids||[])) {
-      queueLines.push(line);
-      queueTagsMap.set(line, q.tags || []);
+Resume where you left off?`);
+    if (doResume) {
+      allSourceIds = savedSession.remaining;
+      resumeFrom   = savedSession.done;
+    } else {
+      _bulkClearSession();
     }
   }
 
-  const allLines = [...pasteLines, ...queueLines];
-  if (!allLines.length) {
-    toast('Add files or paste links / JSON to import', 'error');
-    return;
+  if (!allSourceIds.length) {
+    if (_bulkQueue.length > 0) allSourceIds = _bulkQueue.flatMap(q => q.ids);
+    if (pasteIds.length)       allSourceIds = [...allSourceIds, ...pasteIds];
   }
 
-  // ── Show live UI ──
+  if (!allSourceIds.length) { toast('Enter Steam IDs or add files to queue first', 'error'); return; }
+
+  bulkRunning = true;
+  bulkPaused  = false;
+
+  const startBtn   = document.getElementById('bulk-start-btn');
+  const stopBtn    = document.getElementById('bulk-stop-btn');
+  const pauseBtn   = document.getElementById('bulk-pause-btn');
+  const progWrap   = document.getElementById('bulk-progress-wrap');
+  const progBar    = document.getElementById('bulk-progress-bar');
+  const progText   = document.getElementById('bulk-progress-text');
+  const summaryEl  = document.getElementById('bulk-summary-text');
+  const btGame     = document.getElementById('bt-game');
+  const btOk       = document.getElementById('bt-ok');
+  const btSkip     = document.getElementById('bt-skip');
+  const btFail     = document.getElementById('bt-fail');
+  const btProgress = document.getElementById('bt-progress');
+  const btBar     = document.getElementById('bt-bar');
+
+  if (!startBtn) { toast('Open Bulk modal first', 'error'); bulkRunning = false; return; }
+
+  // define live-state elements early
   const inputState = document.getElementById('bulk-input-state');
   const liveState  = document.getElementById('bulk-live-state');
   const blkLog     = document.getElementById('blk-log');
   const blkPhase   = document.getElementById('blk-phase');
   const blkDot     = document.getElementById('blk-dot');
-  const btOk       = document.getElementById('bt-ok');
-  const btSkip     = document.getElementById('bt-skip');
-  const btFail     = document.getElementById('bt-fail');
-  const btProgress = document.getElementById('bt-progress');
-  const startBtn   = document.getElementById('bulk-start-btn');
-  const stopBtn    = document.getElementById('bulk-stop-btn');
-  const pauseBtn   = document.getElementById('bulk-pause-btn');
+  const btRate     = document.getElementById('bt-rate');
 
-  if (liveState) liveState.style.display = 'flex';
-  if (blkLog)    blkLog.innerHTML = '';
-  if (blkPhase)  blkPhase.textContent = 'IMPORTING';
-  if (blkDot)    blkDot.className = 'blk-dot';
-  if (startBtn)  { startBtn.disabled = true; startBtn.style.opacity = '.4'; startBtn.style.pointerEvents = 'none'; }
-  if (stopBtn)   stopBtn.style.display = 'inline-flex';
-  if (pauseBtn)  pauseBtn.style.display = 'none'; // no pause needed for direct import
+  // switch to live state — keep input visible above
+  if (liveState)  liveState.style.display  = 'flex';
+  if (blkLog)     blkLog.innerHTML = '';
+  if (startBtn)   startBtn.style.disabled = true; startBtn.style.opacity = '.4'; startBtn.style.pointerEvents = 'none';
+  if (stopBtn)   stopBtn.style.display  = 'inline-flex';
+  if (pauseBtn)  pauseBtn.style.display = 'inline-flex';
+  if (progWrap)  progWrap.style.display = 'block';
+  if (progBar)   progBar.style.width    = '0%';
+  if (btOk)      btOk.textContent   = '0';
+  if (btSkip)    btSkip.textContent = '0';
+  if (btFail)    btFail.textContent = '0';
 
-  bulkRunning = true;
-  bulkPaused  = false;
+  // ── PRE-SCAN: fetch fresh data from Firebase then build Sets ──
+  if (blkPhase) blkPhase.textContent = 'SCANNING';
+  if (btGame) { btGame.textContent = 'Loading fresh data from Firebase…'; btGame.style.color = 'var(--neon)'; }
+  await new Promise(r => setTimeout(r, 50));
 
-  let ok = 0, skipped = 0, fail = 0;
-  const total = allLines.length;
+  // Use in-memory allGames (real-time listener keeps it current) — instant, no network call
+  if (btGame) { btGame.textContent = `Building index from ${allGames.length} games…`; btGame.style.color = 'var(--neon)'; }
+  await new Promise(r => setTimeout(r, 30));
 
-  const _log = (msg, type) => {
-    if (!blkLog) return;
-    const colors = { ok:'#10b981', skip:'#eab308', fail:'#ef4444', info:'var(--muted)' };
-    const el = document.createElement('div');
-    el.style.cssText = `font-size:11px;color:${colors[type]||colors.info};padding:1px 0;font-family:'JetBrains Mono',monospace;`;
-    el.textContent = msg;
-    blkLog.appendChild(el);
-    blkLog.scrollTop = blkLog.scrollHeight;
-  };
-
-  for (let i = 0; i < allLines.length; i++) {
-    if (!bulkRunning) break;
-    while (bulkPaused) await new Promise(r => setTimeout(r, 300));
-
-    const line = allLines[i];
-    const extraTags = queueTagsMap.get(line) || [];
-    if (btProgress) btProgress.textContent = `${i+1} / ${total}`;
-
-    let asset = null;
-    try {
-      if (line.startsWith('{')) {
-        // JSON line (from extension NDJSON)
-        const parsed = JSON.parse(line);
-        if (!parsed.post_link && !parsed.title) { fail++; _log('✕ skip: no title/link — ' + line.slice(0,50), 'skip'); if (btFail) btFail.textContent = fail; continue; }
-        asset = _buildAssetFromJson(parsed, extraTags);
-      } else if (/^https?:\/\//.test(line)) {
-        // Plain URL
-        asset = _buildAssetFromUrl(line, extraTags);
-      } else {
-        // Not a URL or JSON — skip (no Steam fallback)
-        skipped++;
-        _log('✕ skip: not a URL or JSON — ' + line.slice(0,60), 'skip');
-        if (btSkip) btSkip.textContent = skipped;
-        continue;
-      }
-
-      const result = await _saveAsset(asset);
-      if (result === 'skip') {
-        skipped++;
-        _log('↷ dup: ' + (asset.title||asset.post_link).slice(0,60), 'skip');
-        if (btSkip) btSkip.textContent = skipped;
-      } else {
-        ok++;
-        _log('✓ ' + (asset.title||asset.post_link).slice(0,60), 'ok');
-        if (btOk) btOk.textContent = ok;
-      }
-    } catch(e) {
-      fail++;
-      _log('✕ error: ' + e.message + ' — ' + line.slice(0,40), 'fail');
-      if (btFail) btFail.textContent = fail;
-      console.error('[bulk]', e, line);
+  const existingSteamIds = new Set();
+  const existingTitles   = new Set();
+  for (const g of allGames) {
+    if (g.steamAppId) existingSteamIds.add(String(g.steamAppId));
+    for (const url of Object.values(g.storeLinks || {})) {
+      const m = String(url).match(/\/app\/(\d+)/);
+      if (m) existingSteamIds.add(m[1]);
     }
-
-    // Batch pause every 20 items to keep UI responsive
-    if (i % 20 === 19) await new Promise(r => setTimeout(r, 50));
+    if (g.title) existingTitles.add(g.title.toLowerCase().trim());
   }
 
-  // ── Done ──
+  // seenInBatch: tracks IDs saved in THIS run so we don't double-save
+  const seenInBatch = new Set();
+
+  // filter input list against fresh DB data
+  const cleanIds = [];
+  let preskip = 0;
+  for (const appId of allSourceIds) {
+    const detected = detectPlatform(appId);
+    const isSteam  = detected?.store?.name === 'Steam';
+    const steamId  = isSteam ? detected?.parsed?.id : null;
+    const batchKey = steamId || appId.toLowerCase().trim();
+    const isDup = seenInBatch.has(batchKey) || (steamId
+      ? existingSteamIds.has(steamId)
+      : existingTitles.has(appId.toLowerCase().trim()));
+    if (isDup) { preskip++; }
+    else { cleanIds.push(appId); seenInBatch.add(batchKey); }
+  }
+
+  const scanMsg = `Scan done — ${cleanIds.length} new, ${preskip} duplicate${preskip!==1?'s':''} skipped`;
+  if (btGame) { btGame.textContent = scanMsg; btGame.style.color = 'var(--green)'; }
+  if (btSkip) btSkip.textContent = preskip;
+  if (btProgress) btProgress.textContent = `0 / ${cleanIds.length}`;
+  if (summaryEl) summaryEl.textContent = `Skipped ${preskip} duplicate${preskip!==1?'s':''}`;
+
+  // update ticker title to show scan summary
+  const tickerTitle = document.querySelector('.bulk-ticker-title');
+  if (tickerTitle) tickerTitle.textContent = `${preskip} dupes skipped · ${cleanIds.length} to fetch`;
+
+  // pause so user reads scan result before fetch starts
+  await new Promise(r => setTimeout(r, 2000));
+
+  let done=0, ok=0, skip=preskip, fail=0;  // start skip from preskip count
+  const recentRatings = [];
+
+  const _fetchStart = Date.now();
+
+  const tick = (title, status='') => {
+    const col = status==='ok'?'#10b981':status==='skip'?'#eab308':status==='fail'?'#ef4444':'var(--text)';
+    if (btGame) { btGame.textContent = title; btGame.style.color = col; }
+    if (btOk)   btOk.textContent   = ok;
+    if (btSkip) btSkip.textContent = skip;
+    if (btFail) btFail.textContent = fail;
+    if (btProgress) btProgress.textContent = `${done} / ${cleanIds.length}`;
+    if (btBar)   btBar.style.width = Math.round(done/cleanIds.length*100)+'%';
+    if (progBar) progBar.style.width = Math.round(done/cleanIds.length*100)+'%';
+    if (progText) progText.textContent = `${done} / ${cleanIds.length}`;
+    // rate per minute
+    if (btRate && done > 0) {
+      const mins = (Date.now() - _fetchStart) / 60000;
+      btRate.textContent = Math.round(ok / Math.max(mins, 0.01)) + '/m';
+    }
+    // cycle — show only last 1 entry so window stays compact
+    if (status && blkLog) {
+      const labels = { ok:'SAVED', skip:'SKIP', fail:'FAIL' };
+      blkLog.innerHTML = `<div class="blk-log-item ${status}"><span class="bli-status">${labels[status]||status}</span><span class="bli-title">${title}</span></div>`;
+    }
+  };
+
+  // save initial session
+  _bulkSaveSession({ total: cleanIds.length + resumeFrom, done: resumeFrom, remaining: cleanIds });
+
+  for (const appId of cleanIds) {
+    if (!bulkRunning) break;
+    // pause wait
+    while (bulkPaused && bulkRunning) await new Promise(r => setTimeout(r, 300));
+    if (!bulkRunning) break;
+    const label = appId.length > 40 ? appId.slice(0,37)+'…' : appId;
+    tick(label);
+
+    try {
+      const detected = detectPlatform(appId);
+      const isSteam  = detected?.store?.name === 'Steam';
+      const steamId  = isSteam ? detected.parsed.id : null;
+
+      const gameData = isSteam ? await bulkFetchSingleGame(steamId) : await bulkFetchFromStore(detected);
+
+      if (gameData) {
+        // skip Mixed / Negative BEFORE inheriting from recentRatings
+        if (gameData.rating === 'Mixed' || gameData.rating === 'Negative') {
+          skip++; done++;
+          tick(`${gameData.title || label} — ${gameData.rating}`, 'skip');
+          await new Promise(r => setTimeout(r, 100));
+          continue;
+        }
+        if (!gameData.rating && recentRatings.length > 0) gameData.rating = recentRatings[recentRatings.length-1];
+        // skip if inherited rating is also Mixed/Negative
+        if (gameData.rating === 'Mixed' || gameData.rating === 'Negative') {
+          skip++; done++;
+          tick(`${gameData.title || label} — ${gameData.rating} (inherited)`, 'skip');
+          await new Promise(r => setTimeout(r, 100));
+          continue;
+        }
+        if (gameData.rating) { recentRatings.push(gameData.rating); if (recentRatings.length > 5) recentRatings.shift(); }
+
+        gameData.status = 'published';
+        if (!gameData.trailer && gameData.steamAppId) {
+          const st = await fetchSteamTrailer(gameData.steamAppId).catch(()=>null);
+          if (st) gameData.trailer = st;
+        }
+        if (!gameData.trailer) {
+          const yt = await fetchYouTubeTrailer(gameData.title).catch(()=>null);
+          if (yt) gameData.trailer = yt;
+        }
+        // normalize all fields against taxonomy before saving
+        const normalized = normalizeTaxFields(gameData);
+        // Merge tags: existing → queue tags → global tags (global has priority)
+        const queueTags   = _bulkQueue[0]?.tags || [];
+        const globalTags  = _bulkGlobalTags || [];
+        const allExtra    = [...new Set([...queueTags, ...globalTags])];
+        if (allExtra.length) {
+          const existing = normalized.userTags || [];
+          // Global tags override duplicates — merge with global last
+          const merged = [...new Set([
+            ...existing.filter(t => !globalTags.includes(t)),
+            ...queueTags,
+            ...globalTags,
+          ])];
+          normalized.userTags = merged;
+        }
+        const id = db.collection(COLLECTION).doc().id;
+        await db.collection(COLLECTION).doc(id).set({...normalized, id, createdAt: Date.now(), updatedAt: Date.now()});
+        logAction('game_added', normalized.title, id, null, {...normalized, id});
+        // keep sets updated so later IDs in this same run don't duplicate
+        // add to sets immediately so next iteration catches it
+        if (normalized.steamAppId) {
+          existingSteamIds.add(String(normalized.steamAppId));
+          seenInBatch.add(String(normalized.steamAppId));
+        }
+        if (normalized.title) {
+          existingTitles.add(normalized.title.toLowerCase().trim());
+          seenInBatch.add(normalized.title.toLowerCase().trim());
+        }
+        ok++; done++; tick(normalized.title || label, 'ok');
+        // update session progress
+        const _remaining = cleanIds.slice(done);
+        _bulkSaveSession({ total: cleanIds.length + resumeFrom, done: resumeFrom + done, remaining: _remaining });
+      } else {
+        fail++; done++; tick(label, 'fail');
+      }
+    } catch(e) {
+      fail++; done++; tick(label, 'fail');
+    }
+    await new Promise(r => setTimeout(r, 700));
+  }
+
   bulkRunning = false;
-  if (blkPhase) blkPhase.textContent = 'DONE';
-  if (blkDot)   blkDot.className = 'blk-dot idle';
-  if (startBtn) { startBtn.disabled = false; startBtn.style.opacity = ''; startBtn.style.pointerEvents = ''; }
-  if (stopBtn)  stopBtn.style.display = 'none';
-  if (pauseBtn) pauseBtn.style.display = 'none';
-
-  invalidateFilterCache();
-  renderLibrary();
-  updateNavBadges();
-
-  if (pasteLines.length) document.getElementById('bulk-ids-area').value = '';
-  _bulkQueue = [];
-
-  toast(
-    `Imported ${ok} asset${ok!==1?'s':''}` +
-    (skipped ? ` · ${skipped} skipped` : '') +
-    (fail ? ` · ${fail} failed` : ''),
-    ok > 0 ? 'success' : 'error'
-  );
+  bulkPaused  = false;
+  if (stopBtn)   stopBtn.style.display   = 'none';
+  if (pauseBtn)  pauseBtn.style.display  = 'none';
+  if (btGame)    { btGame.textContent = `Done — ${ok} saved, ${skip} skipped, ${fail} failed`; btGame.style.color = ok > 0 ? '#10b981' : 'var(--muted)'; }
+  if (blkPhase)  { blkPhase.textContent = 'COMPLETE'; blkPhase.style.color = '#10b981'; }
+  if (blkDot)    blkDot.classList.add('done');
+  if (btRate && ok > 0) { const mins=(Date.now()-_fetchStart)/60000; btRate.textContent=Math.round(ok/Math.max(mins,0.01))+'/m'; }
+  if (progBar)   progBar.style.width = '100%';
+  toast(`Bulk fetch complete — ${ok} saved!`, 'success');
+  _bulkClearSession();
+  if (_bulkQueue.length > 0) _bulkQueue.shift();
+  setTimeout(() => {
+    if (liveState)  liveState.style.display  = 'none';
+    if (startBtn) { startBtn.disabled = false; startBtn.style.opacity = ''; startBtn.style.pointerEvents = ''; }
+    const resumeBtn2 = document.getElementById('bulk-resume-btn');
+    if (resumeBtn2) resumeBtn2.style.display = 'none';
+    document.getElementById('bulk-ids-area').value = '';
+    _bulkQueueRender();
+    if (_bulkQueue.length > 0) {
+      toast(`Starting next: ${_bulkQueue[0].name}`, 'info');
+      setTimeout(startBulkFetch, 1500);
+    }
+  }, 3000);
 }
-
 function stopBulkFetch() {
   bulkRunning = false;
   bulkPaused  = false;
@@ -8893,7 +9176,7 @@ function delTaxItem(key, val) {
 }
 
 function saveTaxonomy() {
-  if (db) db.collection('meta').doc('taxonomy').set(TAXONOMY).catch(e => console.warn('[taxonomy]', e));
+  if (db) db.collection('meta').doc('taxonomy').set(TAXONOMY).catch(()=>{});
 }
 
 /* ═══════════════════════════════════════════════
@@ -8916,7 +9199,6 @@ const DEFAULT_TAXONOMY = {
 
 /* merge DEFAULT into TAXONOMY (adds any missing keys/values, never removes existing) */
 function mergeTaxonomyDefaults() {
-  // Ensure assetCategories is an object tree, not array
   if (!TAXONOMY.assetCategories || Array.isArray(TAXONOMY.assetCategories)) TAXONOMY.assetCategories = {};
   let changed = false;
   for (const [key, vals] of Object.entries(DEFAULT_TAXONOMY)) {
@@ -9029,7 +9311,6 @@ ${catEl}
 ${tagEls}
       <wp:post_type>post</wp:post_type>
       <wp:status>publish</wp:status>
-      <wp:attachment_url>${image}</wp:attachment_url>
       <content:encoded><![CDATA[
 ${content}
       ]]></content:encoded>
@@ -9078,7 +9359,7 @@ function importGames() {
   if (!Array.isArray(games)) { toast('Must be a JSON array', 'error'); return; }
   const updates={};
   games.forEach(g => { const id=g.id||db.collection(COLLECTION).doc().id; updates[`games/${id}`]={...g,id}; });
-  const ibatch = db.batch(); games.forEach(g => { const r = g.id ? db.collection(COLLECTION).doc(g.id) : db.collection(COLLECTION).doc(); ibatch.set(r, {...g, id: r.id}); }); ibatch.commit().then(()=>{ toast(`Imported ${games.length} assets!`, 'success'); document.getElementById('import-json-area').value=''; }).catch(e=>toast('Error: '+e.message,'error'));
+  const ib=db.batch();games.forEach(g=>{const r=g.id?db.collection(COLLECTION).doc(g.id):db.collection(COLLECTION).doc();ib.set(r,{...g,id:r.id});});ib.commit().then(()=>{toast(`Imported ${games.length} assets!`,'success');document.getElementById('import-json-area').value='';}).catch(e=>toast('Error: '+e.message,'error'));
 }
 
 
@@ -9173,7 +9454,7 @@ async function deleteDuplicates() {
 function nukeAllGames() {
   if (!confirm('DELETE ALL GAMES? This cannot be undone.')) return;
   if (!confirm('Are you absolutely sure?')) return;
-  db.collection(COLLECTION).get().then(snap => { const nb = db.batch(); snap.forEach(d => nb.delete(d.ref)); return nb.commit(); }).then(()=>toast('All assets deleted', 'success')).catch(e=>toast('Delete failed: '+e.message,'error'));
+  db.collection(COLLECTION).get().then(s=>{const b=db.batch();s.forEach(d=>b.delete(d.ref));return b.commit();}).then(()=>toast('All assets deleted', 'success'));
 }
 
 // Sync Supabase with Firebase — deletes orphan rows from Supabase
@@ -9445,28 +9726,24 @@ function hidePageLoader() {
       <div style="padding:20px;max-width:760px;margin:0 auto;width:100%;">
         <input type="hidden" id="edit-game-id">
 
-        <!-- ① Paste Extracted Data -->
+        <!-- Paste Extracted Data -->
         <div style="background:var(--surface);border:1px solid var(--border-act);border-radius:var(--r-lg);padding:14px 16px;margin-bottom:20px;">
           <div style="font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;color:var(--neon);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:10px;display:flex;align-items:center;gap:6px;">
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg>
-            Paste Extracted Data
+            Paste Extracted Data (from Extension)
           </div>
-          <textarea id="f-paste-data" placeholder='{"title":"...","post_link":"...","price":"...","author":"...","category":"3D > Character > Human"}' style="min-height:60px;max-height:120px;font-family:'JetBrains Mono',monospace;font-size:11px;resize:vertical;width:100%;margin-bottom:8px;"></textarea>
+          <textarea id="f-paste-data" placeholder='{"post_link":"...","title":"...","price":"...","author":"...","tags":["3D","Character"]}' style="min-height:60px;max-height:120px;font-family:'JetBrains Mono',monospace;font-size:11px;resize:vertical;width:100%;margin-bottom:8px;"></textarea>
           <div style="display:flex;gap:8px;align-items:center;">
-            <button class="btn btn-secondary btn-sm" onclick="applyPastedData()">
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="margin-right:4px;vertical-align:-1px"><polyline points="20 6 9 17 4 12"/></svg>
-              Apply Data
-            </button>
+            <button class="btn btn-secondary btn-sm" onclick="applyPastedData()">Apply Data</button>
             <span id="paste-data-status" style="font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;"></span>
           </div>
         </div>
 
         <div class="form-grid">
-          <!-- ② Basic Info -->
           <div class="form-section full">Basic Info</div>
           <div class="field full">
             <div class="field-label">Post Link <span class="req">*</span></div>
-            <input type="url" id="f-post-link" placeholder="https://fab.com/listings/... or assetstore.unity.com/packages/..." oninput="_autoDetectStore(this.value)">
+            <input type="url" id="f-post-link" placeholder="https://fab.com/listings/... or assetstore.unity.com/..." oninput="_autoDetectStore(this.value)">
             <div id="f-store-detected" style="margin-top:4px;font-size:11px;color:var(--neon);display:none;"></div>
           </div>
           <div class="field full">
@@ -9480,12 +9757,9 @@ function hidePageLoader() {
           <div class="field">
             <div class="field-label">Price Range</div>
             <select id="f-price-range">
-              <option value="">Auto</option>
-              <option value="free">Free</option>
-              <option value="0-10">$0–10</option>
-              <option value="10-20">$10–20</option>
-              <option value="20-50">$20–50</option>
-              <option value="50-100">$50–100</option>
+              <option value="">Auto</option><option value="free">Free</option>
+              <option value="0-10">$0–10</option><option value="10-20">$10–20</option>
+              <option value="20-50">$20–50</option><option value="50-100">$50–100</option>
               <option value="100+">$100+</option>
             </select>
           </div>
@@ -9499,50 +9773,50 @@ function hidePageLoader() {
               <option value="">— Select —</option>
             </select>
           </div>
-          <!-- Hierarchical category levels -->
+
+          <!-- Category levels -->
           <div class="field full">
-            <div class="field-label" style="margin-bottom:6px;">Category Path <span style="font-size:10px;color:var(--muted);font-weight:400;">(3D → Character → Human → Male)</span></div>
+            <div class="field-label" style="margin-bottom:6px;">Category Path <span style="font-size:10px;color:var(--muted);font-weight:400;">3D > Character > Human > Male</span></div>
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;">
-              <select id="f-cat-lvl1" style="font-size:12px;" onchange="_updateCatLevel(2)"><option value="">Level 1</option></select>
-              <select id="f-cat-lvl2" style="font-size:12px;" onchange="_updateCatLevel(3)"><option value="">Level 2</option></select>
-              <select id="f-cat-lvl3" style="font-size:12px;" onchange="_updateCatLevel(4)"><option value="">Level 3</option></select>
-              <select id="f-cat-lvl4" style="font-size:12px;"><option value="">Level 4</option></select>
+              <select id="f-cat-lvl1" style="font-size:12px;" onchange="_updateCatLevel(2)"><option value="">Lvl 1</option></select>
+              <select id="f-cat-lvl2" style="font-size:12px;" onchange="_updateCatLevel(3)"><option value="">Lvl 2</option></select>
+              <select id="f-cat-lvl3" style="font-size:12px;" onchange="_updateCatLevel(4)"><option value="">Lvl 3</option></select>
+              <select id="f-cat-lvl4" style="font-size:12px;"><option value="">Lvl 4</option></select>
             </div>
-            <div style="margin-top:6px;display:flex;gap:6px;align-items:center;">
-              <input type="text" id="f-cat-bulk-input" placeholder="Or type: 3D > Character > Human > Male" style="flex:1;font-size:12px;">
+            <div style="margin-top:6px;display:flex;gap:6px;">
+              <input type="text" id="f-cat-bulk-input" placeholder="Or type: 3D > Character > Human" style="flex:1;font-size:12px;">
               <button class="btn btn-secondary btn-sm" onclick="_parseCategoryBulk()">Parse</button>
               <button class="btn btn-secondary btn-sm" onclick="_showAddCategoryUI()">+ Add</button>
             </div>
           </div>
-          <!-- Image Upload -->
+
+          <!-- Image -->
           <div class="field full">
-            <div class="field-label">Image <span style="font-size:10px;color:var(--muted);font-weight:400;">(upload PNG/JPG, paste CTRL+V, or enter URL)</span></div>
-            <!-- Drop zone -->
-            <div id="img-drop-zone" onclick="document.getElementById('img-file-input').click()"
-              style="border:2px dashed var(--border-act);border-radius:var(--r-lg);padding:20px;text-align:center;cursor:pointer;transition:all 0.2s;background:var(--surface);"
-              ondragover="event.preventDefault();this.style.borderColor='var(--neon)';this.style.background='var(--neon-dim)';"
-              ondragleave="this.style.borderColor='var(--border-act)';this.style.background='var(--surface)';"
-              ondrop="_handleImageDrop(event)">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--neon)" stroke-width="1.5" stroke-linecap="round" style="margin-bottom:6px;opacity:0.7;"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-              <div style="font-size:12px;color:var(--muted);">Click to upload or drag & drop PNG/JPG</div>
-              <div style="font-size:10px;color:var(--dim);margin-top:3px;">or paste image with CTRL+V</div>
-              <input type="file" id="img-file-input" accept="image/png,image/jpeg,image/webp,image/gif" style="display:none;" onchange="_handleImageUpload(this)">
-            </div>
-            <!-- URL fallback -->
+            <div class="field-label">Image</div>
+            <label for="img-file-input" style="display:flex;align-items:center;gap:10px;border:2px dashed var(--border-act);border-radius:var(--r-lg);padding:14px 16px;cursor:pointer;background:var(--surface);"
+              ondragover="event.preventDefault();this.style.borderColor='var(--neon)';"
+              ondragleave="this.style.borderColor='var(--border-act)';"
+              ondrop="_handleImageDrop(event);this.style.borderColor='var(--border-act)';">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--neon)" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              <div>
+                <div style="font-size:13px;color:var(--text);font-weight:600;">Click to upload</div>
+                <div style="font-size:11px;color:var(--dim);">PNG, JPG, WebP — drag & drop — or paste CTRL+V</div>
+              </div>
+              <input type="file" id="img-file-input" accept="image/*" tabindex="-1" style="display:none;" onchange="_handleImageUpload(this)">
+            </label>
             <div style="display:flex;align-items:center;gap:6px;margin-top:6px;">
               <span style="font-size:10px;color:var(--dim);white-space:nowrap;">or URL:</span>
-              <input type="url" id="f-cover" placeholder="https://..." style="flex:1;font-size:12px;" oninput="_showImagePreview(this.value);window._pendingImageFile=null;document.getElementById('f-image-upload-badge').style.display='none';">
+              <input type="url" id="f-cover" placeholder="https://..." style="flex:1;font-size:12px;" oninput="_showImagePreview(this.value);window._pendingImageFile=null;const _b=document.getElementById('f-image-upload-badge');if(_b)_b.style.display='none';">
             </div>
             <div id="f-image-preview" style="margin-top:8px;display:none;">
               <div style="position:relative;display:inline-block;">
-                <img id="f-image-preview-img" src="" style="max-height:120px;border-radius:6px;border:1px solid var(--border);object-fit:cover;display:block;">
-                <button onclick="_clearImageInput()" style="position:absolute;top:4px;right:4px;background:rgba(0,0,0,0.7);border:none;color:#fff;border-radius:50%;width:20px;height:20px;cursor:pointer;font-size:12px;line-height:20px;text-align:center;">×</button>
+                <img id="f-image-preview-img" src="" alt="" style="max-height:160px;max-width:100%;border-radius:8px;border:1px solid var(--border-act);object-fit:contain;display:block;background:var(--surface);">
+                <button onclick="_clearImageInput()" style="position:absolute;top:4px;right:4px;background:rgba(0,0,0,0.75);border:none;color:#fff;border-radius:50%;width:22px;height:22px;cursor:pointer;font-size:14px;line-height:22px;text-align:center;">x</button>
               </div>
-              <div id="f-image-upload-badge" style="display:none;margin-top:4px;font-size:11px;color:var(--amber);font-family:'JetBrains Mono',monospace;">📁 File ready — will upload to Firebase Storage on save</div>
+              <div id="f-image-upload-badge" style="display:none;margin-top:4px;font-size:11px;color:var(--amber);font-family:'JetBrains Mono',monospace;"></div>
             </div>
           </div>
 
-          <!-- ③ Description Block -->
           <div class="form-section full">Description</div>
           <div class="field full">
             <div class="field-label">Description</div>
@@ -9554,10 +9828,9 @@ function hidePageLoader() {
           </div>
           <div class="field full">
             <div class="field-label">Technical Details <span style="font-size:10px;color:var(--muted);font-weight:400;">optional</span></div>
-            <textarea id="f-technical" placeholder="File formats, poly count, engine version, requirements…" style="min-height:70px;"></textarea>
+            <textarea id="f-technical" placeholder="File formats, poly count, engine version…" style="min-height:70px;"></textarea>
           </div>
 
-          <!-- ④ Tags -->
           <div class="form-section full">Tags</div>
           <div class="field full">
             <div style="position:relative;">
@@ -9569,24 +9842,19 @@ function hidePageLoader() {
             </div>
           </div>
 
-          <!-- ⑤ Store Links (auto only) -->
-          <div class="form-section full">Store Links <span style="font-size:10px;color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0;">(auto-detected from Post Link)</span></div>
+          <div class="form-section full">Store Links <span style="font-size:10px;color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0;">(auto from Post Link)</span></div>
           <div class="field full">
-            <div id="f-auto-store-preview" style="font-size:12px;color:var(--muted);padding:8px;background:var(--surface);border-radius:var(--r);border:1px solid var(--border);min-height:36px;">
-              Enter Post Link above to auto-detect store
-            </div>
-            <div style="margin-top:6px;">
-              <div id="store-link-rows" style="display:flex;flex-direction:column;gap:6px;margin-bottom:4px;"></div>
-              <button class="add-link-btn" onclick="addStoreLinkRow()">+ Add manual link</button>
-              <input type="hidden" id="f-storelinks">
-            </div>
+            <div id="f-auto-store-preview" style="font-size:12px;color:var(--muted);padding:8px;background:var(--surface);border-radius:var(--r);border:1px solid var(--border);margin-bottom:6px;">Enter Post Link above to auto-detect store</div>
+            <div id="store-link-rows" style="display:flex;flex-direction:column;gap:6px;margin-bottom:4px;"></div>
+            <button class="add-link-btn" onclick="addStoreLinkRow()">+ Add manual link</button>
+            <input type="hidden" id="f-storelinks">
           </div>
           <input type="hidden" id="f-deals">
         </div>
 
         <div style="display:flex;align-items:center;gap:10px;margin-top:24px;padding-top:20px;border-top:1px solid var(--border);">
           <button class="btn btn-primary" onclick="saveGame()" style="min-width:120px;">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
             Save Asset
           </button>
           <button class="btn btn-secondary" onclick="clearGameForm()">Clear</button>
@@ -9594,8 +9862,6 @@ function hidePageLoader() {
         </div>
       </div>
     </div>
-  </div>
-</div>
 
 <!-- BULK IMPORT MODAL -->
 <div class="tool-modal" id="bulk-modal" onclick="if(event.target===this)closeBulkModal()">
