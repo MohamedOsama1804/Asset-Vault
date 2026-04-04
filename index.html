@@ -4409,16 +4409,25 @@ select option { background: var(--card); }
           <!-- INPUT STATE -->
           <div id="bulk-input-state">
 
-            <textarea id="bulk-ids-area"
-              placeholder='Paste JSON from extension (one object or array):&#10;{"post_link":"https://assetstore.unity.com/...","title":"My Asset","price":"49.99","author":"Creator","tags":["3D","Character"]}&#10;&#10;Or paste multiple URLs (one per line):&#10;https://fab.com/listings/...&#10;https://cgtrader.com/3d-models/...'
-              style="min-height:140px;max-height:300px;font-family:'JetBrains Mono',monospace;font-size:11px;resize:vertical;width:100%;"></textarea>
+            <div id="bulk-file-entries" style="display:flex;flex-direction:column;gap:5px;margin-bottom:8px;"></div>
 
+            <button onclick="_addFileEntry()" class="btn btn-secondary btn-sm" style="width:100%;border-style:dashed;color:var(--muted);margin-bottom:10px;justify-content:center;gap:5px;">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Add File
+            </button>
+
+            <div style="font-size:10px;color:var(--dim);text-align:center;margin:4px 0;font-family:'JetBrains Mono',monospace;">— or paste links / NDJSON directly —</div>
+            <textarea id="bulk-ids-area"
+              placeholder="Paste links or NDJSON (one per line):
+https://fab.com/listings/...
+https://cgtrader.com/3d-models/..."
+              style="min-height:70px;max-height:160px;font-family:'JetBrains Mono',monospace;font-size:12px;resize:vertical;"></textarea>
 
             <!-- Actions -->
             <div style="margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
               <button class="btn btn-primary" onclick="startBulkFetch()" id="bulk-start-btn">
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                Import
+                Start Fetch
               </button>
               <label class="btn btn-secondary btn-sm" style="cursor:pointer;margin:0;" title="Add TXT/CSV files to queue">
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/></svg>
@@ -4637,7 +4646,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyDbg8fnVjVe7badJ7eXaDGWnAus7QxFkUs",
   authDomain: "assets-vault-9ec2b.firebaseapp.com",
   projectId: "assets-vault-9ec2b",
-  storageBucket: "assets-vault-9ec2b.firebasestorage.app",
+  storageBucket: "assets-vault-9ec2b.appspot.com",
   messagingSenderId: "656390855397",
   appId: "1:656390855397:web:791bce333961e9abf6120c"
 };
@@ -4836,7 +4845,6 @@ function initFirebase() {
   db = firebase.firestore();
   storage = firebase.storage();
   console.log('[Firebase] Firestore initialized, collection:', COLLECTION);
-  console.log('[Firebase] Storage initialized, bucket:', storage.app.options.storageBucket);
   showApp();
 }
 
@@ -4912,7 +4920,7 @@ const VIEW_META = {
   library:  { title: 'Library',        sub: 'All published assets' },
   drafts:   { title: 'Drafts',         sub: 'Assets pending review' },
   add:      { title: 'Add Asset',      sub: 'Add manually' },
-  bulk:     { title: 'Bulk Import',    sub: 'Paste JSON from extension or URLs — imports directly to Firestore' },
+  bulk:     { title: 'Bulk Import',    sub: 'Import multiple assets via links, JSON from extension, or .txt/.json files' },
   taxonomy: { title: 'Taxonomy',       sub: 'Manage filter categories and tags' },
   io:       { title: 'Import / Export',sub: 'Backup and restore your catalog' },
   updates:  { title: 'Recent Updates', sub: 'History of all admin actions' },
@@ -5832,8 +5840,8 @@ function closeAddGameModal() {
 }
 
 function openBulkModal() {
-  // Don't auto-init file entries - it creates file inputs that trigger dialog
-  // _fileEntries only used if user explicitly adds files
+  if (!_fileEntries || !_fileEntries.length) _initFileEntries();
+  setTimeout(_renderFileEntries, 50);
   const bm = document.getElementById('bulk-modal');
   bm.classList.add('open');
   // Populate modal body once from view-bulk (move, don't clone)
@@ -6952,19 +6960,14 @@ function _promptNewCategory() {
 
 function _showImagePreview(url) {
   const wrap = document.getElementById('f-image-preview');
-  const img  = document.getElementById('f-image-preview-img');
-  const badge = document.getElementById('f-image-upload-badge');
+  const img = document.getElementById('f-image-preview-img');
   if (!wrap || !img) return;
-  if (url && String(url).length > 5) {
+  if (url) {
     img.src = url;
-    img.style.display = 'block';
     wrap.style.display = 'block';
-    wrap.style.visibility = 'visible';
-    wrap.style.opacity = '1';
   } else {
     wrap.style.display = 'none';
   }
-  if (badge) badge.style.display = window._pendingImageFile ? 'block' : 'none';
 }
 
 function _handleImageUpload(input) {
@@ -6993,26 +6996,19 @@ function _clearImageInput() {
 }
 
 function handleImageFile(file) {
-  if (!file) { toast('No file selected', 'error'); return; }
-  if (!file.type.startsWith('image/')) { toast('Please select an image file (PNG, JPG, etc.)', 'error'); return; }
+  if (!file || !file.type.startsWith('image/')) return;
   if (file.size > 15 * 1024 * 1024) { toast('Image too large (max 15MB)', 'error'); return; }
-  window._pendingImageFile = file;
   const reader = new FileReader();
   reader.onload = e => {
-    const dataUrl = e.target.result;
-    // Show preview immediately with base64
-    const wrap = document.getElementById('f-image-preview');
-    const img  = document.getElementById('f-image-preview-img');
-    const badge = document.getElementById('f-image-upload-badge');
+    _showImagePreview(e.target.result);
     const coverEl = document.getElementById('f-cover');
-    if (img)  { img.src = dataUrl; img.style.display = 'block'; }
-    if (wrap) { wrap.style.cssText = 'margin-top:8px;display:block;visibility:visible;opacity:1;'; }
-    if (badge) { badge.style.display = 'block'; }
-    if (coverEl) coverEl.value = ''; // clear URL input — upload happens on save
+    if (coverEl) coverEl.value = '';
   };
-  reader.onerror = () => toast('Failed to read image file', 'error');
   reader.readAsDataURL(file);
-  toast(`Image "${file.name}" selected — will upload on save`, 'success');
+  window._pendingImageFile = file;
+  const badge = document.getElementById('f-image-upload-badge');
+  if (badge) badge.style.display = 'block';
+  toast(`Image "${file.name}" ready — will upload on save`, 'success');
 }
 
 // Paste support — user can CTRL+C an image and paste it into the modal
@@ -7326,44 +7322,23 @@ async function saveGame() {
     let coverUrl = (document.getElementById('f-cover')?.value || '').trim();
     if (coverUrl.startsWith('data:')) coverUrl = ''; // reject base64
     if (window._pendingImageFile) {
-      const file = window._pendingImageFile;
-      console.log('[saveGame] Uploading image:', file.name, 'size:', file.size);
       try {
         toast('Uploading image…', 'info');
-        if (!storage) throw new Error('Firebase Storage not initialized');
-        const fname = Date.now() + '_' + file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-        const sRef = storage.ref().child('covers/' + fname);
-        const snap = await sRef.put(file);
-        coverUrl = await snap.ref.getDownloadURL();
+        const file = window._pendingImageFile;
+        const storageRef = storage.ref('covers/' + Date.now() + '_' + file.name.replace(/[^a-zA-Z0-9._-]/g,'_'));
+        const uploadTask = await storageRef.put(file);
+        coverUrl = await uploadTask.ref.getDownloadURL();
         window._pendingImageFile = null;
+        // Update the cover input so it shows the real URL
         const coverInput = document.getElementById('f-cover');
         if (coverInput) coverInput.value = coverUrl;
+        // Update preview to use the real URL (not base64)
         _showImagePreview(coverUrl);
-        console.log('[saveGame] Image uploaded:', coverUrl);
-        toast('Image uploaded!', 'success');
+        console.log('[saveGame] Image uploaded to Storage:', coverUrl);
       } catch(imgErr) {
-        console.error('[saveGame] Storage upload failed:', imgErr);
-        // Fallback: read file as base64 data URL and store directly
-        // (only for small images < 500KB to stay under Firestore 1MB limit)
-        if (file.size < 500 * 1024) {
-          try {
-            const b64 = await new Promise((res, rej) => {
-              const r = new FileReader();
-              r.onload = e => res(e.target.result);
-              r.onerror = rej;
-              r.readAsDataURL(file);
-            });
-            coverUrl = b64;
-            console.log('[saveGame] Using base64 fallback (small image)');
-            toast('Storage unavailable — image saved as base64', 'error');
-          } catch(b64Err) {
-            coverUrl = '';
-            toast('Image upload failed: ' + imgErr.message, 'error');
-          }
-        } else {
-          coverUrl = '';
-          toast('Image upload failed (try a URL instead): ' + imgErr.message, 'error');
-        }
+        console.error('[saveGame] Image upload failed:', imgErr);
+        toast('Image upload failed — asset saved without image. ' + imgErr.message, 'error');
+        coverUrl = '';
       }
     }
 
@@ -7429,16 +7404,10 @@ async function saveGame() {
       updatedAt: Date.now(),
     };
 
-    // Sanity check: reject base64 images (too large for Firestore 1MB limit)
-    if (finalData.cover && finalData.cover.startsWith('data:') && finalData.cover.length > 900000) {
-      finalData.cover = '';
-      finalData.image = '';
-      console.warn('[saveGame] Cover too large for Firestore — removed');
-    }
-    console.log('[saveGame] Writing to Firestore doc:', docId, '| cover:', finalData.cover ? finalData.cover.slice(0,60) : 'none');
+    console.log('[saveGame] Writing to Firestore doc:', docId);
     await db.collection(COLLECTION).doc(docId).set(finalData);
-    console.log('[saveGame] Saved successfully:', docId, '| cover:', finalData.cover ? 'YES' : 'NO');
-    toast(`"${title}" saved!${finalData.cover ? '' : ' (no image)'}`, 'success');
+    console.log('[saveGame] Saved successfully:', docId);
+    toast(`"${title}" saved!`, 'success');
 
     try {
       await logAction(isNew ? 'game_added' : 'game_updated', title, docId,
@@ -8082,7 +8051,6 @@ function bulkLoadFile(input) {
   const files = Array.from(input.files);
   if (!files.length) return;
   let loaded = 0;
-  let totalItems = 0;
   files.forEach(file => {
     const reader = new FileReader();
     reader.onload = e => {
@@ -8092,28 +8060,15 @@ function bulkLoadFile(input) {
       if (text.startsWith('[')) {
         try { const arr = JSON.parse(text); items = arr.map(x => typeof x === 'string' ? x : JSON.stringify(x)); isJson = true; }
         catch { items = text.split(/[\n\r]+/).map(s=>s.trim()).filter(Boolean); }
-      } else if (text.startsWith('{')) {
-        // Single JSON object or NDJSON
-        try { JSON.parse(text); items = [text]; isJson = true; }
-        catch { items = text.split(/[\n\r]+/).map(s=>s.trim()).filter(Boolean); isJson = true; }
       } else {
         items = text.split(/[\n\r]+/).map(s=>s.trim()).filter(Boolean);
-        isJson = items.some(l => l.startsWith('{'));
+        isJson = items.length > 0 && items.some(l => l.startsWith('{'));
       }
       _bulkQueue.push({ name: file.name, ids: items, tags: [], isJson });
-      totalItems += items.length;
       loaded++;
       if (loaded === files.length) {
-        // Update file list display
-        const listEl = document.getElementById('bulk-file-list');
-        if (listEl) {
-          listEl.style.display = 'block';
-          listEl.innerHTML = _bulkQueue.map(q =>
-            `✓ ${q.name} — ${q.ids.length} items`
-          ).join('<br>');
-        }
-        if (typeof _bulkQueueRender === 'function') _bulkQueueRender();
-        toast(`${files.length} file${files.length>1?'s':''} loaded: ${totalItems} items ready`, 'success');
+        _bulkQueueRender();
+        toast(`${files.length} file${files.length>1?'s':''} added (${items.length} items)`, 'success');
       }
     };
     reader.readAsText(file);
@@ -8270,11 +8225,9 @@ document.addEventListener('click', e => {
 });
 
 function _syncFileEntriesToQueue() {
-  if (_fileEntries && _fileEntries.length) {
-    _bulkQueue = _fileEntries
-      .filter(e => e.ids && e.ids.length)
-      .map(e => ({ name: e.name, ids: e.ids, tags: e.tags, isJson: !!e.isJson }));
-  }
+  _bulkQueue = _fileEntries
+    .filter(e => e.ids && e.ids.length)
+    .map(e => ({ name: e.name, ids: e.ids, tags: e.tags, isJson: !!e.isJson }));
 }
 
 
@@ -8407,31 +8360,8 @@ async function startBulkFetch() {
   }
 
   /* ── Collect all lines to process ── */
-  // Handle paste: could be single JSON object (pretty or compact), NDJSON, or URLs
-  let pasteLines = [];
-  if (pasteRaw) {
-    const trimmed = pasteRaw.trim();
-    if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
-      // Try parsing entire paste as single JSON object or JSON array
-      try {
-        const parsed = JSON.parse(trimmed);
-        if (Array.isArray(parsed)) {
-          // JSON array of objects
-          pasteLines = parsed.map(item => typeof item === 'string' ? item : JSON.stringify(item));
-        } else {
-          // Single JSON object
-          pasteLines = [trimmed];
-        }
-      } catch(e) {
-        // Not valid JSON as whole — split by lines, each line might be JSON
-        pasteLines = trimmed.split(/[\r\n]+/).map(s=>s.trim()).filter(Boolean);
-      }
-    } else {
-      // Plain URLs or mixed content — split by lines
-      pasteLines = trimmed.split(/[\r\n]+/).map(s=>s.trim()).filter(Boolean);
-    }
-  }
-
+  // From paste textarea
+  const pasteLines = pasteRaw ? pasteRaw.split(/[\r\n]+/).map(s=>s.trim()).filter(Boolean) : [];
   // From file queue entries
   const queueLines = [];
   const queueTagsMap = new Map(); // line -> extraTags
@@ -8444,7 +8374,7 @@ async function startBulkFetch() {
 
   const allLines = [...pasteLines, ...queueLines];
   if (!allLines.length) {
-    toast('Paste JSON from extension or URLs, then click Import', 'error');
+    toast('Add files or paste links / JSON to import', 'error');
     return;
   }
 
@@ -9396,7 +9326,7 @@ function toggleDraftView() {
 // On load: restore view from URL hash
 (function() {
   const hash = window.location.hash.replace('#','');
-  const validViews = ['library', 'drafts', 'taxonomy', 'io'];
+  const validViews = ['library', 'drafts', 'taxonomy', 'bulk', 'io'];
   if (hash && validViews.includes(hash)) {
     setTimeout(() => {
       const navEl = document.querySelector('.nav-item[onclick*="\'' + hash + '\'"]');
@@ -9588,7 +9518,7 @@ function hidePageLoader() {
           <div class="field full">
             <div class="field-label">Image <span style="font-size:10px;color:var(--muted);font-weight:400;">(upload PNG/JPG, paste CTRL+V, or enter URL)</span></div>
             <!-- Drop zone -->
-            <div id="img-drop-zone" onclick="const fi=document.getElementById('img-file-input');if(fi)fi.click();"
+            <div id="img-drop-zone" onclick="document.getElementById('img-file-input').click()"
               style="border:2px dashed var(--border-act);border-radius:var(--r-lg);padding:20px;text-align:center;cursor:pointer;transition:all 0.2s;background:var(--surface);"
               ondragover="event.preventDefault();this.style.borderColor='var(--neon)';this.style.background='var(--neon-dim)';"
               ondragleave="this.style.borderColor='var(--border-act)';this.style.background='var(--surface)';"
@@ -9601,18 +9531,14 @@ function hidePageLoader() {
             <!-- URL fallback -->
             <div style="display:flex;align-items:center;gap:6px;margin-top:6px;">
               <span style="font-size:10px;color:var(--dim);white-space:nowrap;">or URL:</span>
-              <input type="url" id="f-cover" placeholder="https://..." style="flex:1;font-size:12px;" oninput="_showImagePreview(this.value);window._pendingImageFile=null;const _b=document.getElementById('f-image-upload-badge');if(_b)_b.style.display='none';">
+              <input type="url" id="f-cover" placeholder="https://..." style="flex:1;font-size:12px;" oninput="_showImagePreview(this.value);window._pendingImageFile=null;document.getElementById('f-image-upload-badge').style.display='none';">
             </div>
             <div id="f-image-preview" style="margin-top:8px;display:none;">
-              <div style="position:relative;display:inline-block;max-width:100%;">
-                <img id="f-image-preview-img" src="" alt="Preview"
-                  style="max-height:160px;max-width:100%;border-radius:8px;border:1px solid var(--border-act);object-fit:contain;display:block;background:var(--surface);">
-                <button onclick="_clearImageInput()" title="Remove image"
-                  style="position:absolute;top:4px;right:4px;background:rgba(0,0,0,0.75);border:none;color:#fff;border-radius:50%;width:22px;height:22px;cursor:pointer;font-size:14px;line-height:22px;text-align:center;z-index:2;">×</button>
+              <div style="position:relative;display:inline-block;">
+                <img id="f-image-preview-img" src="" style="max-height:120px;border-radius:6px;border:1px solid var(--border);object-fit:cover;display:block;">
+                <button onclick="_clearImageInput()" style="position:absolute;top:4px;right:4px;background:rgba(0,0,0,0.7);border:none;color:#fff;border-radius:50%;width:20px;height:20px;cursor:pointer;font-size:12px;line-height:20px;text-align:center;">×</button>
               </div>
-              <div id="f-image-upload-badge" style="display:none;margin-top:6px;font-size:11px;color:var(--amber);font-family:'JetBrains Mono',monospace;">
-                📁 File selected — will upload to Firebase Storage on save
-              </div>
+              <div id="f-image-upload-badge" style="display:none;margin-top:4px;font-size:11px;color:var(--amber);font-family:'JetBrains Mono',monospace;">📁 File ready — will upload to Firebase Storage on save</div>
             </div>
           </div>
 
