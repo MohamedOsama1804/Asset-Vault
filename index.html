@@ -4787,6 +4787,7 @@ function _clearImageInput() {
   const ci = document.getElementById('f-cover'); if (ci) ci.value = '';
   const pr = document.getElementById('f-image-preview'); if (pr) pr.style.display = 'none';
   const bg = document.getElementById('f-image-upload-badge'); if (bg) bg.style.display = 'none';
+  const inp = document.getElementById('img-file-input'); if (inp) try{inp.value='';}catch(e){}
 }
 function handleImageFile(file) {
   if (!file) return;
@@ -5006,17 +5007,29 @@ function _promptNewCategory() {
    BULK IMPORT — startBulkFetch (direct, no Steam)
 ═══════════════════════════════════════════════ */
 function openBulkModal() {
-  if (!_fileEntries||!_fileEntries.length) {
-    _fileEntries = [{id:0,tags:[],ids:[],name:''}];
-    _feNextId = 1;
-    setTimeout(_renderFileEntries, 50);
-  }
   const bm = document.getElementById('bulk-modal');
-  if (!bm) {
+  if (!bm) return;
+  bm.classList.add('open');
+  document.body.style.overflow = 'hidden';
+  const dest = document.getElementById('bulk-modal-body');
+  if (dest && !dest._populated) {
     const src = document.getElementById('view-bulk');
-    if (src) { src.style.display='flex'; src.classList.add('active'); return; }
+    if (src) {
+      const clone = src.cloneNode(true);
+      clone.style.display = 'block';
+      dest.appendChild(clone);
+      dest._populated = true;
+    }
   }
-  if (bm) { bm.classList.add('open'); document.body.style.overflow='hidden'; }
+  // Init file entries after modal is visible
+  if (!_fileEntries || !_fileEntries.length) {
+    _fileEntries = [{id:0, tags:[], ids:[], name:''}];
+    _feNextId = 1;
+    setTimeout(() => {
+      const wrap = document.getElementById('bulk-file-entries');
+      if (wrap && typeof _renderFileEntries === 'function') _renderFileEntries();
+    }, 100);
+  }
 }
 
 function bulkLoadFile(input) {
@@ -6282,58 +6295,18 @@ async function refetchCurrentGame() {
     }
   }
 }
-function openAddGameModal(id) {
-  if (id) {
-    editingGameId = id;
-    loadGameIntoForm(id);
-    const title = document.getElementById('add-game-modal-title');
-    if (title) title.innerHTML = title.innerHTML.replace('Add Asset', 'Edit Asset');
-  } else {
-    editingGameId = null;
-    clearGameForm();
-    const title = document.getElementById('add-game-modal-title');
-    if (title) title.innerHTML = title.innerHTML.replace('Edit Asset', 'Add Asset');
-  }
-  document.getElementById('add-game-modal').classList.add('open');
-  document.body.style.overflow = 'hidden';
-}
-function closeAddGameModal() {
-  const m = document.getElementById('add-game-modal');
-  m.classList.remove('open');
-  m.style.display = '';
-  document.body.style.overflow = '';
-  // Go back if we pushed modal state
-  if (history.state && history.state.adminModal) {
-    history.back();
-  }
-}
 
-function openBulkModal() {
-  if (!_fileEntries || !_fileEntries.length) _initFileEntries();
-  setTimeout(_renderFileEntries, 50);
-  const bm = document.getElementById('bulk-modal');
-  bm.classList.add('open');
-  // Populate modal body once from view-bulk (move, don't clone)
-  const dest = document.getElementById('bulk-modal-body');
-  if (!dest._populated) {
-    const src = document.getElementById('view-bulk');
-    if (src && dest) {
-      // Move children so IDs remain unique in DOM
-      while (src.firstChild) dest.appendChild(src.firstChild);
-      dest._populated = true;
-    }
-  }
-}
-function closeBulkModal() { const m=document.getElementById('bulk-modal'); m.classList.remove('open'); m.style.display=''; }
 
 function openImportExportModal() {
-  const im = document.getElementById('io-modal');
-  im.classList.add('open');
+  const m = document.getElementById('io-modal');
+  if (m) { m.classList.add('open'); document.body.style.overflow = 'hidden'; }
   const dest = document.getElementById('io-modal-body');
-  if (!dest._populated) {
+  if (dest && !dest._populated) {
     const src = document.getElementById('view-io');
     if (src && dest) {
-      while (src.firstChild) dest.appendChild(src.firstChild);
+      const clone = src.cloneNode(true);
+      clone.style.display = 'block';
+      dest.appendChild(clone);
       dest._populated = true;
     }
   }
@@ -7427,17 +7400,6 @@ function _promptNewCategory() {
   _populateCategorySelect(cat);
 }
 
-function _showImagePreview(url) {
-  const wrap = document.getElementById('f-image-preview');
-  const img = document.getElementById('f-image-preview-img');
-  if (!wrap || !img) return;
-  if (url) {
-    img.src = url;
-    wrap.style.display = 'block';
-  } else {
-    wrap.style.display = 'none';
-  }
-}
 
 function _handleImageUpload(input) {
   const file = input.files?.[0];
@@ -7520,27 +7482,6 @@ function _addStoreSource() {
   renderStoreSourcesEditor();
 }
 
-function clearGameForm() {
-  editingGameId = null;
-  document.getElementById('edit-game-id').value = '';
-  ['f-title','f-post-link','f-author','f-cover','f-desc','f-overview','f-technical','f-popularity','f-price'].forEach(id => {
-    const el = document.getElementById(id); if (el) el.value = '';
-  });
-  const prEl = document.getElementById('f-price-range'); if (prEl) prEl.value = '';
-  const catEl = document.getElementById('f-category'); if (catEl) catEl.value = '';
-  const prevEl = document.getElementById('f-image-preview'); if (prevEl) prevEl.style.display = 'none';
-  const eaEl = document.getElementById('f-ea'); if (eaEl) eaEl.value = 'false';
-  const spEl = document.getElementById('f-sponsored'); if (spEl) spEl.value = 'false';
-  const lfEl = document.getElementById('f-lf'); if (lfEl) lfEl.value = 'false';
-  ['f-difficulty','f-length','f-period','f-rating','f-visual'].forEach(id => { const e=document.getElementById(id); if(e) e.value=''; });
-  clearPasteField('userTags');
-  const slr = document.getElementById('store-link-rows'); if (slr) slr.innerHTML = '';
-  const dlr = document.getElementById('deals-link-rows'); if (dlr) dlr.innerHTML = '';
-  addStoreLinkRow(); addDealLinkRow();
-  buildAllCheckboxGrids(); buildFormSelects();
-  _populateCategorySelect('');
-  const ss = document.getElementById('save-status'); if (ss) ss.style.display = 'none';
-}
 
 let _saving = false;
 async function saveGame() {
@@ -8362,7 +8303,7 @@ function _removeFileEntry(id) {
 }
 
 function _renderFileEntries() {
-  const wrap = document.getElementById('bulk-file-entries');
+  const wrap = document.querySelector('#bulk-modal-body #bulk-file-entries') || document.getElementById('bulk-file-entries');
   if (!wrap) return;
   wrap.innerHTML = _fileEntries.map((entry, i) => {
     const dot = i === 0
@@ -8510,265 +8451,6 @@ document.addEventListener('click', e => {
   }
 });
 
-async function startBulkFetch() {
-  _syncFileEntriesToQueue();
-  // ── Build source IDs: queue files + paste + session resume ──
-  const pasteRaw = document.getElementById('bulk-ids-area').value.trim();
-  const pasteIds = pasteRaw ? pasteRaw.split(/[\r\n]+/).map(s=>s.trim()).filter(Boolean) : [];
-
-  let allSourceIds = [];
-  let resumeFrom   = 0;
-
-  // Check for saved session
-  const savedSession = _bulkLoadSession();
-  if (savedSession && savedSession.remaining && savedSession.remaining.length > 0) {
-    const doResume = confirm(`Saved session found: ${savedSession.done.toLocaleString()} done, ${savedSession.remaining.length.toLocaleString()} remaining.
-
-Resume where you left off?`);
-    if (doResume) {
-      allSourceIds = savedSession.remaining;
-      resumeFrom   = savedSession.done;
-    } else {
-      _bulkClearSession();
-    }
-  }
-
-  if (!allSourceIds.length) {
-    if (_bulkQueue.length > 0) allSourceIds = _bulkQueue.flatMap(q => q.ids);
-    if (pasteIds.length)       allSourceIds = [...allSourceIds, ...pasteIds];
-  }
-
-  if (!allSourceIds.length) { toast('Enter Steam IDs or add files to queue first', 'error'); return; }
-
-  bulkRunning = true;
-  bulkPaused  = false;
-
-  const startBtn   = document.getElementById('bulk-start-btn');
-  const stopBtn    = document.getElementById('bulk-stop-btn');
-  const pauseBtn   = document.getElementById('bulk-pause-btn');
-  const progWrap   = document.getElementById('bulk-progress-wrap');
-  const progBar    = document.getElementById('bulk-progress-bar');
-  const progText   = document.getElementById('bulk-progress-text');
-  const summaryEl  = document.getElementById('bulk-summary-text');
-  const btGame     = document.getElementById('bt-game');
-  const btOk       = document.getElementById('bt-ok');
-  const btSkip     = document.getElementById('bt-skip');
-  const btFail     = document.getElementById('bt-fail');
-  const btProgress = document.getElementById('bt-progress');
-  const btBar     = document.getElementById('bt-bar');
-
-  if (!startBtn) { toast('Open Bulk modal first', 'error'); bulkRunning = false; return; }
-
-  // define live-state elements early
-  const inputState = document.getElementById('bulk-input-state');
-  const liveState  = document.getElementById('bulk-live-state');
-  const blkLog     = document.getElementById('blk-log');
-  const blkPhase   = document.getElementById('blk-phase');
-  const blkDot     = document.getElementById('blk-dot');
-  const btRate     = document.getElementById('bt-rate');
-
-  // switch to live state — keep input visible above
-  if (liveState)  liveState.style.display  = 'flex';
-  if (blkLog)     blkLog.innerHTML = '';
-  if (startBtn)   startBtn.style.disabled = true; startBtn.style.opacity = '.4'; startBtn.style.pointerEvents = 'none';
-  if (stopBtn)   stopBtn.style.display  = 'inline-flex';
-  if (pauseBtn)  pauseBtn.style.display = 'inline-flex';
-  if (progWrap)  progWrap.style.display = 'block';
-  if (progBar)   progBar.style.width    = '0%';
-  if (btOk)      btOk.textContent   = '0';
-  if (btSkip)    btSkip.textContent = '0';
-  if (btFail)    btFail.textContent = '0';
-
-  // ── PRE-SCAN: fetch fresh data from Firebase then build Sets ──
-  if (blkPhase) blkPhase.textContent = 'SCANNING';
-  if (btGame) { btGame.textContent = 'Loading fresh data from Firebase…'; btGame.style.color = 'var(--neon)'; }
-  await new Promise(r => setTimeout(r, 50));
-
-  // Use in-memory allGames (real-time listener keeps it current) — instant, no network call
-  if (btGame) { btGame.textContent = `Building index from ${allGames.length} games…`; btGame.style.color = 'var(--neon)'; }
-  await new Promise(r => setTimeout(r, 30));
-
-  const existingSteamIds = new Set();
-  const existingTitles   = new Set();
-  for (const g of allGames) {
-    if (g.steamAppId) existingSteamIds.add(String(g.steamAppId));
-    for (const url of Object.values(g.storeLinks || {})) {
-      const m = String(url).match(/\/app\/(\d+)/);
-      if (m) existingSteamIds.add(m[1]);
-    }
-    if (g.title) existingTitles.add(g.title.toLowerCase().trim());
-  }
-
-  // seenInBatch: tracks IDs saved in THIS run so we don't double-save
-  const seenInBatch = new Set();
-
-  // filter input list against fresh DB data
-  const cleanIds = [];
-  let preskip = 0;
-  for (const appId of allSourceIds) {
-    const detected = detectPlatform(appId);
-    const isSteam  = detected?.store?.name === 'Steam';
-    const steamId  = isSteam ? detected?.parsed?.id : null;
-    const batchKey = steamId || appId.toLowerCase().trim();
-    const isDup = seenInBatch.has(batchKey) || (steamId
-      ? existingSteamIds.has(steamId)
-      : existingTitles.has(appId.toLowerCase().trim()));
-    if (isDup) { preskip++; }
-    else { cleanIds.push(appId); seenInBatch.add(batchKey); }
-  }
-
-  const scanMsg = `Scan done — ${cleanIds.length} new, ${preskip} duplicate${preskip!==1?'s':''} skipped`;
-  if (btGame) { btGame.textContent = scanMsg; btGame.style.color = 'var(--green)'; }
-  if (btSkip) btSkip.textContent = preskip;
-  if (btProgress) btProgress.textContent = `0 / ${cleanIds.length}`;
-  if (summaryEl) summaryEl.textContent = `Skipped ${preskip} duplicate${preskip!==1?'s':''}`;
-
-  // update ticker title to show scan summary
-  const tickerTitle = document.querySelector('.bulk-ticker-title');
-  if (tickerTitle) tickerTitle.textContent = `${preskip} dupes skipped · ${cleanIds.length} to fetch`;
-
-  // pause so user reads scan result before fetch starts
-  await new Promise(r => setTimeout(r, 2000));
-
-  let done=0, ok=0, skip=preskip, fail=0;  // start skip from preskip count
-  const recentRatings = [];
-
-  const _fetchStart = Date.now();
-
-  const tick = (title, status='') => {
-    const col = status==='ok'?'#10b981':status==='skip'?'#eab308':status==='fail'?'#ef4444':'var(--text)';
-    if (btGame) { btGame.textContent = title; btGame.style.color = col; }
-    if (btOk)   btOk.textContent   = ok;
-    if (btSkip) btSkip.textContent = skip;
-    if (btFail) btFail.textContent = fail;
-    if (btProgress) btProgress.textContent = `${done} / ${cleanIds.length}`;
-    if (btBar)   btBar.style.width = Math.round(done/cleanIds.length*100)+'%';
-    if (progBar) progBar.style.width = Math.round(done/cleanIds.length*100)+'%';
-    if (progText) progText.textContent = `${done} / ${cleanIds.length}`;
-    // rate per minute
-    if (btRate && done > 0) {
-      const mins = (Date.now() - _fetchStart) / 60000;
-      btRate.textContent = Math.round(ok / Math.max(mins, 0.01)) + '/m';
-    }
-    // cycle — show only last 1 entry so window stays compact
-    if (status && blkLog) {
-      const labels = { ok:'SAVED', skip:'SKIP', fail:'FAIL' };
-      blkLog.innerHTML = `<div class="blk-log-item ${status}"><span class="bli-status">${labels[status]||status}</span><span class="bli-title">${title}</span></div>`;
-    }
-  };
-
-  // save initial session
-  _bulkSaveSession({ total: cleanIds.length + resumeFrom, done: resumeFrom, remaining: cleanIds });
-
-  for (const appId of cleanIds) {
-    if (!bulkRunning) break;
-    // pause wait
-    while (bulkPaused && bulkRunning) await new Promise(r => setTimeout(r, 300));
-    if (!bulkRunning) break;
-    const label = appId.length > 40 ? appId.slice(0,37)+'…' : appId;
-    tick(label);
-
-    try {
-      const detected = detectPlatform(appId);
-      const isSteam  = detected?.store?.name === 'Steam';
-      const steamId  = isSteam ? detected.parsed.id : null;
-
-      const gameData = isSteam ? await bulkFetchSingleGame(steamId) : await bulkFetchFromStore(detected);
-
-      if (gameData) {
-        // skip Mixed / Negative BEFORE inheriting from recentRatings
-        if (gameData.rating === 'Mixed' || gameData.rating === 'Negative') {
-          skip++; done++;
-          tick(`${gameData.title || label} — ${gameData.rating}`, 'skip');
-          await new Promise(r => setTimeout(r, 100));
-          continue;
-        }
-        if (!gameData.rating && recentRatings.length > 0) gameData.rating = recentRatings[recentRatings.length-1];
-        // skip if inherited rating is also Mixed/Negative
-        if (gameData.rating === 'Mixed' || gameData.rating === 'Negative') {
-          skip++; done++;
-          tick(`${gameData.title || label} — ${gameData.rating} (inherited)`, 'skip');
-          await new Promise(r => setTimeout(r, 100));
-          continue;
-        }
-        if (gameData.rating) { recentRatings.push(gameData.rating); if (recentRatings.length > 5) recentRatings.shift(); }
-
-        gameData.status = 'published';
-        if (!gameData.trailer && gameData.steamAppId) {
-          const st = await fetchSteamTrailer(gameData.steamAppId).catch(()=>null);
-          if (st) gameData.trailer = st;
-        }
-        if (!gameData.trailer) {
-          const yt = await fetchYouTubeTrailer(gameData.title).catch(()=>null);
-          if (yt) gameData.trailer = yt;
-        }
-        // normalize all fields against taxonomy before saving
-        const normalized = normalizeTaxFields(gameData);
-        // Merge tags: existing → queue tags → global tags (global has priority)
-        const queueTags   = _bulkQueue[0]?.tags || [];
-        const globalTags  = _bulkGlobalTags || [];
-        const allExtra    = [...new Set([...queueTags, ...globalTags])];
-        if (allExtra.length) {
-          const existing = normalized.userTags || [];
-          // Global tags override duplicates — merge with global last
-          const merged = [...new Set([
-            ...existing.filter(t => !globalTags.includes(t)),
-            ...queueTags,
-            ...globalTags,
-          ])];
-          normalized.userTags = merged;
-        }
-        const id = db.collection(COLLECTION).doc().id;
-        await db.collection(COLLECTION).doc(id).set({...normalized, id, createdAt: Date.now(), updatedAt: Date.now()});
-        logAction('game_added', normalized.title, id, null, {...normalized, id});
-        // keep sets updated so later IDs in this same run don't duplicate
-        // add to sets immediately so next iteration catches it
-        if (normalized.steamAppId) {
-          existingSteamIds.add(String(normalized.steamAppId));
-          seenInBatch.add(String(normalized.steamAppId));
-        }
-        if (normalized.title) {
-          existingTitles.add(normalized.title.toLowerCase().trim());
-          seenInBatch.add(normalized.title.toLowerCase().trim());
-        }
-        ok++; done++; tick(normalized.title || label, 'ok');
-        // update session progress
-        const _remaining = cleanIds.slice(done);
-        _bulkSaveSession({ total: cleanIds.length + resumeFrom, done: resumeFrom + done, remaining: _remaining });
-      } else {
-        fail++; done++; tick(label, 'fail');
-      }
-    } catch(e) {
-      fail++; done++; tick(label, 'fail');
-    }
-    await new Promise(r => setTimeout(r, 700));
-  }
-
-  bulkRunning = false;
-  bulkPaused  = false;
-  if (stopBtn)   stopBtn.style.display   = 'none';
-  if (pauseBtn)  pauseBtn.style.display  = 'none';
-  if (btGame)    { btGame.textContent = `Done — ${ok} saved, ${skip} skipped, ${fail} failed`; btGame.style.color = ok > 0 ? '#10b981' : 'var(--muted)'; }
-  if (blkPhase)  { blkPhase.textContent = 'COMPLETE'; blkPhase.style.color = '#10b981'; }
-  if (blkDot)    blkDot.classList.add('done');
-  if (btRate && ok > 0) { const mins=(Date.now()-_fetchStart)/60000; btRate.textContent=Math.round(ok/Math.max(mins,0.01))+'/m'; }
-  if (progBar)   progBar.style.width = '100%';
-  toast(`Bulk fetch complete — ${ok} saved!`, 'success');
-  _bulkClearSession();
-  if (_bulkQueue.length > 0) _bulkQueue.shift();
-  setTimeout(() => {
-    if (liveState)  liveState.style.display  = 'none';
-    if (startBtn) { startBtn.disabled = false; startBtn.style.opacity = ''; startBtn.style.pointerEvents = ''; }
-    const resumeBtn2 = document.getElementById('bulk-resume-btn');
-    if (resumeBtn2) resumeBtn2.style.display = 'none';
-    document.getElementById('bulk-ids-area').value = '';
-    _bulkQueueRender();
-    if (_bulkQueue.length > 0) {
-      toast(`Starting next: ${_bulkQueue[0].name}`, 'info');
-      setTimeout(startBulkFetch, 1500);
-    }
-  }, 3000);
-}
 function stopBulkFetch() {
   bulkRunning = false;
   bulkPaused  = false;
@@ -9265,83 +8947,6 @@ function exportTaxonomy() {
   toast('Taxonomy exported!', 'success');
 }
 
-function exportToWordPressXML(data) {
-  if (!data || !data.length) { toast('No assets to export', 'error'); return; }
-  const _x = s => String(s == null ? '' : s).trim()
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;');
-
-  const now = new Date().toUTCString();
-  const items = data.map(g => {
-    const title     = _x(g.title);
-    const link      = _x(g.post_link || g.storeLinks?.Steam || '');
-    const author    = _x(g.author || g.developer || '');
-    const category  = _x(g.category || '');
-    const price     = _x(g.price || '');
-    const image     = _x(g.cover || g.image || '');
-    const priceRange= _x(g.price_range || '');
-    const desc      = _x(g.description || '');
-
-    const tags = [...(g.userTags || []), ...(g.genres || [])];
-    const tagEls = [...new Set(tags)]
-      .filter(Boolean)
-      .map(t => `      <category domain="post_tag" nicename="${_x(t.toLowerCase().replace(/\s+/g,'-'))}"><![CDATA[${t.trim()}]]></category>`)
-      .join('\n');
-
-    const catEl = category
-      ? `      <category domain="category" nicename="${_x(category.toLowerCase().replace(/\s+/g,'-'))}"><![CDATA[${category}]]></category>`
-      : '';
-
-    const contentParts = [];
-    if (image) contentParts.push(`<img src="${image.replace(/"/g,'&quot;')}" alt="${title.replace(/"/g,'&quot;')}" style="max-width:100%;" />`);
-    if (desc)  contentParts.push(`<p>${desc}</p>`);
-    if (price) contentParts.push(`<p><strong>Price:</strong> ${price}${priceRange ? ' (' + priceRange + ')' : ''}</p>`);
-    if (link)  contentParts.push(`<p><a href="${link.replace(/"/g,'&quot;')}">View Asset →</a></p>`);
-    const content = contentParts.join('\n');
-
-    return `    <item>
-      <title>${title}</title>
-      <link>${link}</link>
-      <pubDate>${now}</pubDate>
-      <dc:creator><![CDATA[${author}]]></dc:creator>
-${catEl}
-${tagEls}
-      <wp:post_type>post</wp:post_type>
-      <wp:status>publish</wp:status>
-      <content:encoded><![CDATA[
-${content}
-      ]]></content:encoded>
-    </item>`;
-  }).join('\n');
-
-  const xml = `<?xml version="1.0" encoding="UTF-8" ?>
-<rss version="2.0"
-  xmlns:excerpt="http://wordpress.org/export/1.2/excerpt/"
-  xmlns:content="http://purl.org/rss/1.0/modules/content/"
-  xmlns:wfw="http://wellformedweb.org/CommentAPI/"
-  xmlns:dc="http://purl.org/dc/elements/1.1/"
-  xmlns:wp="http://wordpress.org/export/1.2/">
-  <channel>
-    <title>AssetScout Export</title>
-    <link>https://assetscout.app</link>
-    <description>WordPress WXR export from AssetScout Admin</description>
-    <pubDate>${now}</pubDate>
-    <wp:wxr_version>1.2</wp:wxr_version>
-    <generator>AssetScout Admin</generator>
-${items}
-  </channel>
-</rss>`;
-
-  const blob = new Blob([xml], { type: 'application/xml;charset=utf-8' });
-  const u = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = u; a.download = 'assets-export.xml'; a.click();
-  URL.revokeObjectURL(u);
-  toast(`WordPress XML exported (${data.length} assets)`, 'success');
-}
 
 function exportSelectedXML() {
   if (selectedIds.size > 0) {
@@ -9793,27 +9398,24 @@ function hidePageLoader() {
           <!-- Image -->
           <div class="field full">
             <div class="field-label">Image</div>
-            <label for="img-file-input" style="display:flex;align-items:center;gap:10px;border:2px dashed var(--border-act);border-radius:var(--r-lg);padding:14px 16px;cursor:pointer;background:var(--surface);"
+            <label for="img-file-input" style="display:flex;align-items:center;gap:10px;border:2px dashed var(--border-act);border-radius:var(--r-lg);padding:14px 16px;cursor:pointer;background:var(--surface);transition:border-color 0.2s;"
               ondragover="event.preventDefault();this.style.borderColor='var(--neon)';"
               ondragleave="this.style.borderColor='var(--border-act)';"
               ondrop="_handleImageDrop(event);this.style.borderColor='var(--border-act)';">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--neon)" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
               <div>
-                <div style="font-size:13px;color:var(--text);font-weight:600;">Click to upload</div>
-                <div style="font-size:11px;color:var(--dim);">PNG, JPG, WebP — drag & drop — or paste CTRL+V</div>
+                <div style="font-size:13px;color:var(--text);font-weight:600;">Click to upload image</div>
+                <div style="font-size:11px;color:var(--dim);">PNG, JPG, WebP — drag & drop — CTRL+V to paste</div>
               </div>
               <input type="file" id="img-file-input" accept="image/*" tabindex="-1" style="display:none;" onchange="_handleImageUpload(this)">
             </label>
-            <div style="display:flex;align-items:center;gap:6px;margin-top:6px;">
-              <span style="font-size:10px;color:var(--dim);white-space:nowrap;">or URL:</span>
-              <input type="url" id="f-cover" placeholder="https://..." style="flex:1;font-size:12px;" oninput="_showImagePreview(this.value);window._pendingImageFile=null;const _b=document.getElementById('f-image-upload-badge');if(_b)_b.style.display='none';">
-            </div>
+            <input type="hidden" id="f-cover">
             <div id="f-image-preview" style="margin-top:8px;display:none;">
               <div style="position:relative;display:inline-block;">
                 <img id="f-image-preview-img" src="" alt="" style="max-height:160px;max-width:100%;border-radius:8px;border:1px solid var(--border-act);object-fit:contain;display:block;background:var(--surface);">
                 <button onclick="_clearImageInput()" style="position:absolute;top:4px;right:4px;background:rgba(0,0,0,0.75);border:none;color:#fff;border-radius:50%;width:22px;height:22px;cursor:pointer;font-size:14px;line-height:22px;text-align:center;">x</button>
               </div>
-              <div id="f-image-upload-badge" style="display:none;margin-top:4px;font-size:11px;color:var(--amber);font-family:'JetBrains Mono',monospace;"></div>
+              <div id="f-image-upload-badge" style="display:none;margin-top:4px;font-size:11px;color:var(--amber);"></div>
             </div>
           </div>
 
