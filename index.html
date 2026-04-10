@@ -5710,14 +5710,13 @@ function loadGameIntoForm(id) {
   set('f-period',      g.period);
   set('f-rating',      g.rating);
   set('f-visual',      g.visual);
-  _populateCategorySelect(g.category || '');
-  // Populate hierarchical category dropdowns
-  if (typeof _initCatDropdowns === 'function') {
-    _initCatDropdowns(g.category_lvl1||'', g.category_lvl2||'', g.category_lvl3||'', g.category_lvl4||'');
-    if (!g.category_lvl1 && g.category) {
-      const parts = g.category.split('>').map(p => p.trim()).filter(Boolean);
-      _initCatDropdowns(parts[0]||'', parts[1]||'', parts[2]||'', parts[3]||'');
-    }
+  // Populate category tokens
+  if (typeof setCategoryTokens === 'function') {
+    // Prefer categories[] array, fall back to splitting old "A > B > C" string
+    const _cats = Array.isArray(g.categories) && g.categories.length
+      ? g.categories
+      : (g.category ? g.category.split('>').map(p => p.trim()).filter(Boolean) : []);
+    setCategoryTokens(_cats);
   }
   _showImagePreview(g.cover || g.image || '');
   buildFormSelects(g);
@@ -5734,7 +5733,7 @@ function loadGameIntoForm(id) {
     (g.deals || []).forEach(d => addDealLinkRow(d.name||'', d.url||'', d.discount||''));
   }
   if (typeof setPasteValues === 'function') {
-    setPasteValues('usertags', '', g.userTags || []);
+    setPasteValues('userTags', '', g.userTags || []);
   }
   ['cb-platforms','cb-playmode','cb-themes'].forEach(cbId => {
     const el = document.getElementById(cbId);
@@ -6900,6 +6899,169 @@ function _tagSuggestKey(event, inputId) {
 /* ═══════════════════════════════════════════════
    ASSET FIELD HELPERS
 ═══════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════
+   CATEGORY TOKEN SYSTEM (mirrors Tags UX)
+   - getCategoryTokens()  → string[]
+   - setCategoryTokens(arr)
+   - clearCategoryTokens()
+═══════════════════════════════════════════════ */
+
+// In-memory store for category tokens (mirrors pasteStore for userTags)
+let _catStore = {};  // { label: true }
+
+function _catParsePaste() {
+  const area = document.getElementById('pi-categories');
+  if (!area) return;
+  const raw = area.value;
+  // Split on comma, newline, or ">" to handle pasted "3D > Characters > Human"
+  const items = raw.split(/[\n,>]+/).map(s => s.trim()).filter(Boolean);
+  if (items.length > 1 || raw.includes('\n') || raw.includes('>') || raw.includes(',')) {
+    items.forEach(v => { if (v) _addCatToken(v); });
+    area.value = '';
+    _hideCatSuggestions();
+  }
+}
+
+function _addCatToken(val) {
+  if (!val) return;
+  const v = val.trim();
+  if (!v || _catStore[v]) return;
+  _catStore[v] = true;
+  _renderCatTokens();
+  // Ensure term exists in taxonomy tree
+  if (typeof addCategoryPath === 'function') {
+    addCategoryPath([v]);
+  }
+}
+
+function _removeCatToken(val) {
+  delete _catStore[val];
+  _renderCatTokens();
+}
+
+function _renderCatTokens() {
+  const el = document.getElementById('pt-categories');
+  if (!el) return;
+  el.innerHTML = Object.keys(_catStore).map(v =>
+    `<span class="paste-tag">${v}<span class="paste-tag-x" onclick="_removeCatToken('${v.replace(/'/g,"\\'")}')"><svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span></span>`
+  ).join('');
+}
+
+function getCategoryTokens() {
+  return Object.keys(_catStore);
+}
+
+function setCategoryTokens(arr) {
+  _catStore = {};
+  (arr || []).forEach(v => { if (v) _catStore[v.trim()] = true; });
+  _renderCatTokens();
+}
+
+function clearCategoryTokens() {
+  _catStore = {};
+  _renderCatTokens();
+  const area = document.getElementById('pi-categories');
+  if (area) area.value = '';
+}
+
+// ── Category suggestions (draws from taxonomy tree keys) ──────────────
+
+function _getAllCategoryLabels() {
+  const labels = new Set();
+  // Flatten all keys from assetCategories tree
+  function walk(node) {
+    if (!node || typeof node !== 'object') return;
+    Object.keys(node).forEach(k => { labels.add(k); walk(node[k]); });
+  }
+  walk(TAXONOMY?.assetCategories || {});
+  // Also collect from saved games
+  allGames.forEach(g => {
+    const cats = Array.isArray(g.categories) ? g.categories
+               : (g.category ? g.category.split('>').map(p=>p.trim()).filter(Boolean) : []);
+    cats.forEach(c => labels.add(c));
+  });
+  return [...labels].sort();
+}
+
+function _showCatSuggestions() {
+  const input = document.getElementById('pi-categories');
+  const drop  = document.getElementById('cat-suggest-dropdown');
+  if (!input || !drop) return;
+  const val = input.value.trim().toLowerCase();
+  const all  = _getAllCategoryLabels();
+  let matches = val
+    ? all.filter(t => t.toLowerCase().includes(val) && !_catStore[t])
+    : [];
+  const isNew = val && !all.some(t => t.toLowerCase() === val);
+  let html = matches.slice(0, 10).map(t =>
+    `<div class="tag-suggest-item" data-val="${t}" onmousedown="event.preventDefault();_selectCatSuggestion('${t.replace(/'/g,"\\'")}')">` +
+    `${t}</div>`
+  ).join('');
+  if (isNew && val) {
+    html += `<div class="tag-suggest-item" data-val="${val}" onmousedown="event.preventDefault();_selectCatSuggestion('${val.replace(/'/g,"\\'")}')">` +
+            `${val}<span class="ts-new">+ Add new</span></div>`;
+  }
+  if (!html) { drop.style.display = 'none'; return; }
+  drop.innerHTML = html;
+  drop.style.display = 'block';
+  drop.querySelectorAll('.tag-suggest-item')[0]?.classList.add('active');
+}
+
+function _hideCatSuggestions() {
+  const drop = document.getElementById('cat-suggest-dropdown');
+  if (drop) drop.style.display = 'none';
+}
+
+function _selectCatSuggestion(val) {
+  _addCatToken(val);
+  const input = document.getElementById('pi-categories');
+  if (input) input.value = '';
+  _hideCatSuggestions();
+}
+
+function _catSuggestKey(event) {
+  const drop = document.getElementById('cat-suggest-dropdown');
+  if (!drop || drop.style.display === 'none') {
+    // Enter/comma with text in input → add token
+    if (event.key === 'Enter' || event.key === ',') {
+      event.preventDefault();
+      const input = document.getElementById('pi-categories');
+      if (!input) return;
+      const val = input.value.trim().replace(/,+$/, '');
+      if (val) { _addCatToken(val); input.value = ''; }
+    }
+    return;
+  }
+  const items = drop.querySelectorAll('.tag-suggest-item');
+  const active = drop.querySelector('.tag-suggest-item.active');
+  let idx = [...items].indexOf(active);
+  if (event.key === 'ArrowDown') {
+    event.preventDefault();
+    items.forEach(i => i.classList.remove('active'));
+    items[Math.min(idx + 1, items.length - 1)]?.classList.add('active');
+  } else if (event.key === 'ArrowUp') {
+    event.preventDefault();
+    items.forEach(i => i.classList.remove('active'));
+    items[Math.max(idx - 1, 0)]?.classList.add('active');
+  } else if (event.key === 'Enter' || event.key === 'Tab') {
+    const ai = drop.querySelector('.tag-suggest-item.active');
+    if (ai) { event.preventDefault(); _selectCatSuggestion(ai.dataset.val); }
+    else {
+      event.preventDefault();
+      const input = document.getElementById('pi-categories');
+      if (input?.value.trim()) { _addCatToken(input.value.trim()); input.value = ''; _hideCatSuggestions(); }
+    }
+  } else if (event.key === 'Escape') {
+    _hideCatSuggestions();
+  } else if (event.key === ',') {
+    event.preventDefault();
+    const input = document.getElementById('pi-categories');
+    const val = input?.value.trim().replace(/,+$/, '');
+    if (val) { _addCatToken(val); input.value = ''; _hideCatSuggestions(); }
+  }
+}
+
+
 function _calcPriceRange(price) {
   if (!price) return '';
   const s = String(price).toLowerCase().trim();
@@ -7127,13 +7289,8 @@ function clearGameForm() {
   const ps = document.getElementById('paste-data-status'); if (ps) ps.textContent = '';
   // Tags
   if (typeof clearPasteField === 'function') clearPasteField('userTags');
-  // Category levels
-  ['f-cat-lvl1','f-cat-lvl2','f-cat-lvl3','f-cat-lvl4'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.innerHTML = '<option value="">—</option>';
-  });
-  const catEl = document.getElementById('f-category');
-  if (catEl && typeof _populateCategorySelect === 'function') _populateCategorySelect('');
+  // Category tokens
+  if (typeof clearCategoryTokens === 'function') clearCategoryTokens();
   // Store links
   const slr = document.getElementById('store-link-rows');
   if (slr) { slr.innerHTML = ''; if (typeof addStoreLinkRow === 'function') addStoreLinkRow(); }
@@ -7144,8 +7301,7 @@ function clearGameForm() {
   if (storePreview) storePreview.textContent = 'Enter Post Link above to auto-detect store';
   // Save status
   const ss = document.getElementById('save-status'); if (ss) ss.style.display = 'none';
-  // Category dropdowns
-  if (typeof _populateCatLevel === 'function') _populateCatLevel(1, []);
+  // (category tokens cleared above)
 }
 
 /* ═══════════════════════════════════════════════
@@ -7292,12 +7448,20 @@ function applyPastedData() {
     sv('f-technical', parsed.technicalDetails || parsed.technical_details);
   const imgUrl = parsed.cover || parsed.image || '';
   if (imgUrl && !imgUrl.startsWith('data:')) { sv('f-cover', imgUrl); _showImagePreview(imgUrl); }
-  // Category path
-  if (parsed.category) {
-    const parts = parsed.category.split('>').map(p => p.trim()).filter(Boolean);
-    addCategoryPath(parts);
-    _initCatDropdowns(parts[0], parts[1], parts[2], parts[3]);
-    sv('f-category', parts[0] || parsed.category);
+  // Category tokens — accept categories[] (new) or category string (old)
+  if (typeof setCategoryTokens === 'function') {
+    let _cats = [];
+    if (Array.isArray(parsed.categories) && parsed.categories.length) {
+      _cats = parsed.categories;
+    } else if (Array.isArray(parsed.category_path) && parsed.category_path.length) {
+      _cats = parsed.category_path;
+    } else if (parsed.category) {
+      _cats = parsed.category.split('>').map(p => p.trim()).filter(Boolean);
+    }
+    if (_cats.length) {
+      setCategoryTokens(_cats);
+      if (typeof addCategoryPath === 'function') addCategoryPath(_cats);
+    }
   }
   // Tags
   if (parsed.author && typeof addPasteTag === 'function') {
@@ -7365,22 +7529,22 @@ async function saveGame() {
     const manualStoreLinks = (() => { try { const el = document.getElementById('f-storelinks'); return JSON.parse((el?.value)||'{}'); } catch { return {}; } })();
     const storeLinks = { ...autoStoreLinks, ...manualStoreLinks };
 
-    // Category levels
-    const catLvl1 = (document.getElementById('f-cat-lvl1')?.value || '').trim();
-    const catLvl2 = (document.getElementById('f-cat-lvl2')?.value || '').trim();
-    const catLvl3 = (document.getElementById('f-cat-lvl3')?.value || '').trim();
-    const catLvl4 = (document.getElementById('f-cat-lvl4')?.value || '').trim();
-    const categoryPath = [catLvl1, catLvl2, catLvl3, catLvl4].filter(Boolean).join(' > ');
+    // Category tokens → categories array + backward-compat category string
+    const _catTokens    = typeof getCategoryTokens === 'function' ? getCategoryTokens() : [];
+    const _categoryPath = _catTokens;                              // ordered array
+    const _categoryStr  = _catTokens.join(' > ');                  // backward-compat string
 
     const gameData = {
       title,
       post_link:        postLink,
       author:           (document.getElementById('f-author')?.value || '').trim(),
-      category:         categoryPath || (document.getElementById('f-category')?.value || ''),
-      category_lvl1:    catLvl1,
-      category_lvl2:    catLvl2,
-      category_lvl3:    catLvl3,
-      category_lvl4:    catLvl4,
+      categories:       _catTokens,            // NEW: array format
+      category_path:    _categoryPath,          // NEW: hierarchy array
+      category:         _categoryStr,           // backward compat "A > B > C"
+      category_lvl1:    _catTokens[0] || '',
+      category_lvl2:    _catTokens[1] || '',
+      category_lvl3:    _catTokens[2] || '',
+      category_lvl4:    _catTokens[3] || '',
       cover:            coverUrl,
       image:            coverUrl,
       description:      (document.getElementById('f-desc')?.value || '').trim(),
@@ -8297,9 +8461,13 @@ async function startBulkFetch() {
   /* ── helper: build asset object from a parsed JSON object ── */
   function _buildAssetFromJson(parsed, extraTags) {
     const imgUrl = (parsed.cover||parsed.image||'').startsWith('data:') ? '' : (parsed.cover||parsed.image||'');
-    const cat = (parsed.category||'').trim();
-    const catParts = cat ? cat.split('>').map(p=>p.trim()).filter(Boolean) : [];
-    if (catParts.length && typeof addCategoryPath === 'function') addCategoryPath(catParts);
+    // Accept categories[] (new) or split legacy category string
+    const _bc = Array.isArray(parsed.categories) && parsed.categories.length ? parsed.categories
+      : Array.isArray(parsed.category_path) && parsed.category_path.length ? parsed.category_path
+      : ((parsed.category||'').trim() ? (parsed.category).split('>').map(p=>p.trim()).filter(Boolean) : []);
+    if (_bc.length && typeof addCategoryPath === 'function') addCategoryPath(_bc);
+    const cat = _bc.join(' > ');
+    const catParts = _bc;
     let sl = parsed.storeLinks || {};
     const pl = (parsed.post_link||'').trim();
     if (pl && !Object.keys(sl).length) {
@@ -8316,6 +8484,8 @@ async function startBulkFetch() {
       author:           parsed.author || '',
       price:            parsed.price || '',
       price_range:      parsed.price_range || (parsed.price ? _calcPriceRange(parsed.price) : ''),
+      categories:       _bc,
+      category_path:    _bc,
       category:         cat,
       category_lvl1:    catParts[0]||'', category_lvl2: catParts[1]||'',
       category_lvl3:    catParts[2]||'', category_lvl4: catParts[3]||'',
@@ -8996,7 +9166,7 @@ function exportToWordPressXML(data) {
     const title     = _x(g.title);
     const link      = _x(g.post_link || g.storeLinks?.Steam || '');
     const author    = _x(g.author || g.developer || '');
-    const category  = _x(g.category || '');
+    const category  = g.category || '';  // backward-compat; catEls built below
     const price     = _x(g.price || '');
     const image     = _x(g.cover || g.image || '');
     const priceRange= _x(g.price_range || '');
@@ -9008,8 +9178,16 @@ function exportToWordPressXML(data) {
       .map(t => `      <category domain="post_tag" nicename="${_x(t.toLowerCase().replace(/\s+/g,'-'))}"><![CDATA[${t.trim()}]]></category>`)
       .join('\n');
 
-    const catEl = category
-      ? `      <category domain="category" nicename="${_x(category.toLowerCase().replace(/\s+/g,'-'))}"><![CDATA[${category}]]></category>`
+    // Build categories array: prefer new categories[] / category_path[], fall back to splitting legacy string
+    const _rawCats = Array.isArray(g.categories) && g.categories.length ? g.categories
+      : Array.isArray(g.category_path) && g.category_path.length ? g.category_path
+      : (category ? category.split('>').map(p => p.trim()).filter(Boolean) : []);
+    const catEls = _rawCats.map((c, i) =>
+      `      <category domain="category" nicename="${_x(c.toLowerCase().replace(/\s+/g,'-'))}"><![CDATA[${c}]]></category>`
+    ).join('\n');
+    // Store category_path as wp:postmeta for importer
+    const catPathMeta = _rawCats.length
+      ? `      <wp:postmeta><wp:meta_key><![CDATA[_amt_category_path]]></wp:meta_key><wp:meta_value><![CDATA[${_x(JSON.stringify(_rawCats))}]]></wp:meta_value></wp:postmeta>`
       : '';
 
     const contentParts = [];
@@ -9024,8 +9202,9 @@ function exportToWordPressXML(data) {
       <link>${link}</link>
       <pubDate>${now}</pubDate>
       <dc:creator><![CDATA[${author}]]></dc:creator>
-${catEl}
+${catEls}
 ${tagEls}
+${catPathMeta}
       <wp:post_type>post</wp:post_type>
       <wp:status>publish</wp:status>
       <wp:attachment_url>${image}</wp:attachment_url>
@@ -9492,25 +9671,19 @@ function hidePageLoader() {
             <div class="field-label">Author / Creator</div>
             <input type="text" id="f-author" placeholder="Creator or studio name">
           </div>
-          <div class="field">
-            <div class="field-label">Category</div>
-            <select id="f-category" style="width:100%;" onchange="if(this.value==='__new__')_promptNewCategory()">
-              <option value="">— Select —</option>
-            </select>
-          </div>
-          <!-- Hierarchical category levels -->
+          <!-- Category token input — identical UX to Tags -->
           <div class="field full">
-            <div class="field-label" style="margin-bottom:6px;">Category Path <span style="font-size:10px;color:var(--muted);font-weight:400;">(3D → Character → Human → Male)</span></div>
-            <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;">
-              <select id="f-cat-lvl1" style="font-size:12px;" onchange="_updateCatLevel(2)"><option value="">Level 1</option></select>
-              <select id="f-cat-lvl2" style="font-size:12px;" onchange="_updateCatLevel(3)"><option value="">Level 2</option></select>
-              <select id="f-cat-lvl3" style="font-size:12px;" onchange="_updateCatLevel(4)"><option value="">Level 3</option></select>
-              <select id="f-cat-lvl4" style="font-size:12px;"><option value="">Level 4</option></select>
-            </div>
-            <div style="margin-top:6px;display:flex;gap:6px;align-items:center;">
-              <input type="text" id="f-cat-bulk-input" placeholder="Or type: 3D > Character > Human > Male" style="flex:1;font-size:12px;">
-              <button class="btn btn-secondary btn-sm" onclick="_parseCategoryBulk()">Parse</button>
-              <button class="btn btn-secondary btn-sm" onclick="_showAddCategoryUI()">+ Add</button>
+            <div class="field-label">Category <span style="font-size:10px;color:var(--muted);font-weight:400;">hierarchy preserved internally</span></div>
+            <div style="position:relative;">
+              <div class="paste-field" id="pf-categories" onclick="this.querySelector('.paste-input-area').focus()">
+                <div class="paste-tags" id="pt-categories"></div>
+                <textarea class="paste-input-area" id="pi-categories"
+                  placeholder="Type category and press comma or Enter…" rows="1"
+                  oninput="_catParsePaste();_showCatSuggestions();"
+                  onblur="setTimeout(()=>_hideCatSuggestions(),150)"
+                  onkeydown="_catSuggestKey(event)"></textarea>
+              </div>
+              <div id="cat-suggest-dropdown" class="tag-suggest-dropdown" style="display:none;"></div>
             </div>
           </div>
           <!-- Image Upload -->
