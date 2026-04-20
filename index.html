@@ -4686,7 +4686,7 @@ https://cgtrader.com/3d-models/..."
             <button class="btn btn-secondary btn-sm" onclick="_bprCancel()" id="bpr-cancel-btn">Cancel</button>
             <button class="btn btn-primary" onclick="_bprConfirmImport()" id="bpr-confirm-btn">
               <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" style="margin-right:4px;vertical-align:-1px"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-              <span id="bpr-confirm-label">Import as Drafts</span>
+              <span id="bpr-confirm-label">Import Assets</span>
             </button>
           </div>
         </div>
@@ -8810,10 +8810,10 @@ function _bprUpdateStats() {
   if (footerInfo) {
     footerInfo.textContent = removed
       ? `${total} to import · ${removed} removed`
-      : `${total} asset${total!==1?'s':''} ready to import as drafts`;
+      : `${total} asset${total!==1?'s':''} ready to import`;
   }
   const confirmLabel = document.getElementById('bpr-confirm-label');
-  if (confirmLabel) confirmLabel.textContent = `Import ${total} as Draft${total!==1?'s':''}`;
+  if (confirmLabel) confirmLabel.textContent = `Import ${total} Asset${total!==1?'s':''}`;
   const confirmBtn = document.getElementById('bpr-confirm-btn');
   if (confirmBtn) confirmBtn.disabled = total === 0;
 }
@@ -8876,11 +8876,10 @@ async function _bprConfirmImport() {
   for (let i = 0; i < toSave.length; i++) {
     const { asset } = toSave[i];
     try {
-      // Draft-first: override status regardless of what mapExtensionAsset set
-      const draftAsset = { ...asset, status: 'draft', createdAt: Date.now(), updatedAt: Date.now() };
+      const finalAsset = { ...asset, status: 'published', createdAt: Date.now(), updatedAt: Date.now() };
       const docRef = db.collection(COLLECTION).doc();
-      draftAsset.id = docRef.id;
-      await docRef.set(draftAsset);
+      finalAsset.id = docRef.id;
+      await docRef.set(finalAsset);
       ok++;
     } catch(e) {
       fail++;
@@ -8949,7 +8948,7 @@ async function startBulkFetch() {
       title: url, post_link: url, author: '', price: '', price_range: '', category: '',
       cover: '', image: '', description: '', overview: '', technicalDetails: '',
       userTags: [...(extraTags||[])], storeLinks: sn ? {[sn]: url} : {},
-      status: 'draft', createdAt: Date.now(), updatedAt: Date.now(),
+      status: 'published', createdAt: Date.now(), updatedAt: Date.now(),
     };
   }
 
