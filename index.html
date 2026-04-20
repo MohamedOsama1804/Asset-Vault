@@ -3963,7 +3963,148 @@ select option { background: var(--card); }
 
 
 
-/* ── Bulk File Entry rows ── */
+/* ── BULK IMPORT PREVIEW OVERLAY ─────────────── */
+#bulk-preview-overlay {
+  position: fixed; inset: 0; z-index: 9500;
+  background: rgba(0,0,0,0.82); backdrop-filter: blur(8px);
+  display: none; align-items: flex-start; justify-content: center;
+  padding: 24px 16px; overflow-y: auto;
+}
+#bulk-preview-overlay.open { display: flex; }
+#bulk-preview-box {
+  background: var(--base);
+  border: 1px solid rgba(0,212,255,0.2);
+  border-radius: 14px;
+  width: 100%; max-width: 900px;
+  min-height: 200px;
+  box-shadow: 0 0 40px rgba(0,212,255,0.06), 0 24px 80px rgba(0,0,0,0.8);
+  display: flex; flex-direction: column;
+  margin: auto;
+}
+#bulk-preview-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1px solid rgba(0,212,255,0.1);
+  background: linear-gradient(135deg, var(--surface), rgba(0,212,255,0.04));
+  border-radius: 14px 14px 0 0;
+  flex-shrink: 0;
+}
+#bulk-preview-header-left { display: flex; align-items: center; gap: 10px; }
+#bulk-preview-title {
+  font-weight: 700; font-size: 15px; color: var(--text);
+  display: flex; align-items: center; gap: 8px;
+}
+#bulk-preview-stats {
+  font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  color: var(--muted); display: flex; gap: 12px;
+}
+#bulk-preview-stats span { display: flex; align-items: center; gap: 4px; }
+#bulk-preview-table-wrap {
+  flex: 1; overflow-y: auto; max-height: 55vh;
+  padding: 0;
+}
+#bulk-preview-table-wrap::-webkit-scrollbar { width: 4px; }
+#bulk-preview-table-wrap::-webkit-scrollbar-thumb { background: var(--dim); border-radius: 2px; }
+#bulk-preview-table {
+  width: 100%; border-collapse: collapse;
+  font-size: 12px;
+}
+#bulk-preview-table thead th {
+  position: sticky; top: 0; z-index: 2;
+  background: var(--surface);
+  padding: 8px 12px;
+  text-align: left;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; font-weight: 600;
+  letter-spacing: 0.8px; text-transform: uppercase;
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+}
+#bulk-preview-table tbody tr {
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  transition: background 0.1s;
+}
+#bulk-preview-table tbody tr:hover { background: rgba(255,255,255,0.02); }
+#bulk-preview-table tbody tr.bpr-removed {
+  opacity: 0.3; text-decoration: line-through;
+}
+#bulk-preview-table tbody td {
+  padding: 8px 12px; vertical-align: middle;
+  color: var(--text);
+}
+.bpr-cover-cell { width: 44px; }
+.bpr-cover-thumb {
+  width: 36px; height: 36px; border-radius: 5px;
+  object-fit: cover; display: block; background: var(--surface);
+  border: 1px solid var(--border);
+}
+.bpr-cover-missing {
+  width: 36px; height: 36px; border-radius: 5px;
+  background: var(--surface); border: 1px dashed rgba(245,158,11,0.5);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; color: var(--amber);
+}
+.bpr-title-cell { max-width: 220px; }
+.bpr-title {
+  font-weight: 600; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis; max-width: 200px;
+  display: block;
+}
+.bpr-postlink {
+  font-size: 10px; color: var(--muted); font-family: 'JetBrains Mono', monospace;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  max-width: 200px; display: block; margin-top: 2px;
+}
+.bpr-price { font-family: 'JetBrains Mono', monospace; font-weight: 600; }
+.bpr-price.is-free { color: var(--green); }
+.bpr-price.is-missing { color: var(--amber); font-style: italic; }
+.bpr-cat {
+  font-size: 11px; color: var(--muted);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  max-width: 160px; display: block;
+}
+.bpr-dup-badge {
+  font-size: 9px; font-weight: 700; font-family: 'JetBrains Mono', monospace;
+  padding: 2px 6px; border-radius: 4px;
+  background: rgba(245,158,11,0.12); color: var(--amber);
+  border: 1px solid rgba(245,158,11,0.3);
+}
+.bpr-remove-btn {
+  background: none; border: 1px solid rgba(239,68,68,0.2);
+  color: var(--muted); border-radius: 5px;
+  width: 24px; height: 24px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.12s; flex-shrink: 0;
+}
+.bpr-remove-btn:hover { background: rgba(239,68,68,0.15); color: var(--red); border-color: rgba(239,68,68,0.4); }
+#bulk-preview-footer {
+  padding: 14px 20px;
+  border-top: 1px solid var(--border);
+  display: flex; align-items: center; gap: 10px;
+  flex-shrink: 0; background: var(--base);
+  border-radius: 0 0 14px 14px;
+  flex-wrap: wrap;
+}
+#bulk-preview-footer-info {
+  font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  color: var(--muted); flex: 1; min-width: 0;
+}
+#bulk-preview-saving {
+  display: none; align-items: center; gap: 8px;
+  font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  color: var(--neon);
+}
+#bulk-preview-saving-bar {
+  width: 120px; height: 2px; background: var(--border); border-radius: 2px; overflow: hidden;
+}
+#bulk-preview-saving-fill {
+  height: 100%; width: 0%; background: var(--neon);
+  transition: width 0.3s ease; border-radius: 2px;
+}
+@media (max-width: 768px) {
+  #bulk-preview-table thead th:nth-child(4),
+  #bulk-preview-table tbody td:nth-child(4) { display: none; }
+}
 .bulk-file-row {
   display: flex; flex-direction: column; gap: 4px;
   padding: 7px 10px; background: var(--surface);
@@ -4500,6 +4641,57 @@ https://cgtrader.com/3d-models/..."
         </div>
       </div>
 
+      <!-- ── BULK IMPORT PREVIEW OVERLAY ── -->
+      <div id="bulk-preview-overlay">
+        <div id="bulk-preview-box">
+          <div id="bulk-preview-header">
+            <div id="bulk-preview-header-left">
+              <div id="bulk-preview-title">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--neon)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                Review Before Import
+              </div>
+              <div id="bulk-preview-stats">
+                <span id="bpr-stat-total" style="color:var(--text);">0 assets</span>
+                <span id="bpr-stat-nocover" style="color:var(--amber);display:none;"></span>
+                <span id="bpr-stat-noprice" style="color:var(--amber);display:none;"></span>
+                <span id="bpr-stat-dups" style="color:var(--amber);display:none;"></span>
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <button class="btn btn-secondary btn-sm" onclick="_bprRejectAll()" id="bpr-reject-all-btn">✕ Reject All</button>
+              <button class="btn btn-sm" style="background:rgba(0,212,255,0.12);color:var(--neon);border:1px solid rgba(0,212,255,0.3);" onclick="_bprApproveAll()" id="bpr-approve-all-btn">✓ Approve All</button>
+            </div>
+          </div>
+          <div id="bulk-preview-table-wrap">
+            <table id="bulk-preview-table">
+              <thead>
+                <tr>
+                  <th class="bpr-cover-cell">Cover</th>
+                  <th>Title / Link</th>
+                  <th>Price</th>
+                  <th>Category</th>
+                  <th>Author</th>
+                  <th style="width:36px;"></th>
+                </tr>
+              </thead>
+              <tbody id="bulk-preview-tbody"></tbody>
+            </table>
+          </div>
+          <div id="bulk-preview-footer">
+            <div id="bulk-preview-footer-info"></div>
+            <div id="bulk-preview-saving">
+              <span id="bulk-preview-saving-text">Saving…</span>
+              <div id="bulk-preview-saving-bar"><div id="bulk-preview-saving-fill"></div></div>
+            </div>
+            <button class="btn btn-secondary btn-sm" onclick="_bprCancel()" id="bpr-cancel-btn">Cancel</button>
+            <button class="btn btn-primary" onclick="_bprConfirmImport()" id="bpr-confirm-btn">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" style="margin-right:4px;vertical-align:-1px"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              <span id="bpr-confirm-label">Import as Drafts</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- ── TAXONOMY VIEW ── -->
       <div class="view" id="view-taxonomy" style="display:none">
         <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 20px 0;gap:10px;">
@@ -4712,6 +4904,92 @@ async function _sbSetStatus(id, status) {
 ═══════════════════════════════════════════════ */
 let fbApp;
 let allGames = [], TAXONOMY = {};
+
+/* ═══════════════════════════════════════════════
+   UNIFIED EXTENSION FIELD MAPPER
+   Single source of truth for Extension → Firestore
+   All bulk/import/add flows MUST go through this.
+   To add/rename a field: edit ONLY here.
+═══════════════════════════════════════════════ */
+function mapExtensionAsset(parsed, extraTags) {
+  if (!parsed || typeof parsed !== 'object') return null;
+
+  // ── post_link ──────────────────────────────
+  const pl = (parsed.post_link || '').trim();
+
+  // ── title ──────────────────────────────────
+  const title = (parsed.title || pl || '').trim();
+
+  // ── category → array + string ──────────────
+  const _bc =
+    Array.isArray(parsed.categories) && parsed.categories.length ? parsed.categories
+    : Array.isArray(parsed.category_path) && parsed.category_path.length ? parsed.category_path
+    : (parsed.category || '').trim()
+        ? parsed.category.split('>').map(p => p.trim()).filter(Boolean)
+        : [];
+  // Side-effect: register new category paths into taxonomy UI if available
+  if (_bc.length && typeof addCategoryPath === 'function') addCategoryPath(_bc);
+  const categoryStr  = _bc.join(' > ');
+
+  // ── cover ───────────────────────────────────
+  // Extension always sends cover:''. Keep field present, strip base64 blobs.
+  const rawCover = parsed.cover || parsed.image || '';
+  const coverUrl = rawCover.startsWith('data:') ? '' : rawCover;
+
+  // ── technical_details / technicalDetails ───
+  const technicalDetails = (parsed.technicalDetails || parsed.technical_details || '').trim();
+
+  // ── tags → userTags ─────────────────────────
+  const userTags = [
+    ...(Array.isArray(parsed.tags) ? parsed.tags : []),
+    ...(extraTags || []),
+  ];
+
+  // ── price ────────────────────────────────────
+  const price      = (parsed.price || '').trim();
+  const price_range = parsed.price_range || (price ? _calcPriceRange(price) : '');
+
+  // ── storeLinks — auto-detect from post_link ─
+  let storeLinks = parsed.storeLinks || {};
+  if (pl && !Object.keys(storeLinks).length) {
+    if      (pl.includes('assetstore.unity.com')) storeLinks = { 'Unity Asset Store': pl };
+    else if (pl.includes('cgtrader.com'))          storeLinks = { 'CGTrader': pl };
+    else if (pl.includes('fab.com'))               storeLinks = { 'Fab': pl };
+    else if (pl.includes('unrealengine.com'))      storeLinks = { 'Unreal Marketplace': pl };
+    else if (pl.includes('turbosquid.com'))        storeLinks = { 'TurboSquid': pl };
+    else if (pl.includes('sketchfab.com'))         storeLinks = { 'Sketchfab': pl };
+    else if (pl.includes('artstation.com'))        storeLinks = { 'ArtStation': pl };
+  }
+
+  return {
+    // ── Core fields (extension output) ────────
+    title,
+    post_link:        pl,
+    author:           (parsed.author || '').trim(),
+    price,
+    price_range,
+    cover:            coverUrl,
+    image:            coverUrl,
+    description:      (parsed.description || '').trim(),
+    overview:         (parsed.overview || '').trim(),
+    technicalDetails,
+    userTags,
+    // ── Category (multi-format for compatibility) ──
+    categories:       _bc,
+    category_path:    _bc,
+    category:         categoryStr,
+    category_lvl1:    _bc[0] || '',
+    category_lvl2:    _bc[1] || '',
+    category_lvl3:    _bc[2] || '',
+    category_lvl4:    _bc[3] || '',
+    // ── Store ──────────────────────────────────
+    storeLinks,
+    // ── Status / timestamps (caller can override) ──
+    status:    parsed.status || 'published',
+    createdAt: parsed.createdAt || Date.now(),
+    updatedAt: Date.now(),
+  };
+}
 
 // ── Unified parsing maps + helpers (Add Game / Bulk / QFix) ─────────────
 const PARSE_MAPS = {
@@ -8454,51 +8732,208 @@ document.addEventListener('click', e => {
   }
 });
 
+/* ═══════════════════════════════════════════════
+   BULK IMPORT PREVIEW ENGINE
+   Parses all lines → shows review table → user approves → saves as drafts
+═══════════════════════════════════════════════ */
+let _bprAssets = [];   // full parsed asset list [{asset, removed, isDup}]
+let _bprExtraTagsMap = new Map(); // post_link → extraTags
+
+const _bprNormUrl = u => (u||'').toLowerCase().trim().replace(/\/+$/, '');
+
+function _bprIsDup(asset) {
+  if (!asset.post_link) return false;
+  return allGames.some(g => _bprNormUrl(g.post_link) === _bprNormUrl(asset.post_link));
+}
+
+function _bprBuildRow(item, idx) {
+  const { asset, removed, isDup } = item;
+  const esc = s => (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+
+  const coverCell = asset.cover
+    ? `<img class="bpr-cover-thumb" src="${esc(asset.cover)}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+      + `<div class="bpr-cover-missing" style="display:none;">🖼</div>`
+    : `<div class="bpr-cover-missing" title="No cover">🖼</div>`;
+
+  const priceClass = !asset.price ? 'is-missing'
+    : (asset.price === '0' || asset.price.toLowerCase() === 'free') ? 'is-free' : '';
+  const priceText = !asset.price ? 'No price'
+    : (asset.price === '0' || asset.price.toLowerCase() === 'free') ? 'Free' : `$${asset.price}`;
+
+  const catText = asset.category || '<span style="color:var(--dim);font-style:italic;">—</span>';
+  const dupBadge = isDup ? `<span class="bpr-dup-badge" title="Already in library">DUP</span>` : '';
+
+  const shortLink = (asset.post_link||'').replace(/^https?:\/\//,'').slice(0,45);
+
+  return `<tr id="bpr-row-${idx}" class="${removed?'bpr-removed':''}">
+    <td class="bpr-cover-cell">${coverCell}</td>
+    <td class="bpr-title-cell">
+      <span class="bpr-title" title="${esc(asset.title)}">${esc(asset.title)||'<em style="color:var(--dim);">No title</em>'}</span>
+      <span class="bpr-postlink" title="${esc(asset.post_link)}">${esc(shortLink)}</span>
+      ${dupBadge}
+    </td>
+    <td><span class="bpr-price ${priceClass}">${priceText}</span></td>
+    <td><span class="bpr-cat" title="${esc(asset.category)}">${catText}</span></td>
+    <td style="font-size:11px;color:var(--muted);max-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(asset.author||'—')}</td>
+    <td><button class="bpr-remove-btn" onclick="_bprToggleRow(${idx})" title="${removed?'Restore':'Remove'}">
+      ${removed
+        ? `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>`
+        : `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`}
+    </button></td>
+  </tr>`;
+}
+
+function _bprRenderTable() {
+  const tbody = document.getElementById('bulk-preview-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = _bprAssets.map((item, i) => _bprBuildRow(item, i)).join('');
+}
+
+function _bprUpdateStats() {
+  const active    = _bprAssets.filter(i => !i.removed);
+  const nocover   = active.filter(i => !i.asset.cover).length;
+  const noprice   = active.filter(i => !i.asset.price).length;
+  const dups      = active.filter(i => i.isDup).length;
+  const total     = active.length;
+
+  const el = id => document.getElementById(id);
+  el('bpr-stat-total').textContent = `${total} asset${total!==1?'s':''}`;
+  if (nocover) { el('bpr-stat-nocover').textContent = `${nocover} no cover`; el('bpr-stat-nocover').style.display=''; }
+  else el('bpr-stat-nocover').style.display='none';
+  if (noprice) { el('bpr-stat-noprice').textContent = `${noprice} no price`; el('bpr-stat-noprice').style.display=''; }
+  else el('bpr-stat-noprice').style.display='none';
+  if (dups) { el('bpr-stat-dups').textContent = `${dups} duplicate${dups!==1?'s':''}`; el('bpr-stat-dups').style.display=''; }
+  else el('bpr-stat-dups').style.display='none';
+
+  const removed = _bprAssets.filter(i => i.removed).length;
+  const footerInfo = document.getElementById('bulk-preview-footer-info');
+  if (footerInfo) {
+    footerInfo.textContent = removed
+      ? `${total} to import · ${removed} removed`
+      : `${total} asset${total!==1?'s':''} ready to import as drafts`;
+  }
+  const confirmLabel = document.getElementById('bpr-confirm-label');
+  if (confirmLabel) confirmLabel.textContent = `Import ${total} as Draft${total!==1?'s':''}`;
+  const confirmBtn = document.getElementById('bpr-confirm-btn');
+  if (confirmBtn) confirmBtn.disabled = total === 0;
+}
+
+function _bprToggleRow(idx) {
+  if (!_bprAssets[idx]) return;
+  _bprAssets[idx].removed = !_bprAssets[idx].removed;
+  // Re-render only this row for performance
+  const row = document.getElementById(`bpr-row-${idx}`);
+  if (row) {
+    const tmp = document.createElement('tbody');
+    tmp.innerHTML = _bprBuildRow(_bprAssets[idx], idx);
+    row.replaceWith(tmp.firstElementChild);
+  }
+  _bprUpdateStats();
+}
+
+function _bprApproveAll() {
+  _bprAssets.forEach(i => { i.removed = false; });
+  _bprRenderTable();
+  _bprUpdateStats();
+}
+
+function _bprRejectAll() {
+  _bprAssets.forEach(i => { i.removed = true; });
+  _bprRenderTable();
+  _bprUpdateStats();
+}
+
+function _bprCancel() {
+  document.getElementById('bulk-preview-overlay').classList.remove('open');
+  _bprAssets = [];
+  _bprExtraTagsMap.clear();
+  // Re-enable start button
+  const startBtn = document.getElementById('bulk-start-btn');
+  if (startBtn) { startBtn.disabled = false; startBtn.style.opacity = ''; startBtn.style.pointerEvents = ''; }
+}
+
+async function _bprConfirmImport() {
+  const toSave = _bprAssets.filter(i => !i.removed && !i.isDup);
+  const dupsSaved = _bprAssets.filter(i => !i.removed && i.isDup);
+  if (!toSave.length && !dupsSaved.length) {
+    toast('No assets to import', 'error');
+    return;
+  }
+
+  // Lock UI during save
+  const confirmBtn = document.getElementById('bpr-confirm-btn');
+  const cancelBtn  = document.getElementById('bpr-cancel-btn');
+  const savingEl   = document.getElementById('bulk-preview-saving');
+  const savingFill = document.getElementById('bulk-preview-saving-fill');
+  const savingText = document.getElementById('bulk-preview-saving-text');
+  if (confirmBtn) { confirmBtn.disabled = true; confirmBtn.style.opacity = '.5'; }
+  if (cancelBtn)  { cancelBtn.disabled = true; cancelBtn.style.opacity = '.5'; }
+  if (savingEl)   savingEl.style.display = 'flex';
+
+  let ok = 0, skipped = 0, fail = 0;
+  const total = toSave.length;
+
+  for (let i = 0; i < toSave.length; i++) {
+    const { asset } = toSave[i];
+    try {
+      // Draft-first: override status regardless of what mapExtensionAsset set
+      const draftAsset = { ...asset, status: 'draft', createdAt: Date.now(), updatedAt: Date.now() };
+      const docRef = db.collection(COLLECTION).doc();
+      draftAsset.id = docRef.id;
+      await docRef.set(draftAsset);
+      ok++;
+    } catch(e) {
+      fail++;
+      console.error('[bpr] save failed:', e.message, asset.title);
+    }
+    if (savingFill) savingFill.style.width = `${Math.round(((i+1)/total)*100)}%`;
+    if (savingText) savingText.textContent = `Saving ${i+1} / ${total}…`;
+    if ((i+1) % 10 === 0) await new Promise(r => setTimeout(r, 20));
+  }
+
+  // Close overlay
+  document.getElementById('bulk-preview-overlay').classList.remove('open');
+  _bprAssets = [];
+  _bprExtraTagsMap.clear();
+
+  // Re-enable bulk start button
+  const startBtn = document.getElementById('bulk-start-btn');
+  if (startBtn) { startBtn.disabled = false; startBtn.style.opacity = ''; startBtn.style.pointerEvents = ''; }
+  // Clear input area
+  const area = document.getElementById('bulk-ids-area');
+  if (area) area.value = '';
+  _bulkQueue = [];
+
+  invalidateFilterCache();
+  renderLibrary();
+  updateNavBadges();
+
+  const parts = [`${ok} draft${ok!==1?'s':''} saved`];
+  if (dupsSaved.length) parts.push(`${dupsSaved.length} duplicate${dupsSaved.length!==1?'s':''} skipped`);
+  if (fail) parts.push(`${fail} failed`);
+  toast(parts.join(' · '), ok > 0 ? 'success' : 'error');
+
+  // Reset save progress UI
+  if (savingEl)   savingEl.style.display = 'none';
+  if (savingFill) savingFill.style.width = '0%';
+  if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.style.opacity = ''; }
+  if (cancelBtn)  { cancelBtn.disabled = false; cancelBtn.style.opacity = ''; }
+}
+
+function _bprShowPreview(assets) {
+  _bprAssets = assets;
+  _bprRenderTable();
+  _bprUpdateStats();
+  document.getElementById('bulk-preview-overlay').classList.add('open');
+}
+
 async function startBulkFetch() {
   _syncFileEntriesToQueue();
   const pasteRaw = (document.getElementById('bulk-ids-area')?.value || '').trim();
 
   /* ── helper: build asset object from a parsed JSON object ── */
   function _buildAssetFromJson(parsed, extraTags) {
-    const imgUrl = (parsed.cover||parsed.image||'').startsWith('data:') ? '' : (parsed.cover||parsed.image||'');
-    // Accept categories[] (new) or split legacy category string
-    const _bc = Array.isArray(parsed.categories) && parsed.categories.length ? parsed.categories
-      : Array.isArray(parsed.category_path) && parsed.category_path.length ? parsed.category_path
-      : ((parsed.category||'').trim() ? (parsed.category).split('>').map(p=>p.trim()).filter(Boolean) : []);
-    if (_bc.length && typeof addCategoryPath === 'function') addCategoryPath(_bc);
-    const cat = _bc.join(' > ');
-    const catParts = _bc;
-    let sl = parsed.storeLinks || {};
-    const pl = (parsed.post_link||'').trim();
-    if (pl && !Object.keys(sl).length) {
-      if (pl.includes('assetstore.unity.com')) sl = {'Unity Asset Store': pl};
-      else if (pl.includes('cgtrader.com'))    sl = {'CGTrader': pl};
-      else if (pl.includes('fab.com'))          sl = {'Fab': pl};
-      else if (pl.includes('unrealengine.com')) sl = {'Unreal Marketplace': pl};
-      else if (pl.includes('turbosquid.com'))   sl = {'TurboSquid': pl};
-      else if (pl.includes('sketchfab.com'))    sl = {'Sketchfab': pl};
-    }
-    return {
-      title:            parsed.title || pl || '',
-      post_link:        pl,
-      author:           parsed.author || '',
-      price:            parsed.price || '',
-      price_range:      parsed.price_range || (parsed.price ? _calcPriceRange(parsed.price) : ''),
-      categories:       _bc,
-      category_path:    _bc,
-      category:         cat,
-      category_lvl1:    catParts[0]||'', category_lvl2: catParts[1]||'',
-      category_lvl3:    catParts[2]||'', category_lvl4: catParts[3]||'',
-      cover:            imgUrl, image: imgUrl,
-      description:      parsed.description || '',
-      overview:         parsed.overview || '',
-      technicalDetails: parsed.technicalDetails || parsed.technical_details || '',
-      userTags:         [...(Array.isArray(parsed.tags)?parsed.tags:[]), ...(extraTags||[])],
-      storeLinks:       sl,
-      status:           'published',
-      createdAt:        Date.now(),
-      updatedAt:        Date.now(),
-    };
+    return mapExtensionAsset(parsed, extraTags);
   }
 
   /* ── helper: build asset from a plain URL ── */
@@ -8514,26 +8949,14 @@ async function startBulkFetch() {
       title: url, post_link: url, author: '', price: '', price_range: '', category: '',
       cover: '', image: '', description: '', overview: '', technicalDetails: '',
       userTags: [...(extraTags||[])], storeLinks: sn ? {[sn]: url} : {},
-      status: 'published', createdAt: Date.now(), updatedAt: Date.now(),
+      status: 'draft', createdAt: Date.now(), updatedAt: Date.now(),
     };
   }
 
-  /* ── helper: save one asset with dedup check ── */
-  const _normUrl = u => (u||'').toLowerCase().trim().replace(/\/+$/, '');
-  async function _saveAsset(asset) {
-    if (asset.post_link && allGames.some(g => _normUrl(g.post_link) === _normUrl(asset.post_link))) return 'skip';
-    const docRef = db.collection(COLLECTION).doc();
-    asset.id = docRef.id;
-    await docRef.set(asset);
-    return 'ok';
-  }
-
   /* ── Collect all lines to process ── */
-  // From paste textarea
   const pasteLines = pasteRaw ? pasteRaw.split(/[\r\n]+/).map(s=>s.trim()).filter(Boolean) : [];
-  // From file queue entries
   const queueLines = [];
-  const queueTagsMap = new Map(); // line -> extraTags
+  const queueTagsMap = new Map();
   for (const q of _bulkQueue) {
     for (const line of (q.ids||[])) {
       queueLines.push(line);
@@ -8547,112 +8970,59 @@ async function startBulkFetch() {
     return;
   }
 
-  // ── Show live UI ──
-  const inputState = document.getElementById('bulk-input-state');
-  const liveState  = document.getElementById('bulk-live-state');
-  const blkLog     = document.getElementById('blk-log');
-  const blkPhase   = document.getElementById('blk-phase');
-  const blkDot     = document.getElementById('blk-dot');
-  const btOk       = document.getElementById('bt-ok');
-  const btSkip     = document.getElementById('bt-skip');
-  const btFail     = document.getElementById('bt-fail');
-  const btProgress = document.getElementById('bt-progress');
-  const startBtn   = document.getElementById('bulk-start-btn');
-  const stopBtn    = document.getElementById('bulk-stop-btn');
-  const pauseBtn   = document.getElementById('bulk-pause-btn');
+  // Disable start button during parse phase
+  const startBtn = document.getElementById('bulk-start-btn');
+  if (startBtn) { startBtn.disabled = true; startBtn.style.opacity = '.4'; startBtn.style.pointerEvents = 'none'; }
 
-  if (liveState) liveState.style.display = 'flex';
-  if (blkLog)    blkLog.innerHTML = '';
-  if (blkPhase)  blkPhase.textContent = 'IMPORTING';
-  if (blkDot)    blkDot.className = 'blk-dot';
-  if (startBtn)  { startBtn.disabled = true; startBtn.style.opacity = '.4'; startBtn.style.pointerEvents = 'none'; }
-  if (stopBtn)   stopBtn.style.display = 'inline-flex';
-  if (pauseBtn)  pauseBtn.style.display = 'none'; // no pause needed for direct import
-
-  bulkRunning = true;
-  bulkPaused  = false;
-
-  let ok = 0, skipped = 0, fail = 0;
-  const total = allLines.length;
-
-  const _log = (msg, type) => {
-    if (!blkLog) return;
-    const colors = { ok:'#10b981', skip:'#eab308', fail:'#ef4444', info:'var(--muted)' };
-    const el = document.createElement('div');
-    el.style.cssText = `font-size:11px;color:${colors[type]||colors.info};padding:1px 0;font-family:'JetBrains Mono',monospace;`;
-    el.textContent = msg;
-    blkLog.appendChild(el);
-    blkLog.scrollTop = blkLog.scrollHeight;
-  };
+  // ── Parse phase: build preview list (NO saving yet) ──
+  const previewItems = [];
+  let parseErrors = 0;
 
   for (let i = 0; i < allLines.length; i++) {
-    if (!bulkRunning) break;
-    while (bulkPaused) await new Promise(r => setTimeout(r, 300));
-
     const line = allLines[i];
     const extraTags = queueTagsMap.get(line) || [];
-    if (btProgress) btProgress.textContent = `${i+1} / ${total}`;
-
     let asset = null;
+
     try {
       if (line.startsWith('{')) {
-        // JSON line (from extension NDJSON)
         const parsed = JSON.parse(line);
-        if (!parsed.post_link && !parsed.title) { fail++; _log('✕ skip: no title/link — ' + line.slice(0,50), 'skip'); if (btFail) btFail.textContent = fail; continue; }
+        if (!parsed.post_link && !parsed.title) { parseErrors++; continue; }
         asset = _buildAssetFromJson(parsed, extraTags);
       } else if (/^https?:\/\//.test(line)) {
-        // Plain URL
         asset = _buildAssetFromUrl(line, extraTags);
       } else {
-        // Not a URL or JSON — skip (no Steam fallback)
-        skipped++;
-        _log('✕ skip: not a URL or JSON — ' + line.slice(0,60), 'skip');
-        if (btSkip) btSkip.textContent = skipped;
+        parseErrors++;
         continue;
       }
-
-      const result = await _saveAsset(asset);
-      if (result === 'skip') {
-        skipped++;
-        _log('↷ dup: ' + (asset.title||asset.post_link).slice(0,60), 'skip');
-        if (btSkip) btSkip.textContent = skipped;
-      } else {
-        ok++;
-        _log('✓ ' + (asset.title||asset.post_link).slice(0,60), 'ok');
-        if (btOk) btOk.textContent = ok;
-      }
     } catch(e) {
-      fail++;
-      _log('✕ error: ' + e.message + ' — ' + line.slice(0,40), 'fail');
-      if (btFail) btFail.textContent = fail;
-      console.error('[bulk]', e, line);
+      parseErrors++;
+      continue;
     }
 
-    // Batch pause every 20 items to keep UI responsive
-    if (i % 20 === 19) await new Promise(r => setTimeout(r, 50));
+    if (!asset) continue;
+    previewItems.push({
+      asset,
+      removed: false,
+      isDup: _bprIsDup(asset),
+    });
+
+    // Yield every 50 items to keep UI responsive on large imports
+    if (i % 50 === 49) await new Promise(r => setTimeout(r, 0));
   }
 
-  // ── Done ──
-  bulkRunning = false;
-  if (blkPhase) blkPhase.textContent = 'DONE';
-  if (blkDot)   blkDot.className = 'blk-dot idle';
-  if (startBtn) { startBtn.disabled = false; startBtn.style.opacity = ''; startBtn.style.pointerEvents = ''; }
-  if (stopBtn)  stopBtn.style.display = 'none';
-  if (pauseBtn) pauseBtn.style.display = 'none';
+  if (!previewItems.length) {
+    toast(
+      parseErrors
+        ? `No valid assets found (${parseErrors} invalid line${parseErrors!==1?'s':''})`
+        : 'No valid assets found',
+      'error'
+    );
+    if (startBtn) { startBtn.disabled = false; startBtn.style.opacity = ''; startBtn.style.pointerEvents = ''; }
+    return;
+  }
 
-  invalidateFilterCache();
-  renderLibrary();
-  updateNavBadges();
-
-  if (pasteLines.length) document.getElementById('bulk-ids-area').value = '';
-  _bulkQueue = [];
-
-  toast(
-    `Imported ${ok} asset${ok!==1?'s':''}` +
-    (skipped ? ` · ${skipped} skipped` : '') +
-    (fail ? ` · ${fail} failed` : ''),
-    ok > 0 ? 'success' : 'error'
-  );
+  // ── Show preview — save happens only after user approves ──
+  _bprShowPreview(previewItems);
 }
 
 function stopBulkFetch() {
