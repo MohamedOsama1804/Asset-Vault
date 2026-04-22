@@ -4496,7 +4496,7 @@ select option { background: var(--card); }
             <input class="lib-search" id="lib-search" placeholder="Search assets..." oninput="_debounceLib()">
           </div>
 
-          <button class="filter-pill" id="lib-filter-today" onclick="setLibFilter('today',this)" title="Show assets imported today">
+          <button class="filter-pill" id="lib-filter-today" onclick="_toggleTodayFilter(this)" title="Show assets imported today">
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" style="margin-right:3px;vertical-align:-1px"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
             Today
             <span id="lib-today-count" style="display:none;font-family:'JetBrains Mono',monospace;font-size:9px;background:var(--neon);color:var(--void);border-radius:100px;padding:1px 5px;margin-left:2px;font-weight:700;"></span>
@@ -6281,6 +6281,17 @@ function _updateTodayBadge() {
   } else {
     badge.style.display = 'none';
     pill.title = 'No assets imported today';
+  }
+}
+
+function _toggleTodayFilter(el) {
+  if (libFilter === 'today') {
+    // Second click → reset to all
+    setLibFilter('all', null);
+    if (el) el.classList.remove('active');
+  } else {
+    // First click → filter today
+    setLibFilter('today', el);
   }
 }
 
