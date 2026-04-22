@@ -4447,16 +4447,6 @@ select option { background: var(--card); }
         <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
         Taxonomy
       </div>
-      <div class="nav-item" onclick="switchView('quality', this)">
-        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
-        Mass Tools
-        <span class="nav-badge" id="nb-quality" style="background:rgba(0,212,255,0.15);color:var(--neon);">✦</span>
-      </div>
-      <div class="sb-section" style="margin-top:6px;">Logs</div>
-      <div class="nav-item" onclick="switchView('updates', this)">
-        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        Recent Updates
-      </div>
     </div>
 
       <div class="sb-footer">
@@ -6679,79 +6669,114 @@ function toggleAdminFilter() {
 
 function buildAdminFilterPanel() {
   const container = document.getElementById('afp-sections');
-  const TAXONOMY_DEFS = [
-    { key:'category',    label:'Category' },
-    { key:'author',      label:'Author', fromData: true },
-    { key:'price_range', label:'Price Range', fromData: true },
+  if (!container) return;
 
-    { key:'platforms',  label:'Platform' },
-    { key:'themes',     label:'Theme / Mood' },
-    { key:'playMode',   label:'Play Mode' },
-    { key:'difficulty', label:'Difficulty' },
-    { key:'rating',     label:'Rating' },
-    { key:'length',     label:'Length' },
-    { key:'price',      label:'Price', isPrice: true },
-    { key:'period',     label:'Period' },
-    { key:'visual',     label:'Visual Style' },
-    { key:'userTags',   label:'Tags' },
-  ];
-  const hidden = (TAXONOMY && TAXONOMY._hidden) || {};
-  container.innerHTML = TAXONOMY_DEFS.map(({key, label, fromData}) => {
-    if (hidden['_card_' + key]) return '';
-    let vals = [];
-    if (fromData) {
-      // Pull values directly from game data
-      vals = [...new Set(allGames.flatMap(g => {
-        const v = g[key];
-        return Array.isArray(v) ? v : (v ? [v] : []);
-      }))].sort();
-    } else if (TAXONOMY && Array.isArray(TAXONOMY[key]) && TAXONOMY[key].length) {
-      const hiddenItems = Array.isArray(hidden[key]) ? hidden[key] : [];
-      vals = TAXONOMY[key].filter(v => !hiddenItems.includes(v)).sort();
-    } else {
-      vals = [...new Set(allGames.flatMap(g => {
-        const v = g[key];
-        return Array.isArray(v) ? v : (v ? [v] : []);
-      }))].sort();
-    }
-    if (!vals.length) return '';
-    const activeSet = adminFilters[key] || new Set();
-    const count = activeSet.size;
-    if (key === 'price') {
-      const pf = window._adminPriceFrom || '', pt = window._adminPriceTo || '', free = window._adminFreeOnly;
-      return `<div class="afp-section collapsed" id="afps-price">
-        <div class="afp-section-header" onclick="toggleAfpSection('price')">
-          <span>Price${(pf||pt||free) ? ' <span class="afp-active-count">✓</span>' : ''}</span>
-          <svg class="afp-chevron" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>
-        </div>
-        <div class="afp-section-body">
-          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-            <input type="number" id="afp-price-from" placeholder="$0" min="0" value="${pf}"
-              style="width:58px;padding:4px 6px;border-radius:5px;border:1px solid var(--border);background:var(--bg-deep);color:var(--text);font-size:11px;"
-              oninput="window._adminPriceFrom=parseFloat(this.value)||null;invalidateFilterCache();renderLibrary()">
-            <span style="color:var(--muted);font-size:11px;">→</span>
-            <input type="number" id="afp-price-to" placeholder="Any" min="0" value="${pt}"
-              style="width:58px;padding:4px 6px;border-radius:5px;border:1px solid var(--border);background:var(--bg-deep);color:var(--text);font-size:11px;"
-              oninput="window._adminPriceTo=parseFloat(this.value)||null;invalidateFilterCache();renderLibrary()">
-            <label style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:3px;cursor:pointer;">
-              <input type="checkbox" ${free?'checked':''} onchange="window._adminFreeOnly=this.checked;invalidateFilterCache();renderLibrary()">Free
-            </label>
-          </div>
-          ${(pf||pt||free)?'<button onclick="window._adminPriceFrom=null;window._adminPriceTo=null;window._adminFreeOnly=false;invalidateFilterCache();buildAdminFilterPanel();renderLibrary();" style="font-size:10px;color:var(--red);background:none;border:none;cursor:pointer;margin-top:4px;padding:0;">Clear</button>':''}
-        </div>
-      </div>`;
-    }
+  // ── Category filter: text search over category values ──────────────────
+  const activeCats = adminFilters['category'] || new Set();
+  const activeCatArr = [...activeCats];
 
-    return `<div class="afp-section collapsed" id="afps-${key}">
-      <div class="afp-section-header" onclick="toggleAfpSection('${key}')">
-        <span>${label}${count ? ` <span class="afp-active-count">${count}</span>` : ''}</span>
+  // Collect all unique category tokens from data
+  const allCatTokens = [...new Set(allGames.flatMap(g => {
+    const cats = Array.isArray(g.categories) ? g.categories
+      : (g.category ? g.category.split('>').map(s => s.trim()).filter(Boolean) : []);
+    return cats;
+  }))].sort();
+
+  // Author filter: text search
+  const activeAuthors = adminFilters['author'] || new Set();
+  const activeAuthorArr = [...activeAuthors];
+  const allAuthors = [...new Set(allGames.map(g => g.author).filter(Boolean))].sort();
+
+  // Price range
+  const pf = window._adminPriceFrom || '', pt = window._adminPriceTo || '', free = window._adminFreeOnly;
+
+  container.innerHTML = `
+
+    <!-- ── Category ── -->
+    <div class="afp-section" id="afps-category">
+      <div class="afp-section-header" onclick="toggleAfpSection('category')">
+        <span>Category${activeCats.size ? ` <span class="afp-active-count">${activeCats.size}</span>` : ''}</span>
+        <svg class="afp-chevron" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>
+      </div>
+      <div class="afp-section-body" style="flex-direction:column;gap:6px;">
+        <input type="text" id="afp-cat-search" placeholder="Search category…"
+          style="width:100%;padding:5px 8px;border-radius:5px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:11px;box-sizing:border-box;"
+          oninput="_afpFilterCats(this.value)">
+        <div id="afp-cat-chips" style="display:flex;flex-wrap:wrap;gap:4px;max-height:140px;overflow-y:auto;padding-right:2px;">
+          ${allCatTokens.map(v => `<span class="afp-chip ${activeCats.has(v)?'active':''}" onclick="toggleAdminFilterChip('category','${v.replace(/'/g,"\\'").replace(/"/g,'&quot;')}',this)">${v}</span>`).join('')}
+        </div>
+        ${activeCatArr.length ? `<button onclick="_clearFilter('category')" style="font-size:10px;color:var(--red);background:none;border:none;cursor:pointer;padding:0;text-align:left;">Clear</button>` : ''}
+      </div>
+    </div>
+
+    <!-- ── Price Range ── -->
+    <div class="afp-section collapsed" id="afps-price">
+      <div class="afp-section-header" onclick="toggleAfpSection('price')">
+        <span>Price${(pf||pt||free) ? ' <span class="afp-active-count">✓</span>' : ''}</span>
         <svg class="afp-chevron" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>
       </div>
       <div class="afp-section-body">
-        ${vals.map(v => `<span class="afp-chip ${activeSet.has(v)?'active':''}" onclick="toggleAdminFilterChip('${key}','${v.replace(/'/g,"\'")}',this)">${v}</span>`).join('')}
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+          <input type="number" id="afp-price-from" placeholder="$0" min="0" value="${pf}"
+            style="width:58px;padding:4px 6px;border-radius:5px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:11px;"
+            oninput="window._adminPriceFrom=parseFloat(this.value)||null;invalidateFilterCache();renderLibrary()">
+          <span style="color:var(--muted);font-size:11px;">→</span>
+          <input type="number" id="afp-price-to" placeholder="Any" min="0" value="${pt}"
+            style="width:58px;padding:4px 6px;border-radius:5px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:11px;"
+            oninput="window._adminPriceTo=parseFloat(this.value)||null;invalidateFilterCache();renderLibrary()">
+          <label style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:3px;cursor:pointer;">
+            <input type="checkbox" ${free?'checked':''} onchange="window._adminFreeOnly=this.checked;invalidateFilterCache();renderLibrary()">Free
+          </label>
+        </div>
+        ${(pf||pt||free)?`<button onclick="window._adminPriceFrom=null;window._adminPriceTo=null;window._adminFreeOnly=false;invalidateFilterCache();buildAdminFilterPanel();renderLibrary();" style="font-size:10px;color:var(--red);background:none;border:none;cursor:pointer;margin-top:4px;padding:0;">Clear</button>`:''}
       </div>
-    </div>`;
-  }).join('');
+    </div>
+
+    <!-- ── Author ── -->
+    <div class="afp-section collapsed" id="afps-author">
+      <div class="afp-section-header" onclick="toggleAfpSection('author')">
+        <span>Author${activeAuthors.size ? ` <span class="afp-active-count">${activeAuthors.size}</span>` : ''}</span>
+        <svg class="afp-chevron" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>
+      </div>
+      <div class="afp-section-body" style="flex-direction:column;gap:6px;">
+        <input type="text" id="afp-author-search" placeholder="Search author…"
+          style="width:100%;padding:5px 8px;border-radius:5px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:11px;box-sizing:border-box;"
+          oninput="_afpFilterAuthors(this.value)">
+        <div id="afp-author-chips" style="display:flex;flex-wrap:wrap;gap:4px;max-height:140px;overflow-y:auto;padding-right:2px;">
+          ${allAuthors.map(v => `<span class="afp-chip ${activeAuthors.has(v)?'active':''}" onclick="toggleAdminFilterChip('author','${v.replace(/'/g,"\\'").replace(/"/g,'&quot;')}',this)">${v}</span>`).join('')}
+        </div>
+        ${activeAuthorArr.length ? `<button onclick="_clearFilter('author')" style="font-size:10px;color:var(--red);background:none;border:none;cursor:pointer;padding:0;text-align:left;">Clear</button>` : ''}
+      </div>
+    </div>
+  `;
+}
+
+// Live search inside category chips
+function _afpFilterCats(q) {
+  const chips = document.querySelectorAll('#afp-cat-chips .afp-chip');
+  const lq = q.toLowerCase();
+  chips.forEach(c => {
+    c.style.display = (!lq || c.textContent.toLowerCase().includes(lq)) ? '' : 'none';
+  });
+}
+
+// Live search inside author chips
+function _afpFilterAuthors(q) {
+  const chips = document.querySelectorAll('#afp-author-chips .afp-chip');
+  const lq = q.toLowerCase();
+  chips.forEach(c => {
+    c.style.display = (!lq || c.textContent.toLowerCase().includes(lq)) ? '' : 'none';
+  });
+}
+
+// Clear a single filter key
+function _clearFilter(key) {
+  delete adminFilters[key];
+  invalidateFilterCache();
+  renderLibrary();
+  buildAdminFilterPanel();
+  const total = Object.values(adminFilters).reduce((s,v) => s + v.size, 0);
+  document.getElementById('admin-reset-btn')?.classList.toggle('visible', total > 0);
 }
 
 function toggleAfpSection(key) {
@@ -6766,20 +6791,22 @@ function toggleAdminFilterChip(key, val, el) {
   if (!set.size) delete adminFilters[key];
   invalidateFilterCache();
   renderLibrary();
-  // Show/hide reset button
+  // Update reset button
   const hasActive = Object.values(adminFilters).some(s => s.size > 0);
   document.getElementById('admin-reset-btn')?.classList.toggle('visible', hasActive);
-  // Update active count badge
+  // Update active count in section header (without full rebuild)
   const sec = document.getElementById(`afps-${key}`);
   if (sec) {
     const hdr = sec.querySelector('.afp-section-header span');
-    const existBadge = hdr.querySelector('.afp-active-count');
-    const n = (adminFilters[key]||new Set()).size;
-    if (n && !existBadge) hdr.insertAdjacentHTML('beforeend', ` <span class="afp-active-count">${n}</span>`);
-    else if (n && existBadge) existBadge.textContent = n;
-    else if (!n && existBadge) existBadge.remove();
+    if (hdr) {
+      const existBadge = hdr.querySelector('.afp-active-count');
+      const n = (adminFilters[key]||new Set()).size;
+      if (n && !existBadge) hdr.insertAdjacentHTML('beforeend', ` <span class="afp-active-count">${n}</span>`);
+      else if (n && existBadge) existBadge.textContent = n;
+      else if (!n && existBadge) existBadge.remove();
+    }
   }
-  // Update total active count
+  // Update total active count badge
   const total = Object.values(adminFilters).reduce((s,v)=>s+v.size,0);
   const cnt = document.getElementById('afp-active-count');
   if (cnt) { cnt.style.display = total ? 'inline' : 'none'; cnt.textContent = `${total} active`; }
@@ -6819,12 +6846,25 @@ function renderLibrary() {
       const todayStart = new Date(); todayStart.setHours(0,0,0,0);
       games = allGames.filter(g => g.createdAt >= todayStart.getTime());
     }
-    if (search) games = games.filter(g => g.title?.toLowerCase().includes(search));
+    if (search) games = games.filter(g => {
+      if (g.title?.toLowerCase().includes(search)) return true;
+      if (g.author?.toLowerCase().includes(search)) return true;
+      if (g.category?.toLowerCase().includes(search)) return true;
+      if (Array.isArray(g.userTags) && g.userTags.some(t => t.toLowerCase().includes(search))) return true;
+      if (Array.isArray(g.categories) && g.categories.some(c => c.toLowerCase().includes(search))) return true;
+      return false;
+    });
 
-    // Tag/field filters (skip price key — handled separately below)
+    // Tag/field filters — category uses token matching, author exact, price handled below
     Object.entries(adminFilters).forEach(([key, set]) => {
       if (!set.size || key === 'price') return;
       games = games.filter(g => {
+        if (key === 'category') {
+          // Match any selected token against categories[] or split category string
+          const cats = Array.isArray(g.categories) && g.categories.length ? g.categories
+            : (g.category ? g.category.split('>').map(s => s.trim()).filter(Boolean) : []);
+          return cats.some(c => set.has(c));
+        }
         const v = g[key];
         if (Array.isArray(v)) return v.some(x => set.has(x));
         return set.has(v);
