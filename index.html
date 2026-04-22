@@ -4493,10 +4493,23 @@ select option { background: var(--card); }
         <div class="lib-controls">
           <div class="lib-search-wrap">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input class="lib-search" id="lib-search" placeholder="Search games..." oninput="_debounceLib()">
+            <input class="lib-search" id="lib-search" placeholder="Search assets..." oninput="_debounceLib()">
           </div>
 
+          <button class="filter-pill" id="lib-filter-today" onclick="setLibFilter('today',this)" title="Show assets imported today">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" style="margin-right:3px;vertical-align:-1px"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Today
+            <span id="lib-today-count" style="display:none;font-family:'JetBrains Mono',monospace;font-size:9px;background:var(--neon);color:var(--void);border-radius:100px;padding:1px 5px;margin-left:2px;font-weight:700;"></span>
+          </button>
+
           <div class="lib-count" id="lib-count">0 assets</div>
+          <button class="btn btn-primary btn-sm" id="lib-add-btn" onclick="openAddGameModal(null)" style="gap:5px;">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Add Asset
+          </button>
+          <button class="btn btn-secondary btn-sm" id="lib-refresh-btn" onclick="_libRefresh()" title="Reload from WordPress" style="padding:5px 9px;display:none;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+          </button>
           <button class="btn btn-secondary btn-sm" id="lib-select-all-btn" onclick="selectAllCards()">Select All</button>
           <button class="btn btn-secondary btn-sm" id="filter-toggle-btn" onclick="toggleAdminFilter()" style="margin-left:auto;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;vertical-align:-1px"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg> Filter</button>
           <button class="btn btn-secondary btn-sm" id="lib-view-toggle" onclick="toggleLibView()" title="Toggle List / Grid view" style="padding:5px 9px;">
@@ -4722,7 +4735,38 @@ https://cgtrader.com/3d-models/..."
       <!-- ── IMPORT / EXPORT VIEW ── -->
       <div class="view" id="view-io" style="display:none">
         <div class="io-grid">
-          <div class="io-card">
+
+          <!-- ── WordPress Connection ── -->
+          <div class="io-card io-full">
+            <div class="io-card-header">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--neon)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/></svg>
+              WordPress Connection
+              <span id="wp-conn-badge" style="margin-left:8px;font-size:10px;font-weight:700;font-family:'JetBrains Mono',monospace;padding:2px 8px;border-radius:4px;background:rgba(107,122,141,0.15);color:var(--muted);">NOT CONFIGURED</span>
+            </div>
+            <div class="io-card-body">
+              <div class="io-card-desc">Connect to your WordPress site to automatically sync assets. Get the AJAX URL and nonce from the WordPress plugin admin page (Asset Tools → open DevTools → <code>AMT.ajax_url</code> and <code>AMT.nonce</code>).</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+                <div>
+                  <label style="display:block;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;">AJAX URL</label>
+                  <input type="url" id="wp-ajax-url-input" placeholder="https://yoursite.com/wp-admin/admin-ajax.php"
+                    style="width:100%;font-family:'JetBrains Mono',monospace;font-size:11px;"
+                    oninput="_wpConfigInputChanged()">
+                </div>
+                <div>
+                  <label style="display:block;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;">Nonce</label>
+                  <input type="text" id="wp-nonce-input" placeholder="e.g. a1b2c3d4e5"
+                    style="width:100%;font-family:'JetBrains Mono',monospace;font-size:11px;"
+                    oninput="_wpConfigInputChanged()">
+                </div>
+              </div>
+              <div style="display:flex;gap:8px;align-items:center;">
+                <button class="btn btn-secondary btn-sm" onclick="_wpSaveConfig()">Save Connection</button>
+                <button class="btn btn-ghost btn-sm" onclick="_wpTestConnection()" id="wp-test-btn">Test Connection</button>
+                <button class="btn btn-ghost btn-sm" style="color:var(--red);" onclick="_wpClearConfig()">Disconnect</button>
+                <span id="wp-conn-status" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-left:4px;"></span>
+              </div>
+            </div>
+          </div>
             <div class="io-card-header">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
               Export Assets
@@ -4779,10 +4823,37 @@ https://cgtrader.com/3d-models/..."
               </div>
             </div>
           </div>
+          <!-- ── Price Scan via WordPress ── -->
+          <div class="io-card io-full" id="wp-price-scan-card" style="display:none;">
+            <div class="io-card-header">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--neon)" stroke-width="2" stroke-linecap="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+              Price Scanner
+            </div>
+            <div class="io-card-body">
+              <div class="io-card-desc">Fetches each asset's source page, extracts current price via JSON-LD / selectors, and updates if changed. Runs via your WordPress site.</div>
+              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px;">
+                <button class="btn btn-secondary btn-sm" id="wp-scan-start-btn" onclick="_wpStartPriceScan()">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" style="margin-right:4px;vertical-align:-1px"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+                  Run Price Scan
+                </button>
+                <button class="btn btn-ghost btn-sm" id="wp-scan-stop-btn" onclick="_wpStopPriceScan()" style="display:none;color:var(--red);">Stop</button>
+                <span id="wp-scan-status" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);"></span>
+              </div>
+              <div id="wp-scan-progress-wrap" style="display:none;margin-bottom:8px;">
+                <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px;">
+                  <span id="wp-scan-label" style="color:var(--muted);">Scanning…</span>
+                  <span id="wp-scan-pct" style="font-family:'JetBrains Mono',monospace;color:var(--neon);font-weight:700;">0%</span>
+                </div>
+                <div style="height:3px;background:var(--border);border-radius:2px;overflow:hidden;">
+                  <div id="wp-scan-bar" style="height:100%;width:0%;background:var(--neon);border-radius:2px;transition:width 0.3s;"></div>
+                </div>
+              </div>
+              <div id="wp-scan-stats" style="display:none;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);"></div>
+            </div>
+          </div>
+
         </div>
       </div>
-
-      <!-- ── RECENT UPDATES VIEW ── -->
       <div class="view" id="view-quality" style="display:none;flex-direction:column;">
         <div id="quality-content" style="padding:20px;overflow-y:auto;flex:1;min-height:0;"></div>
 
@@ -4900,8 +4971,280 @@ async function _sbSetStatus(id, status) {
 }
 
 /* ═══════════════════════════════════════════════
-   STATE
+   WORDPRESS SYNC — sends data to WP plugin
+   Config: set WP_AJAX_URL + WP_NONCE when site is ready.
+   Both values come from the WordPress plugin's AMT object.
+   Until then, all _wp* calls are silent no-ops.
 ═══════════════════════════════════════════════ */
+const _WP_CONFIG = {
+  ajax_url: '',   // e.g. 'https://yoursite.com/wp-admin/admin-ajax.php'
+  nonce:    '',   // from AMT.nonce in WP admin page
+};
+
+function _wpReady() {
+  return _WP_CONFIG.ajax_url !== '' && _WP_CONFIG.nonce !== '';
+}
+
+// Send pre-mapped assets array to WordPress via amt_upsert_assets.
+// assets[] must already be processed by mapExtensionAsset().
+// Fire-and-forget — errors are logged, never block the UI.
+async function _wpUpsert(assets) {
+  if (!_wpReady()) return;
+  if (!Array.isArray(assets) || !assets.length) return;
+  try {
+    const body = new FormData();
+    body.append('action', 'amt_upsert_assets');
+    body.append('nonce',  _WP_CONFIG.nonce);
+    body.append('assets', JSON.stringify(assets));
+    const res = await fetch(_WP_CONFIG.ajax_url, { method: 'POST', body });
+    const json = await res.json();
+    if (json.success) {
+      const d = json.data;
+      console.log(`[WP] upsert: inserted=${d.inserted} updated=${d.updated} skipped=${d.skipped} errors=${d.errors}`);
+    } else {
+      console.warn('[WP] upsert failed:', json.data?.message);
+    }
+  } catch(e) { console.warn('[WP] upsert error:', e.message); }
+}
+
+// Delete a single asset in WordPress by its wp_post_id stored in the game object.
+// game._wp_post_id is set on the Firebase record after first successful upsert.
+async function _wpDelete(wpPostId) {
+  if (!_wpReady() || !wpPostId) return;
+  try {
+    const body = new FormData();
+    body.append('action',  'amt_delete_asset');
+    body.append('nonce',   _WP_CONFIG.nonce);
+    body.append('post_id', String(wpPostId));
+    const res  = await fetch(_WP_CONFIG.ajax_url, { method: 'POST', body });
+    const json = await res.json();
+    if (json.success) {
+      console.log('[WP] deleted post #' + wpPostId);
+    } else {
+      console.warn('[WP] delete failed:', json.data?.message);
+    }
+  } catch(e) { console.warn('[WP] delete error:', e.message); }
+}
+
+// Convert a Firebase/Admin game object to the WP field contract.
+// Thin wrapper — mapExtensionAsset covers extension output;
+// this handles games that came from manual Add Asset form.
+function _wpMapGame(game) {
+  return {
+    title:            game.title            || '',
+    post_link:        game.post_link        || '',
+    author:           game.author           || '',
+    price:            String(game.price     || ''),
+    category:         game.category         || (Array.isArray(game.categories) ? game.categories.join(' > ') : ''),
+    description:      game.description      || '',
+    technicalDetails: game.technicalDetails || game.technical_details || '',
+    cover:            game.cover            || game.image             || '',
+    userTags:         Array.isArray(game.userTags) ? game.userTags : [],
+    storeLinks:       typeof game.storeLinks === 'object'
+                        ? JSON.stringify(game.storeLinks)
+                        : (game.storeLinks || ''),
+  };
+}
+
+// ── WordPress Config Management ────────────────────────────────────────
+
+const _WP_STORAGE_KEY = 'amt_wp_config';
+
+// Load saved config from localStorage on boot
+(function _wpLoadSavedConfig() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(_WP_STORAGE_KEY) || '{}');
+    if (saved.ajax_url) _WP_CONFIG.ajax_url = saved.ajax_url;
+    if (saved.nonce)    _WP_CONFIG.nonce    = saved.nonce;
+  } catch(e) {}
+})();
+
+function _wpSaveConfig() {
+  const url   = (document.getElementById('wp-ajax-url-input')?.value || '').trim();
+  const nonce = (document.getElementById('wp-nonce-input')?.value    || '').trim();
+  if (!url || !nonce) { _wpSetStatus('Both fields are required', 'error'); return; }
+  _WP_CONFIG.ajax_url = url;
+  _WP_CONFIG.nonce    = nonce;
+  try { localStorage.setItem(_WP_STORAGE_KEY, JSON.stringify({ ajax_url: url, nonce })); } catch(e) {}
+  _wpUpdateBadge();
+  _wpSetStatus('Saved', 'success');
+}
+
+function _wpClearConfig() {
+  _WP_CONFIG.ajax_url = '';
+  _WP_CONFIG.nonce    = '';
+  try { localStorage.removeItem(_WP_STORAGE_KEY); } catch(e) {}
+  const urlEl   = document.getElementById('wp-ajax-url-input');
+  const nonceEl = document.getElementById('wp-nonce-input');
+  if (urlEl)   urlEl.value   = '';
+  if (nonceEl) nonceEl.value = '';
+  _wpUpdateBadge();
+  _wpSetStatus('Disconnected', 'info');
+}
+
+async function _wpTestConnection() {
+  if (!_wpReady()) { _wpSetStatus('Save config first', 'error'); return; }
+  const btn = document.getElementById('wp-test-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Testing…'; }
+  _wpSetStatus('', '');
+  try {
+    const body = new FormData();
+    body.append('action', 'amt_dashboard_stats');
+    body.append('nonce',  _WP_CONFIG.nonce);
+    const res  = await fetch(_WP_CONFIG.ajax_url, { method: 'POST', body });
+    const json = await res.json();
+    if (json.success) {
+      _wpSetStatus(`✓ Connected — ${json.data.total} posts in WordPress`, 'success');
+      _wpUpdateBadge(true);
+    } else {
+      _wpSetStatus('✕ ' + (json.data?.message || 'Auth failed — check nonce'), 'error');
+      _wpUpdateBadge(false);
+    }
+  } catch(e) {
+    _wpSetStatus('✕ Network error: ' + e.message, 'error');
+    _wpUpdateBadge(false);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Test Connection'; }
+  }
+}
+
+function _wpSetStatus(msg, type) {
+  const el = document.getElementById('wp-conn-status');
+  if (!el) return;
+  el.textContent = msg;
+  el.style.color = type === 'error' ? 'var(--red)' : type === 'success' ? 'var(--green)' : 'var(--muted)';
+}
+
+function _wpUpdateBadge(connected) {
+  const badge = document.getElementById('wp-conn-badge');
+  if (!badge) return;
+  if (connected === true) {
+    badge.textContent = 'CONNECTED';
+    badge.style.background = 'rgba(16,185,129,0.15)';
+    badge.style.color = 'var(--green)';
+  } else if (connected === false) {
+    badge.textContent = 'ERROR';
+    badge.style.background = 'rgba(239,68,68,0.12)';
+    badge.style.color = 'var(--red)';
+  } else if (_wpReady()) {
+    badge.textContent = 'CONFIGURED';
+    badge.style.background = 'rgba(0,212,255,0.1)';
+    badge.style.color = 'var(--neon)';
+  } else {
+    badge.textContent = 'NOT CONFIGURED';
+    badge.style.background = 'rgba(107,122,141,0.15)';
+    badge.style.color = 'var(--muted)';
+  }
+}
+
+// Pre-fill inputs from saved config when IO view opens
+(function _wpPrefillInputs() {
+  setTimeout(() => {
+    const urlEl   = document.getElementById('wp-ajax-url-input');
+    const nonceEl = document.getElementById('wp-nonce-input');
+    if (urlEl   && _WP_CONFIG.ajax_url) urlEl.value   = _WP_CONFIG.ajax_url;
+    if (nonceEl && _WP_CONFIG.nonce)    nonceEl.value = _WP_CONFIG.nonce;
+    _wpUpdateBadge();
+  }, 0);
+})();
+
+
+// ── WordPress Price Scanner ────────────────────────────────────────────────
+let _wpScanRunning = false;
+
+function _wpShowScanCard() {
+  const card = document.getElementById('wp-price-scan-card');
+  if (card && _wpReady()) card.style.display = '';
+}
+// Show card when IO view opens if WP configured
+(function(){ setTimeout(_wpShowScanCard, 150); })();
+
+async function _wpStartPriceScan() {
+  if (!_wpReady()) { toast('WordPress not configured', 'error'); return; }
+  if (_wpScanRunning) return;
+  _wpScanRunning = true;
+
+  const startBtn = document.getElementById('wp-scan-start-btn');
+  const stopBtn  = document.getElementById('wp-scan-stop-btn');
+  const status   = document.getElementById('wp-scan-status');
+  const wrap     = document.getElementById('wp-scan-progress-wrap');
+  const bar      = document.getElementById('wp-scan-bar');
+  const pct      = document.getElementById('wp-scan-pct');
+  const label    = document.getElementById('wp-scan-label');
+  const stats    = document.getElementById('wp-scan-stats');
+
+  if (startBtn) startBtn.style.display = 'none';
+  if (stopBtn)  stopBtn.style.display  = 'inline-flex';
+  if (wrap)     wrap.style.display     = 'block';
+  if (stats)    stats.style.display    = 'none';
+  if (status)   status.textContent     = 'Initializing…';
+
+  try {
+    // Init scan
+    const initBody = new FormData();
+    initBody.append('action', 'amt_init_scan');
+    initBody.append('nonce',  _WP_CONFIG.nonce);
+    const initRes  = await fetch(_WP_CONFIG.ajax_url, { method: 'POST', body: initBody });
+    const initJson = await initRes.json();
+    if (!initJson.success) throw new Error(initJson.data?.message || 'Init failed');
+
+    const total = initJson.data.total;
+    if (status) status.textContent = `${total} posts queued`;
+
+    // Batch loop
+    let updated = 0, unchanged = 0, skipped = 0, errors = 0;
+    while (_wpScanRunning) {
+      const batchBody = new FormData();
+      batchBody.append('action', 'amt_process_batch');
+      batchBody.append('nonce',  _WP_CONFIG.nonce);
+      const batchRes  = await fetch(_WP_CONFIG.ajax_url, { method: 'POST', body: batchBody });
+      const batchJson = await batchRes.json();
+      if (!batchJson.success) break;
+
+      const d = batchJson.data;
+      updated   = d.stats?.updated   || updated;
+      unchanged = d.stats?.unchanged || unchanged;
+      skipped   = d.stats?.skipped   || skipped;
+      errors    = d.stats?.errors    || errors;
+
+      const p = d.pct || 0;
+      if (bar)   bar.style.width    = p + '%';
+      if (pct)   pct.textContent    = p + '%';
+      if (label) label.textContent  = `${d.offset || 0} / ${d.total || total}`;
+
+      if (d.done) {
+        if (stats) {
+          stats.style.display = 'block';
+          stats.textContent = `Updated: ${updated}  Unchanged: ${unchanged}  Skipped: ${skipped}  Errors: ${errors}`;
+        }
+        if (label) label.textContent = 'Done';
+        break;
+      }
+      await new Promise(r => setTimeout(r, 100));
+    }
+  } catch(e) {
+    if (status) status.textContent = '✕ ' + e.message;
+    toast('Price scan error: ' + e.message, 'error');
+  } finally {
+    _wpScanRunning = false;
+    if (startBtn) startBtn.style.display = 'inline-flex';
+    if (stopBtn)  stopBtn.style.display  = 'none';
+  }
+}
+
+function _wpStopPriceScan() {
+  _wpScanRunning = false;
+  const status = document.getElementById('wp-scan-status');
+  if (status) status.textContent = 'Stopped';
+  // Cancel on server side
+  if (_wpReady()) {
+    const body = new FormData();
+    body.append('action', 'amt_cancel_scan');
+    body.append('nonce',  _WP_CONFIG.nonce);
+    fetch(_WP_CONFIG.ajax_url, { method: 'POST', body }).catch(() => {});
+  }
+}
+
 let fbApp;
 let allGames = [], TAXONOMY = {};
 
@@ -5136,6 +5479,9 @@ function showApp() {
 let _gamesIndex = new Map();
 let _adminAllLoaded = false;
 let _dataListenersAttached = false;
+let _wpLibPage = 1;
+let _wpLibTotalPages = 1;
+const WP_LIB_PER_PAGE = 100; // load in chunks into allGames
 
 function _rebuildIndex() {
   _gamesIndex.clear();
@@ -5148,8 +5494,67 @@ function invalidateFilterCache() {
 }
 
 async function _loadRemaining() {
-  // Firestore: data fully loaded via onSnapshot in loadData
   _adminAllLoaded = true;
+}
+
+// ── WP Library loader — populates allGames from amt_get_library ──────────────
+async function _wpLoadLibrary(page = 1, append = false) {
+  if (!_wpReady()) return false;
+  try {
+    const body = new FormData();
+    body.append('action',   'amt_get_library');
+    body.append('nonce',    _WP_CONFIG.nonce);
+    body.append('page',     page);
+    body.append('per_page', WP_LIB_PER_PAGE);
+    const res  = await fetch(_WP_CONFIG.ajax_url, { method: 'POST', body });
+    const json = await res.json();
+    if (!json.success) { console.warn('[WP Library] error:', json.data?.message); return false; }
+    const d = json.data;
+    _wpLibTotalPages = d.total_pages || 1;
+
+    // Map WP row format → allGames format
+    const mapped = (d.rows || []).map(r => ({
+      id:               String(r.id),           // use WP post ID as string key
+      _wp_post_id:      r.id,
+      title:            r.title        || '',
+      price:            r.price        || '',
+      author:           r.author       || '',
+      post_link:        r.post_link    || '',
+      cover:            r.cover_url    || '',
+      image:            r.cover_url    || '',
+      category:         (r.category_path || r.categories || []).join(' > '),
+      categories:       r.categories  || [],
+      category_path:    r.category_path || [],
+      marketplace:      r.marketplace  || '',
+      has_image:        r.has_image,
+      createdAt:        (r.created_at || 0) * 1000, // unix→ms
+      status:           'published',
+      description:      '',
+    }));
+
+    if (append) {
+      // merge — avoid duplicates by _wp_post_id
+      const existingIds = new Set(allGames.map(g => g._wp_post_id));
+      allGames = allGames.concat(mapped.filter(g => !existingIds.has(g._wp_post_id)));
+    } else {
+      allGames = mapped;
+    }
+
+    _rebuildIndex();
+    invalidateFilterCache();
+    updateStats(); renderLibrary(); renderDrafts(); updateNavBadges(); _updateTodayBadge();
+    _adminAllLoaded = (page >= _wpLibTotalPages);
+    console.log(`[WP Library] page ${page}/${_wpLibTotalPages} — ${allGames.length} total`);
+
+    // Auto-load remaining pages in background
+    if (page < _wpLibTotalPages) {
+      setTimeout(() => _wpLoadLibrary(page + 1, true), 200);
+    }
+    return true;
+  } catch(e) {
+    console.warn('[WP Library] fetch error:', e.message);
+    return false;
+  }
 }
 
 function loadData() {
@@ -5157,7 +5562,27 @@ function loadData() {
   if (_dataListenersAttached) return;
   _dataListenersAttached = true;
 
-  // Real-time Firestore listener on assets collection
+  // If WP is configured — load from WordPress, keep Firebase for taxonomy only
+  if (_wpReady()) {
+    _wpLoadLibrary(1, false);
+    // Still load taxonomy from Firebase
+    db.collection('meta').doc('taxonomy').onSnapshot(snap => {
+      TAXONOMY = snap.exists ? snap.data() : {};
+      mergeTaxonomyDefaults();
+      buildFormSelects();
+      buildAllCheckboxGrids();
+      populateStoresMultiselect();
+      renderTaxonomy();
+      const panel = document.getElementById('admin-filter-panel');
+      if (panel && panel.classList.contains('open')) buildAdminFilterPanel();
+    }, () => {
+      mergeTaxonomyDefaults(); buildFormSelects(); buildAllCheckboxGrids();
+      populateStoresMultiselect(); renderTaxonomy();
+    });
+    return;
+  }
+
+  // Fallback: full Firebase mode
   db.collection(COLLECTION).onSnapshot(snapshot => {
     allGames = [];
     snapshot.forEach(doc => {
@@ -5166,7 +5591,7 @@ function loadData() {
     });
     _rebuildIndex();
     invalidateFilterCache();
-    updateStats(); renderLibrary(); renderDrafts(); updateNavBadges();
+    updateStats(); renderLibrary(); renderDrafts(); updateNavBadges(); _updateTodayBadge();
     _adminAllLoaded = true;
     console.log('[loadData] Firestore loaded', allGames.length, 'assets');
   }, err => {
@@ -5174,7 +5599,6 @@ function loadData() {
     toast('Failed to load data: ' + err.message, 'error');
   });
 
-  // Taxonomy listener
   db.collection('meta').doc('taxonomy').onSnapshot(snap => {
     TAXONOMY = snap.exists ? snap.data() : {};
     mergeTaxonomyDefaults();
@@ -5844,6 +6268,40 @@ function setLibFilter(f, el) {
   renderLibrary();
 }
 
+function _updateTodayBadge() {
+  const todayStart = new Date(); todayStart.setHours(0,0,0,0);
+  const count = allGames.filter(g => g.createdAt >= todayStart.getTime()).length;
+  const badge = document.getElementById('lib-today-count');
+  const pill  = document.getElementById('lib-filter-today');
+  if (!badge || !pill) return;
+  if (count > 0) {
+    badge.textContent = count;
+    badge.style.display = 'inline';
+    pill.title = `${count} asset${count !== 1 ? 's' : ''} imported today`;
+  } else {
+    badge.style.display = 'none';
+    pill.title = 'No assets imported today';
+  }
+}
+
+function _libRefresh() {
+  if (!_wpReady()) return;
+  _dataListenersAttached = false; // allow reload
+  allGames = [];
+  invalidateFilterCache();
+  _wpLoadLibrary(1, false);
+  const btn = document.getElementById('lib-refresh-btn');
+  if (btn) { btn.disabled = true; setTimeout(() => { btn.disabled = false; }, 2000); }
+}
+
+// Show refresh button only when WP is configured
+(function _initLibRefreshBtn() {
+  setTimeout(() => {
+    const btn = document.getElementById('lib-refresh-btn');
+    if (btn && _wpReady()) btn.style.display = 'inline-flex';
+  }, 100);
+})();
+
 
 /* ═══════════════════════════════════════════════
    SELECT ALL — Library & Drafts
@@ -6346,6 +6804,10 @@ function renderLibrary() {
     if (libFilter === 'all')          games = allGames.slice();
     else if (libFilter === 'featured') games = games.filter(g => g.latestFeatured || g.sponsored);
     else if (libFilter === 'ea')       games = games.filter(g => g.earlyAccess);
+    else if (libFilter === 'today') {
+      const todayStart = new Date(); todayStart.setHours(0,0,0,0);
+      games = allGames.filter(g => g.createdAt >= todayStart.getTime());
+    }
     if (search) games = games.filter(g => g.title?.toLowerCase().includes(search));
 
     // Tag/field filters (skip price key — handled separately below)
@@ -6646,6 +7108,7 @@ function deleteGame(id) {
   if (!confirm(`Delete "${g?.title || id}"? This cannot be undone.`)) return;
   db.collection(COLLECTION).doc(id).delete().then(async () => {
     _sbDelete(id); // sync delete to Supabase
+    if (g?._wp_post_id) _wpDelete(g._wp_post_id); // sync delete to WordPress
     await logAction('game_deleted', g?.title || id, id, g || null, null);
     toast('Deleted', 'success');
   });
@@ -6666,7 +7129,11 @@ async function bulkDeleteSelected() {
   if (!ids.length) { toast('Select at least one draft', 'error'); return; }
   if (!confirm(`Delete ${ids.length} draft(s)?`)) return;
   await Promise.all(ids.map(id => db.collection(COLLECTION).doc(id).delete()));
-  await Promise.all(ids.map(id => _sbDelete(id)));
+  await Promise.all(ids.map(id => {
+    _sbDelete(id);
+    const g = allGames.find(x => x.id === id);
+    if (g?._wp_post_id) _wpDelete(g._wp_post_id); // sync delete to WordPress
+  }));
   toast(`${ids.length} deleted`, 'success');
 }
 
@@ -7856,6 +8323,7 @@ async function saveGame() {
     } catch(logErr) { console.warn('[Firebase] logAction failed:', logErr); }
 
     _sbUpsert(finalData);
+    _wpUpsert([_wpMapGame(finalData)]);
 
     const ss = document.getElementById('save-status');
     if (ss) {
@@ -8872,6 +9340,7 @@ async function _bprConfirmImport() {
 
   let ok = 0, skipped = 0, fail = 0;
   const total = toSave.length;
+  const savedAssets = []; // collect for WP sync
 
   for (let i = 0; i < toSave.length; i++) {
     const { asset } = toSave[i];
@@ -8880,6 +9349,7 @@ async function _bprConfirmImport() {
       const docRef = db.collection(COLLECTION).doc();
       finalAsset.id = docRef.id;
       await docRef.set(finalAsset);
+      savedAssets.push(finalAsset);
       ok++;
     } catch(e) {
       fail++;
@@ -8889,6 +9359,9 @@ async function _bprConfirmImport() {
     if (savingText) savingText.textContent = `Saving ${i+1} / ${total}…`;
     if ((i+1) % 10 === 0) await new Promise(r => setTimeout(r, 20));
   }
+
+  // Sync to WordPress — fire-and-forget, never blocks UI
+  if (savedAssets.length) _wpUpsert(savedAssets.map(_wpMapGame));
 
   // Close overlay
   document.getElementById('bulk-preview-overlay').classList.remove('open');
@@ -8906,8 +9379,14 @@ async function _bprConfirmImport() {
   invalidateFilterCache();
   renderLibrary();
   updateNavBadges();
+  _updateTodayBadge();
+  // Auto-activate Today filter so user sees what just got imported
+  if (ok > 0) {
+    const todayPill = document.getElementById('lib-filter-today');
+    setLibFilter('today', todayPill);
+  }
 
-  const parts = [`${ok} draft${ok!==1?'s':''} saved`];
+  const parts = [`${ok} asset${ok!==1?'s':''} saved`];
   if (dupsSaved.length) parts.push(`${dupsSaved.length} duplicate${dupsSaved.length!==1?'s':''} skipped`);
   if (fail) parts.push(`${fail} failed`);
   toast(parts.join(' · '), ok > 0 ? 'success' : 'error');
