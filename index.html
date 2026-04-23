@@ -4808,8 +4808,7 @@ https://cgtrader.com/3d-models/..."
               <textarea id="import-json-area" placeholder='[{"title":"Game Name","genres":["Action"],...}]' style="min-height:120px;font-family:&quot;DM Mono&quot;,monospace;font-size:12px;margin-bottom:10px;"></textarea>
               <div style="display:flex;gap:8px;">
                 <button class="btn btn-primary" onclick="importGames()">Import</button>
-                <button class="btn btn-danger" onclick="nukeAllGames()">Delete ALL Games</button>
-                <button class="btn btn-secondary" onclick="syncSupabaseWithFirebase()" style="color:#10b981;border-color:rgba(16,185,129,0.4);">🔄 Sync Supabase</button>
+                <button class="btn btn-danger" onclick="nukeAllGames()">Delete ALL Assets</button>
               </div>
             </div>
           </div>
@@ -6406,12 +6405,12 @@ function selectAllCards() {
 
 async function deleteSelected() {
   if (!selectedIds.size) return;
-  if (!confirm(`Delete ${selectedIds.size} games? This cannot be undone.`)) return;
+  if (!confirm(`Delete ${selectedIds.size} assets? This cannot be undone.`)) return;
   const ids = [...selectedIds];
   await Promise.all(ids.map(id => db.collection(COLLECTION).doc(id).delete()));
   await Promise.all(ids.map(id => _sbDelete(id)));
   clearSelection();
-  toast(`Deleted ${ids.length} games`, 'success');
+  toast(`Deleted ${ids.length} assets`, 'success');
 }
 
 
@@ -6710,7 +6709,7 @@ function buildAdminFilterPanel() {
     </div>
 
     <!-- ── Price Range ── -->
-    <div class="afp-section collapsed" id="afps-price">
+    <div class="afp-section" id="afps-price">
       <div class="afp-section-header" onclick="toggleAfpSection('price')">
         <span>Price${(pf||pt||free) ? ' <span class="afp-active-count">✓</span>' : ''}</span>
         <svg class="afp-chevron" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>
@@ -6748,12 +6747,45 @@ function buildAdminFilterPanel() {
         ${activeAuthorArr.length ? `<button onclick="_clearFilter('author')" style="font-size:10px;color:var(--red);background:none;border:none;cursor:pointer;padding:0;text-align:left;">Clear</button>` : ''}
       </div>
     </div>
+
+    <!-- ── Tags ── -->
+    ${(() => {
+      const activeTags = adminFilters['userTags'] || new Set();
+      const taxTags = Array.isArray(TAXONOMY?.userTags) ? TAXONOMY.userTags : [];
+      const allTagsSet = new Set([...taxTags, ...allGames.flatMap(g => Array.isArray(g.userTags) ? g.userTags : [])]);
+      const allTagsSorted = [...allTagsSet].sort();
+      if (!allTagsSorted.length) return '';
+      return `<div class="afp-section collapsed" id="afps-userTags">
+        <div class="afp-section-header" onclick="toggleAfpSection('userTags')">
+          <span>Tags${activeTags.size ? ` <span class="afp-active-count">${activeTags.size}</span>` : ''}</span>
+          <svg class="afp-chevron" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>
+        </div>
+        <div class="afp-section-body" style="flex-direction:column;gap:6px;">
+          <input type="text" id="afp-tags-search" placeholder="Search tags…"
+            style="width:100%;padding:5px 8px;border-radius:5px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:11px;box-sizing:border-box;"
+            oninput="_afpFilterTags(this.value)">
+          <div id="afp-tags-chips" style="display:flex;flex-wrap:wrap;gap:4px;max-height:140px;overflow-y:auto;padding-right:2px;">
+            ${allTagsSorted.map(v => `<span class="afp-chip ${activeTags.has(v)?'active':''}" onclick="toggleAdminFilterChip('userTags','${v.replace(/'/g,"\\'").replace(/"/g,'&quot;')}',this)">${v}</span>`).join('')}
+          </div>
+          ${activeTags.size ? `<button onclick="_clearFilter('userTags')" style="font-size:10px;color:var(--red);background:none;border:none;cursor:pointer;padding:0;text-align:left;">Clear</button>` : ''}
+        </div>
+      </div>`;
+    })()}
   `;
 }
 
 // Live search inside category chips
 function _afpFilterCats(q) {
   const chips = document.querySelectorAll('#afp-cat-chips .afp-chip');
+  const lq = q.toLowerCase();
+  chips.forEach(c => {
+    c.style.display = (!lq || c.textContent.toLowerCase().includes(lq)) ? '' : 'none';
+  });
+}
+
+// Live search inside tags chips
+function _afpFilterTags(q) {
+  const chips = document.querySelectorAll('#afp-tags-chips .afp-chip');
   const lq = q.toLowerCase();
   chips.forEach(c => {
     c.style.display = (!lq || c.textContent.toLowerCase().includes(lq)) ? '' : 'none';
@@ -7172,7 +7204,7 @@ async function bulkPublishSelected() {
     await db.collection(COLLECTION).doc(id).update({ status: 'published', updatedAt: Date.now() });
     _sbSetStatus(id, 'published');
   }
-  toast(`${ids.length} game(s) published!`, 'success');
+  toast(`${ids.length} asset(s) published!`, 'success');
 }
 
 async function bulkDeleteSelected() {
@@ -9982,16 +10014,16 @@ const DEFAULT_TAXONOMY = {
   visual: ['Pixel Art','Hand-Drawn','Cartoon','Anime','Realistic','Stylized','Low Poly','Voxel','Minimalist','Abstract','Retro','Comic Book','Watercolor','3D','2D','Isometric','ASCII','Claymation','Stop Motion','Mixed Media'],
 };
 
-/* merge DEFAULT into TAXONOMY (adds any missing keys/values, never removes existing) */
+/* merge DEFAULT into TAXONOMY — only adds MISSING KEYS, never overwrites existing ones */
 function mergeTaxonomyDefaults() {
   // Ensure assetCategories is an object tree, not array
   if (!TAXONOMY.assetCategories || Array.isArray(TAXONOMY.assetCategories)) TAXONOMY.assetCategories = {};
   let changed = false;
   for (const [key, vals] of Object.entries(DEFAULT_TAXONOMY)) {
-    if (!TAXONOMY[key]) { TAXONOMY[key] = [...vals]; changed = true; continue; }
-    const existing = new Set(TAXONOMY[key]);
-    for (const v of vals) {
-      if (!existing.has(v)) { TAXONOMY[key].push(v); changed = true; }
+    // Only add the key if it doesn't exist at all — never modify existing keys
+    if (!TAXONOMY[key]) {
+      TAXONOMY[key] = [...vals];
+      changed = true;
     }
   }
   if (changed) saveTaxonomy();
@@ -10231,7 +10263,7 @@ async function deleteDuplicates() {
   if (!_dedupeToDelete.length) return;
   const statusEl  = document.getElementById("dedupe-status");
   const deleteBtn = document.getElementById("dedupe-delete-btn");
-  if (!confirm("Delete " + _dedupeToDelete.length + " duplicate game(s)? This cannot be undone.")) return;
+  if (!confirm("Delete " + _dedupeToDelete.length + " duplicate asset(s)? This cannot be undone.")) return;
   if (deleteBtn) deleteBtn.disabled = true;
   statusEl.textContent = "Deleting...";
   let done = 0;
