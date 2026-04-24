@@ -10018,15 +10018,17 @@ const DEFAULT_TAXONOMY = {
 function mergeTaxonomyDefaults() {
   // Ensure assetCategories is an object tree, not array
   if (!TAXONOMY.assetCategories || Array.isArray(TAXONOMY.assetCategories)) TAXONOMY.assetCategories = {};
-  let changed = false;
+  // Only add keys that are completely absent — never modify existing keys, never write back.
+  // Writing back here would re-create keys the user deliberately deleted via deleteTaxCategory,
+  // because onSnapshot fires after every saveTaxonomy() call and re-invokes this function.
   for (const [key, vals] of Object.entries(DEFAULT_TAXONOMY)) {
-    // Only add the key if it doesn't exist at all — never modify existing keys
     if (!TAXONOMY[key]) {
       TAXONOMY[key] = [...vals];
-      changed = true;
     }
   }
-  if (changed) saveTaxonomy();
+  // DO NOT call saveTaxonomy() here — this function is called on every Firestore snapshot.
+  // All Firestore writes happen only through explicit user actions (addTaxItem, delTaxItem,
+  // deleteTaxCategory, createNewCategory) which call saveTaxonomy() themselves.
 }
 
 /* normalize a game object — map each field to valid taxonomy values */
