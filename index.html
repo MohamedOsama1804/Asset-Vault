@@ -5563,13 +5563,15 @@ function loadData() {
         TAXONOMY = snap.data();
       } else {
         TAXONOMY = {};
-        mergeTaxonomyDefaults(); // only if no taxonomy exists yet
+        mergeTaxonomyDefaults();
       }
+      _syncTaxonomyKeys();
       buildFormSelects(); buildAllCheckboxGrids();
       populateStoresMultiselect(); renderTaxonomy();
       const panel = document.getElementById('admin-filter-panel');
       if (panel && panel.classList.contains('open')) buildAdminFilterPanel();
     }, () => {
+      _syncTaxonomyKeys();
       buildFormSelects(); buildAllCheckboxGrids();
       populateStoresMultiselect(); renderTaxonomy();
     });
@@ -5598,13 +5600,15 @@ function loadData() {
       TAXONOMY = snap.data();
     } else {
       TAXONOMY = {};
-      mergeTaxonomyDefaults(); // only if no taxonomy exists yet
+      mergeTaxonomyDefaults();
     }
+    _syncTaxonomyKeys();
     buildFormSelects(); buildAllCheckboxGrids();
     populateStoresMultiselect(); renderTaxonomy();
     const panel = document.getElementById('admin-filter-panel');
     if (panel && panel.classList.contains('open')) buildAdminFilterPanel();
   }, () => {
+    _syncTaxonomyKeys();
     buildFormSelects(); buildAllCheckboxGrids();
     populateStoresMultiselect(); renderTaxonomy();
   });
@@ -9830,17 +9834,27 @@ async function bulkFetchSingleGame(appId) {
 
 
 const TAXONOMY_KEYS = [
-  { key:'userTags',  label:'User Tags' },
-  { key:'platforms', label:'Platforms' },
-  { key:'playMode',  label:'Play Modes' },
-  { key:'themes',    label:'Themes / Moods' },
-  { key:'stores',    label:'Stores' },
-  { key:'difficulty',label:'Difficulty' },
-  { key:'length',    label:'Game Length' },
-  { key:'period',    label:'Release Periods' },
-  { key:'rating',    label:'Rating Tiers' },
-  { key:'visual',    label:'Visual Styles' },
+  { key:'userTags',  label:'Tags' },
 ];
+
+// Rebuild TAXONOMY_KEYS from TAXONOMY._customKeys (persisted in Firebase)
+function _syncTaxonomyKeys() {
+  const custom = TAXONOMY._customKeys || {};
+  for (const [key, label] of Object.entries(custom)) {
+    if (!TAXONOMY_KEYS.find(k => k.key === key)) {
+      TAXONOMY_KEYS.push({ key, label });
+    }
+  }
+  // Sync removals — remove any key not in _customKeys and not the base 'userTags'
+  const baseKeys = new Set(['userTags']);
+  const customKeySet = new Set(Object.keys(custom));
+  for (let i = TAXONOMY_KEYS.length - 1; i >= 0; i--) {
+    const k = TAXONOMY_KEYS[i].key;
+    if (!baseKeys.has(k) && !customKeySet.has(k)) {
+      TAXONOMY_KEYS.splice(i, 1);
+    }
+  }
+}
 
 
 /* ═══════════════════════════════════════════════
@@ -9852,9 +9866,9 @@ const customTaxKeys = [];
 function deleteTaxCategory(key, label) {
   if (!confirm(`Delete entire category "${label}"?\nThis removes it from filters and all items.`)) return;
   delete TAXONOMY[key];
-  if (TAXONOMY._customKeys) delete TAXONOMY._customKeys[key];
-  const idx = TAXONOMY_KEYS.findIndex(k => k.key === key);
-  if (idx > -1) TAXONOMY_KEYS.splice(idx, 1);
+  if (!TAXONOMY._customKeys) TAXONOMY._customKeys = {};
+  delete TAXONOMY._customKeys[key];
+  _syncTaxonomyKeys();
   saveTaxonomy(); renderTaxonomy();
   toast(`Category "${label}" deleted`, 'success');
 }
