@@ -4700,6 +4700,10 @@ https://cgtrader.com/3d-models/..."
         <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 20px 0;gap:10px;">
           <div style="font-size:12px;color:var(--muted);">Manage filter categories — toggle visibility or add/remove items</div>
           <div style="display:flex;gap:8px;flex-shrink:0;">
+            <button class="btn btn-secondary btn-sm" onclick="resetTaxonomyDefaults()" title="Remove all pre-filled default values (keeps your custom additions)" style="color:var(--amber);border-color:rgba(245,158,11,0.3);">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="margin-right:4px;vertical-align:-1px"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+              Reset Defaults
+            </button>
             <button class="btn btn-danger btn-sm" onclick="cleanBadTaxKeys()" title="Remove invalid/test categories"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;vertical-align:-1px"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg> Clean Bad Keys</button>
             <button class="btn btn-primary btn-sm" onclick="showAddCategoryModal()">+ New Category</button>
           </div>
@@ -5554,18 +5558,19 @@ function loadData() {
   // If WP is configured — load from WordPress, keep Firebase for taxonomy only
   if (_wpReady()) {
     _wpLoadLibrary(1, false);
-    // Still load taxonomy from Firebase
     db.collection('meta').doc('taxonomy').onSnapshot(snap => {
-      TAXONOMY = snap.exists ? snap.data() : {};
-      mergeTaxonomyDefaults();
-      buildFormSelects();
-      buildAllCheckboxGrids();
-      populateStoresMultiselect();
-      renderTaxonomy();
+      if (snap.exists) {
+        TAXONOMY = snap.data();
+      } else {
+        TAXONOMY = {};
+        mergeTaxonomyDefaults(); // only if no taxonomy exists yet
+      }
+      buildFormSelects(); buildAllCheckboxGrids();
+      populateStoresMultiselect(); renderTaxonomy();
       const panel = document.getElementById('admin-filter-panel');
       if (panel && panel.classList.contains('open')) buildAdminFilterPanel();
     }, () => {
-      mergeTaxonomyDefaults(); buildFormSelects(); buildAllCheckboxGrids();
+      buildFormSelects(); buildAllCheckboxGrids();
       populateStoresMultiselect(); renderTaxonomy();
     });
     return;
@@ -5589,16 +5594,18 @@ function loadData() {
   });
 
   db.collection('meta').doc('taxonomy').onSnapshot(snap => {
-    TAXONOMY = snap.exists ? snap.data() : {};
-    mergeTaxonomyDefaults();
-    buildFormSelects();
-    buildAllCheckboxGrids();
-    populateStoresMultiselect();
-    renderTaxonomy();
+    if (snap.exists) {
+      TAXONOMY = snap.data();
+    } else {
+      TAXONOMY = {};
+      mergeTaxonomyDefaults(); // only if no taxonomy exists yet
+    }
+    buildFormSelects(); buildAllCheckboxGrids();
+    populateStoresMultiselect(); renderTaxonomy();
     const panel = document.getElementById('admin-filter-panel');
     if (panel && panel.classList.contains('open')) buildAdminFilterPanel();
   }, () => {
-    mergeTaxonomyDefaults(); buildFormSelects(); buildAllCheckboxGrids();
+    buildFormSelects(); buildAllCheckboxGrids();
     populateStoresMultiselect(); renderTaxonomy();
   });
 }
@@ -9992,6 +9999,27 @@ function delTaxItem(key, val) {
   toast(`Deleted "${val}"`, 'success');
 }
 
+// Reset: clear all default-filled values from TAXONOMY keys, keeping only user-added custom categories
+// This solves the problem of pre-filled gaming defaults polluting the 3D asset taxonomy
+function resetTaxonomyDefaults() {
+  const defaultKeys = Object.keys(DEFAULT_TAXONOMY);
+  const customCatKeys = TAXONOMY_KEYS.map(k => k.key).filter(k => !defaultKeys.includes(k));
+
+  if (!confirm(
+    `This will empty the built-in categories (userTags, genres, etc.) that came pre-filled with gaming defaults.\n\n` +
+    `Your custom categories (${customCatKeys.length > 0 ? customCatKeys.join(', ') : 'none yet'}) will NOT be affected.\n\n` +
+    `Any items YOU manually added to built-in categories will also be cleared.\n\nContinue?`
+  )) return;
+
+  // Clear all default keys to empty arrays
+  for (const key of defaultKeys) {
+    TAXONOMY[key] = [];
+  }
+  saveTaxonomy();
+  renderTaxonomy();
+  toast('Default categories cleared — add your own items now', 'success');
+}
+
 function saveTaxonomy() {
   if (db) db.collection('meta').doc('taxonomy').set(TAXONOMY).catch(e => console.warn('[taxonomy]', e));
 }
@@ -10000,35 +10028,33 @@ function saveTaxonomy() {
    DEFAULT TAXONOMY — full tag lists
 ═══════════════════════════════════════════════ */
 const DEFAULT_TAXONOMY = {
-  genres: ['Action','Adventure','RPG','Strategy','Simulation','Puzzle','Horror','Platformer','Fighting','Racing','Sports','Shooter','Stealth','Survival','Tower Defense','Card Game','Board Game','Rhythm','Visual Novel','Point & Click','Metroidvania','Roguelike','Tactical RPG','MOBA','Battle Royale','Idle','Casual','Educational','Sandbox','Walking Simulator'],
-  userTags: ['Action','Adventure','Indie','RPG','Strategy','Simulation','Puzzle','Horror','Platformer','Multiplayer','Singleplayer','Co-op','Open World','Story Rich','Atmospheric','Dark','Funny','Cute','Anime','Pixel Art','Stylized','Realistic','2D','3D','First-Person','Third-Person','Top-Down','Side-Scroller','Roguelike','Roguelite','Metroidvania','Souls-like','Tower Defense','Base Building','City Builder','Farming Sim','Dating Sim','Visual Novel','Point & Click','Walking Simulator','Psychological Horror','Survival Horror','Action RPG','Turn-Based','Real-Time','JRPG','Hack and Slash','Shoot \'Em Up','Fighting','Racing','Sports','Battle Royale','MOBA','Card Game','Deckbuilder','Dungeon Crawler','Sandbox','Crafting','Exploration','Stealth','Sniper','Bullet Hell','Rhythm','Music','Relaxing','Cozy','Minimalist','Abstract','Sci-Fi','Fantasy','Medieval','Cyberpunk','Post-Apocalyptic','Western','Historical','Military','Space','Underwater','Supernatural','Mystery','Thriller','Comedy','Satire','Philosophical','Mature','Early Access','Free to Play','VR','Local Co-op','Online Co-op','PvP','PvE','Massively Multiplayer','Competitive','Tactical','Grand Strategy','4X','Management','Economy','Hacking','Parkour','Precision Platformer','Auto Battler','Idle','Clicker','Educational','Hidden Object','Escape Room','Narrative','Interactive Fiction'],
-  features: ['Steam Achievements','Steam Cloud','Full Controller Support','Partial Controller Support','Steam Trading Cards','Steam Workshop','Remote Play Together','Remote Play on TV','Remote Play on Phone','Remote Play on Tablet','Cross-Platform Multiplayer','Steam Leaderboards','Captions Available','Commentary Available','VR Support','HDR Available','Family Sharing','LAN Multiplayer','Online Multiplayer','Local Multiplayer','Co-op','Online Co-op','Local Co-op','PvP','MMO','Includes Level Editor','In-App Purchases','DLC Available','Stats'],
-  platforms: ['PC','Mac','Linux','Windows','SteamOS','Android','iOS','Nintendo Switch','PlayStation 4','PlayStation 5','Xbox One','Xbox Series X/S','PS VR'],
-  playMode: ['Singleplayer','Multiplayer','Co-op','Local Co-op','Online Co-op','Local Multiplayer','Online Multiplayer','MMO','PvP','PvE','Split Screen','Asynchronous Multiplayer','Cross-Play'],
-  themes: ['Dark','Atmospheric','Relaxing','Cozy','Tense','Mysterious','Funny','Satirical','Romantic','Melancholic','Epic','Philosophical','Nostalgic','Surreal','Dreamlike','Gritty','Hopeful','Unsettling','Wholesome','Minimalist','Chaotic','Emotional','Thought-Provoking','Eerie','Whimsical','Violent','Peaceful','Intense'],
-  stores: ['Steam','GOG','Epic Games','Humble Bundle','itch.io','Microsoft Store','PlayStation Store','Nintendo eShop'],
-  difficulty: ['Very Easy','Easy','Normal','Hard','Very Hard','Unforgiving','Adjustable'],
-  length: ['Under 2 Hours','2–5 Hours','5–10 Hours','10–20 Hours','20–50 Hours','50–100 Hours','100+ Hours','Endless / Replayable'],
-  period: ['Before 2000','2000–2004','2005–2009','2010–2014','2015–2017','2018–2019','2020–2021','2022–2023','2024','2025','Upcoming'],
-  rating: ['Overwhelmingly Positive','Very Positive','Positive','Mixed','Negative'],
-  visual: ['Pixel Art','Hand-Drawn','Cartoon','Anime','Realistic','Stylized','Low Poly','Voxel','Minimalist','Abstract','Retro','Comic Book','Watercolor','3D','2D','Isometric','ASCII','Claymation','Stop Motion','Mixed Media'],
+  userTags: [],
+  genres: [],
+  features: [],
+  platforms: [],
+  playMode: [],
+  themes: [],
+  stores: [],
+  difficulty: [],
+  length: [],
+  period: [],
+  rating: [],
+  visual: [],
 };
 
 /* merge DEFAULT into TAXONOMY — only adds MISSING KEYS, never overwrites existing ones */
 function mergeTaxonomyDefaults() {
   // Ensure assetCategories is an object tree, not array
   if (!TAXONOMY.assetCategories || Array.isArray(TAXONOMY.assetCategories)) TAXONOMY.assetCategories = {};
-  // Only add keys that are completely absent — never modify existing keys, never write back.
-  // Writing back here would re-create keys the user deliberately deleted via deleteTaxCategory,
-  // because onSnapshot fires after every saveTaxonomy() call and re-invokes this function.
+  let changed = false;
   for (const [key, vals] of Object.entries(DEFAULT_TAXONOMY)) {
+    // Only add the key if it doesn't exist at all — never modify existing keys
     if (!TAXONOMY[key]) {
       TAXONOMY[key] = [...vals];
+      changed = true;
     }
   }
-  // DO NOT call saveTaxonomy() here — this function is called on every Firestore snapshot.
-  // All Firestore writes happen only through explicit user actions (addTaxItem, delTaxItem,
-  // deleteTaxCategory, createNewCategory) which call saveTaxonomy() themselves.
+  if (changed) saveTaxonomy();
 }
 
 /* normalize a game object — map each field to valid taxonomy values */
