@@ -4700,9 +4700,9 @@ https://cgtrader.com/3d-models/..."
         <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 20px 0;gap:10px;">
           <div style="font-size:12px;color:var(--muted);">Manage filter categories — toggle visibility or add/remove items</div>
           <div style="display:flex;gap:8px;flex-shrink:0;">
-            <button class="btn btn-secondary btn-sm" onclick="resetTaxonomyDefaults()" title="Remove all pre-filled default values (keeps your custom additions)" style="color:var(--amber);border-color:rgba(245,158,11,0.3);">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="margin-right:4px;vertical-align:-1px"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
-              Reset Defaults
+            <button class="btn btn-ghost btn-sm" onclick="showPriceRangesModal()" title="Edit XML export price range buckets">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;vertical-align:-1px"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              Price Ranges
             </button>
             <button class="btn btn-danger btn-sm" onclick="cleanBadTaxKeys()" title="Remove invalid/test categories"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;vertical-align:-1px"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg> Clean Bad Keys</button>
             <button class="btn btn-primary btn-sm" onclick="showAddCategoryModal()">+ New Category</button>
@@ -5558,21 +5558,18 @@ function loadData() {
   // If WP is configured — load from WordPress, keep Firebase for taxonomy only
   if (_wpReady()) {
     _wpLoadLibrary(1, false);
+    // Still load taxonomy from Firebase
     db.collection('meta').doc('taxonomy').onSnapshot(snap => {
-      if (snap.exists) {
-        TAXONOMY = snap.data();
-      } else {
-        TAXONOMY = {};
-        mergeTaxonomyDefaults();
-      }
-      _syncTaxonomyKeys();
-      buildFormSelects(); buildAllCheckboxGrids();
-      populateStoresMultiselect(); renderTaxonomy();
+      TAXONOMY = snap.exists ? snap.data() : {};
+      mergeTaxonomyDefaults();
+      buildFormSelects();
+      buildAllCheckboxGrids();
+      populateStoresMultiselect();
+      renderTaxonomy();
       const panel = document.getElementById('admin-filter-panel');
       if (panel && panel.classList.contains('open')) buildAdminFilterPanel();
     }, () => {
-      _syncTaxonomyKeys();
-      buildFormSelects(); buildAllCheckboxGrids();
+      mergeTaxonomyDefaults(); buildFormSelects(); buildAllCheckboxGrids();
       populateStoresMultiselect(); renderTaxonomy();
     });
     return;
@@ -5596,20 +5593,16 @@ function loadData() {
   });
 
   db.collection('meta').doc('taxonomy').onSnapshot(snap => {
-    if (snap.exists) {
-      TAXONOMY = snap.data();
-    } else {
-      TAXONOMY = {};
-      mergeTaxonomyDefaults();
-    }
-    _syncTaxonomyKeys();
-    buildFormSelects(); buildAllCheckboxGrids();
-    populateStoresMultiselect(); renderTaxonomy();
+    TAXONOMY = snap.exists ? snap.data() : {};
+    mergeTaxonomyDefaults();
+    buildFormSelects();
+    buildAllCheckboxGrids();
+    populateStoresMultiselect();
+    renderTaxonomy();
     const panel = document.getElementById('admin-filter-panel');
     if (panel && panel.classList.contains('open')) buildAdminFilterPanel();
   }, () => {
-    _syncTaxonomyKeys();
-    buildFormSelects(); buildAllCheckboxGrids();
+    mergeTaxonomyDefaults(); buildFormSelects(); buildAllCheckboxGrids();
     populateStoresMultiselect(); renderTaxonomy();
   });
 }
@@ -7916,6 +7909,134 @@ function _calcPriceRange(price) {
   return '100+';
 }
 
+// ── Price Ranges config (editable via UI) ───────────────────────────────────
+// Stored in localStorage so changes survive reload without Firebase dependency.
+// Each entry: { label: string, min: number, max: number|null }
+// max=null means "and above" (open-ended top bucket).
+const PRICE_RANGES_KEY = 'amt_price_ranges_v1';
+const DEFAULT_PRICE_RANGES = [
+  { label: 'Free',        min: 0,   max: 0    },
+  { label: '$0 – $25',   min: 0.01, max: 25   },
+  { label: '$25 – $50',  min: 25.01,max: 50   },
+  { label: '$50 – $100', min: 50.01,max: 100  },
+  { label: '$100 – $200',min: 100.01,max: 200 },
+  { label: '$200 – $500',min: 200.01,max: 500 },
+  { label: '$500+',      min: 500.01,max: null},
+];
+
+function _loadPriceRanges() {
+  try {
+    const raw = localStorage.getItem(PRICE_RANGES_KEY);
+    if (raw) { const p = JSON.parse(raw); if (Array.isArray(p) && p.length) return p; }
+  } catch(e) {}
+  return DEFAULT_PRICE_RANGES.map(r => ({...r}));
+}
+function _savePriceRanges(ranges) {
+  localStorage.setItem(PRICE_RANGES_KEY, JSON.stringify(ranges));
+}
+function _calcPriceRangeLabel(numericPrice) {
+  if (numericPrice === 0) return 'Free';
+  const ranges = _loadPriceRanges();
+  for (const r of ranges) {
+    if (numericPrice < r.min) continue;
+    if (r.max === null || numericPrice <= r.max) return r.label;
+  }
+  return '';
+}
+
+// ── Price Ranges Manager UI ─────────────────────────────────────────────────
+function showPriceRangesModal() {
+  let ranges = _loadPriceRanges();
+
+  function _html() {
+    const rows = ranges.map((r, i) => `
+      <tr>
+        <td style="padding:4px 6px">
+          <input style="width:100%;font-size:12px" value="${r.label.replace(/"/g,'&quot;')}"
+            oninput="window._prTmp[${i}].label=this.value" />
+        </td>
+        <td style="padding:4px 6px">
+          <input type="number" step="0.01" min="0" style="width:70px;font-size:12px" value="${r.min}"
+            oninput="window._prTmp[${i}].min=parseFloat(this.value)||0" />
+        </td>
+        <td style="padding:4px 6px">
+          <input type="number" step="0.01" min="0" style="width:70px;font-size:12px"
+            value="${r.max === null ? '' : r.max}" placeholder="∞"
+            oninput="window._prTmp[${i}].max=this.value===''?null:(parseFloat(this.value)||0)" />
+        </td>
+        <td style="padding:4px 6px;text-align:center">
+          <button class="btn btn-danger btn-sm" style="padding:2px 8px;font-size:11px"
+            onclick="window._prDeleteRange(${i})">✕</button>
+        </td>
+      </tr>`).join('');
+    return `
+      <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:15px;margin-bottom:14px">
+        Price Range Buckets
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:12px">
+        Ranges are matched from top to bottom. Each asset gets the label of the first matching range.
+      </div>
+      <div style="overflow-x:auto;margin-bottom:12px">
+        <table style="width:100%;border-collapse:collapse;font-size:12px">
+          <thead>
+            <tr style="color:var(--muted);text-align:left">
+              <th style="padding:4px 6px;font-weight:600">Label</th>
+              <th style="padding:4px 6px;font-weight:600">Min ($)</th>
+              <th style="padding:4px 6px;font-weight:600">Max ($)</th>
+              <th style="padding:4px 6px"></th>
+            </tr>
+          </thead>
+          <tbody id="pr-tbody">${rows}</tbody>
+        </table>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:space-between;align-items:center">
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-secondary btn-sm" onclick="window._prAddRange()">+ Add Row</button>
+          <button class="btn btn-ghost btn-sm" style="color:var(--muted)" onclick="window._prResetRanges()">Reset to default</button>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('pr-modal').remove()">Cancel</button>
+          <button class="btn btn-primary btn-sm" onclick="window._prSave()">Save</button>
+        </div>
+      </div>`;
+  }
+
+  const overlay = document.createElement('div');
+  overlay.id = 'pr-modal';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:10000;display:flex;align-items:center;justify-content:center';
+  const box = document.createElement('div');
+  box.style.cssText = 'background:#0d1117;border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:24px;width:480px;max-height:80vh;overflow-y:auto;box-shadow:0 24px 60px rgba(0,0,0,0.8)';
+  box.innerHTML = _html();
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+
+  window._prTmp = ranges.map(r => ({...r}));
+
+  window._prDeleteRange = (i) => {
+    window._prTmp.splice(i, 1);
+    ranges = window._prTmp.map(r => ({...r}));
+    box.innerHTML = _html();
+    window._prTmp = ranges.map(r => ({...r}));
+  };
+  window._prAddRange = () => {
+    window._prTmp.push({ label: 'New Range', min: 0, max: null });
+    ranges = window._prTmp.map(r => ({...r}));
+    box.innerHTML = _html();
+    window._prTmp = ranges.map(r => ({...r}));
+  };
+  window._prResetRanges = () => {
+    window._prTmp = DEFAULT_PRICE_RANGES.map(r => ({...r}));
+    ranges = window._prTmp.map(r => ({...r}));
+    box.innerHTML = _html();
+    window._prTmp = ranges.map(r => ({...r}));
+  };
+  window._prSave = () => {
+    _savePriceRanges(window._prTmp);
+    document.getElementById('pr-modal').remove();
+    toast('Price ranges saved', 'success');
+  };
+}
+
 function _autoCalcPriceRange() {
   const price = document.getElementById('f-price')?.value || '';
   const sel = document.getElementById('f-price-range');
@@ -8302,11 +8423,7 @@ function applyPastedData() {
       if (typeof addCategoryPath === 'function') addCategoryPath(_cats);
     }
   }
-  // Tags
-  if (parsed.author && typeof addPasteTag === 'function') {
-    const ex = typeof getPasteValues === 'function' ? getPasteValues('userTags', '') : [];
-    if (!ex.includes(parsed.author)) addPasteTag('userTags', parsed.author, '');
-  }
+  // Tags — author is intentionally excluded from userTags (stored separately in author field)
   if (Array.isArray(parsed.tags) && typeof addPasteTag === 'function')
     parsed.tags.forEach(t => { if (t) addPasteTag('userTags', t, ''); });
   if (status) { status.textContent = '✓ Fields filled'; status.style.color = 'var(--green)'; setTimeout(() => { status.textContent = ''; }, 3000); }
@@ -9834,27 +9951,17 @@ async function bulkFetchSingleGame(appId) {
 
 
 const TAXONOMY_KEYS = [
-  { key:'userTags',  label:'Tags' },
+  { key:'userTags',  label:'User Tags' },
+  { key:'platforms', label:'Platforms' },
+  { key:'playMode',  label:'Play Modes' },
+  { key:'themes',    label:'Themes / Moods' },
+  { key:'stores',    label:'Stores' },
+  { key:'difficulty',label:'Difficulty' },
+  { key:'length',    label:'Game Length' },
+  { key:'period',    label:'Release Periods' },
+  { key:'rating',    label:'Rating Tiers' },
+  { key:'visual',    label:'Visual Styles' },
 ];
-
-// Rebuild TAXONOMY_KEYS from TAXONOMY._customKeys (persisted in Firebase)
-function _syncTaxonomyKeys() {
-  const custom = TAXONOMY._customKeys || {};
-  for (const [key, label] of Object.entries(custom)) {
-    if (!TAXONOMY_KEYS.find(k => k.key === key)) {
-      TAXONOMY_KEYS.push({ key, label });
-    }
-  }
-  // Sync removals — remove any key not in _customKeys and not the base 'userTags'
-  const baseKeys = new Set(['userTags']);
-  const customKeySet = new Set(Object.keys(custom));
-  for (let i = TAXONOMY_KEYS.length - 1; i >= 0; i--) {
-    const k = TAXONOMY_KEYS[i].key;
-    if (!baseKeys.has(k) && !customKeySet.has(k)) {
-      TAXONOMY_KEYS.splice(i, 1);
-    }
-  }
-}
 
 
 /* ═══════════════════════════════════════════════
@@ -9866,9 +9973,9 @@ const customTaxKeys = [];
 function deleteTaxCategory(key, label) {
   if (!confirm(`Delete entire category "${label}"?\nThis removes it from filters and all items.`)) return;
   delete TAXONOMY[key];
-  if (!TAXONOMY._customKeys) TAXONOMY._customKeys = {};
-  delete TAXONOMY._customKeys[key];
-  _syncTaxonomyKeys();
+  if (TAXONOMY._customKeys) delete TAXONOMY._customKeys[key];
+  const idx = TAXONOMY_KEYS.findIndex(k => k.key === key);
+  if (idx > -1) TAXONOMY_KEYS.splice(idx, 1);
   saveTaxonomy(); renderTaxonomy();
   toast(`Category "${label}" deleted`, 'success');
 }
@@ -10013,27 +10120,6 @@ function delTaxItem(key, val) {
   toast(`Deleted "${val}"`, 'success');
 }
 
-// Reset: clear all default-filled values from TAXONOMY keys, keeping only user-added custom categories
-// This solves the problem of pre-filled gaming defaults polluting the 3D asset taxonomy
-function resetTaxonomyDefaults() {
-  const defaultKeys = Object.keys(DEFAULT_TAXONOMY);
-  const customCatKeys = TAXONOMY_KEYS.map(k => k.key).filter(k => !defaultKeys.includes(k));
-
-  if (!confirm(
-    `This will empty the built-in categories (userTags, genres, etc.) that came pre-filled with gaming defaults.\n\n` +
-    `Your custom categories (${customCatKeys.length > 0 ? customCatKeys.join(', ') : 'none yet'}) will NOT be affected.\n\n` +
-    `Any items YOU manually added to built-in categories will also be cleared.\n\nContinue?`
-  )) return;
-
-  // Clear all default keys to empty arrays
-  for (const key of defaultKeys) {
-    TAXONOMY[key] = [];
-  }
-  saveTaxonomy();
-  renderTaxonomy();
-  toast('Default categories cleared — add your own items now', 'success');
-}
-
 function saveTaxonomy() {
   if (db) db.collection('meta').doc('taxonomy').set(TAXONOMY).catch(e => console.warn('[taxonomy]', e));
 }
@@ -10042,18 +10128,18 @@ function saveTaxonomy() {
    DEFAULT TAXONOMY — full tag lists
 ═══════════════════════════════════════════════ */
 const DEFAULT_TAXONOMY = {
-  userTags: [],
-  genres: [],
-  features: [],
-  platforms: [],
-  playMode: [],
-  themes: [],
-  stores: [],
-  difficulty: [],
-  length: [],
-  period: [],
-  rating: [],
-  visual: [],
+  genres: ['Action','Adventure','RPG','Strategy','Simulation','Puzzle','Horror','Platformer','Fighting','Racing','Sports','Shooter','Stealth','Survival','Tower Defense','Card Game','Board Game','Rhythm','Visual Novel','Point & Click','Metroidvania','Roguelike','Tactical RPG','MOBA','Battle Royale','Idle','Casual','Educational','Sandbox','Walking Simulator'],
+  userTags: ['Action','Adventure','Indie','RPG','Strategy','Simulation','Puzzle','Horror','Platformer','Multiplayer','Singleplayer','Co-op','Open World','Story Rich','Atmospheric','Dark','Funny','Cute','Anime','Pixel Art','Stylized','Realistic','2D','3D','First-Person','Third-Person','Top-Down','Side-Scroller','Roguelike','Roguelite','Metroidvania','Souls-like','Tower Defense','Base Building','City Builder','Farming Sim','Dating Sim','Visual Novel','Point & Click','Walking Simulator','Psychological Horror','Survival Horror','Action RPG','Turn-Based','Real-Time','JRPG','Hack and Slash','Shoot \'Em Up','Fighting','Racing','Sports','Battle Royale','MOBA','Card Game','Deckbuilder','Dungeon Crawler','Sandbox','Crafting','Exploration','Stealth','Sniper','Bullet Hell','Rhythm','Music','Relaxing','Cozy','Minimalist','Abstract','Sci-Fi','Fantasy','Medieval','Cyberpunk','Post-Apocalyptic','Western','Historical','Military','Space','Underwater','Supernatural','Mystery','Thriller','Comedy','Satire','Philosophical','Mature','Early Access','Free to Play','VR','Local Co-op','Online Co-op','PvP','PvE','Massively Multiplayer','Competitive','Tactical','Grand Strategy','4X','Management','Economy','Hacking','Parkour','Precision Platformer','Auto Battler','Idle','Clicker','Educational','Hidden Object','Escape Room','Narrative','Interactive Fiction'],
+  features: ['Steam Achievements','Steam Cloud','Full Controller Support','Partial Controller Support','Steam Trading Cards','Steam Workshop','Remote Play Together','Remote Play on TV','Remote Play on Phone','Remote Play on Tablet','Cross-Platform Multiplayer','Steam Leaderboards','Captions Available','Commentary Available','VR Support','HDR Available','Family Sharing','LAN Multiplayer','Online Multiplayer','Local Multiplayer','Co-op','Online Co-op','Local Co-op','PvP','MMO','Includes Level Editor','In-App Purchases','DLC Available','Stats'],
+  platforms: ['PC','Mac','Linux','Windows','SteamOS','Android','iOS','Nintendo Switch','PlayStation 4','PlayStation 5','Xbox One','Xbox Series X/S','PS VR'],
+  playMode: ['Singleplayer','Multiplayer','Co-op','Local Co-op','Online Co-op','Local Multiplayer','Online Multiplayer','MMO','PvP','PvE','Split Screen','Asynchronous Multiplayer','Cross-Play'],
+  themes: ['Dark','Atmospheric','Relaxing','Cozy','Tense','Mysterious','Funny','Satirical','Romantic','Melancholic','Epic','Philosophical','Nostalgic','Surreal','Dreamlike','Gritty','Hopeful','Unsettling','Wholesome','Minimalist','Chaotic','Emotional','Thought-Provoking','Eerie','Whimsical','Violent','Peaceful','Intense'],
+  stores: ['Steam','GOG','Epic Games','Humble Bundle','itch.io','Microsoft Store','PlayStation Store','Nintendo eShop'],
+  difficulty: ['Very Easy','Easy','Normal','Hard','Very Hard','Unforgiving','Adjustable'],
+  length: ['Under 2 Hours','2–5 Hours','5–10 Hours','10–20 Hours','20–50 Hours','50–100 Hours','100+ Hours','Endless / Replayable'],
+  period: ['Before 2000','2000–2004','2005–2009','2010–2014','2015–2017','2018–2019','2020–2021','2022–2023','2024','2025','Upcoming'],
+  rating: ['Overwhelmingly Positive','Very Positive','Positive','Mixed','Negative'],
+  visual: ['Pixel Art','Hand-Drawn','Cartoon','Anime','Realistic','Stylized','Low Poly','Voxel','Minimalist','Abstract','Retro','Comic Book','Watercolor','3D','2D','Isometric','ASCII','Claymation','Stop Motion','Mixed Media'],
 };
 
 /* merge DEFAULT into TAXONOMY — only adds MISSING KEYS, never overwrites existing ones */
@@ -10145,29 +10231,42 @@ function exportToWordPressXML(data) {
     const priceRange= _x(g.price_range || '');
     const desc      = _x(g.description || '');
 
+    // ── Tags: userTags + genres only (author excluded — goes to Artist category below) ──
     const tags = [...(g.userTags || []), ...(g.genres || [])];
+
+    // Price tag: exact price (e.g. "$85.49") + price range tag (e.g. "$50 – $100")
+    const priceNum = parseFloat(String(price).replace(/[^0-9.]/g, '')) || 0;
+    const priceRangeLabel = _calcPriceRangeLabel(priceNum);
+    if (price)           tags.push('Price: ' + price.replace(/^\$/, '').trim());
+    if (priceRangeLabel) tags.push('Price Range: ' + priceRangeLabel);
+
     const tagEls = [...new Set(tags)]
       .filter(Boolean)
       .map(t => `      <category domain="post_tag" nicename="${_x(t.toLowerCase().replace(/\s+/g,'-'))}"><![CDATA[${t.trim()}]]></category>`)
       .join('\n');
 
-    // Build categories array: prefer new categories[] / category_path[], fall back to splitting legacy string
+    // ── Categories: content hierarchy ──
     const _rawCats = Array.isArray(g.categories) && g.categories.length ? g.categories
       : Array.isArray(g.category_path) && g.category_path.length ? g.category_path
       : (category ? category.split('>').map(p => p.trim()).filter(Boolean) : []);
     const catEls = _rawCats.map((c, i) =>
       `      <category domain="category" nicename="${_x(c.toLowerCase().replace(/\s+/g,'-'))}"><![CDATA[${c}]]></category>`
     ).join('\n');
+
+    // ── Artist category: author with "Artist " prefix (once, as category not tag) ──
+    const artistCatEl = author
+      ? `      <category domain="category" nicename="${_x(('artist-' + author).toLowerCase().replace(/\s+/g,'-'))}"><![CDATA[Artist ${author}]]></category>`
+      : '';
+
     // Store category_path as wp:postmeta for importer
     const catPathMeta = _rawCats.length
       ? `      <wp:postmeta><wp:meta_key><![CDATA[_amt_category_path]]></wp:meta_key><wp:meta_value><![CDATA[${_x(JSON.stringify(_rawCats))}]]></wp:meta_value></wp:postmeta>`
       : '';
 
+    // ── content:encoded: image + Buy Now link only (no description, no technical details) ──
     const contentParts = [];
     if (image) contentParts.push(`<img src="${image.replace(/"/g,'&quot;')}" alt="${title.replace(/"/g,'&quot;')}" style="max-width:100%;" />`);
-    if (desc)  contentParts.push(`<p>${desc}</p>`);
-    if (price) contentParts.push(`<p><strong>Price:</strong> ${price}${priceRange ? ' (' + priceRange + ')' : ''}</p>`);
-    if (link)  contentParts.push(`<p><a href="${link.replace(/"/g,'&quot;')}">View Asset →</a></p>`);
+    if (link)  contentParts.push(`<p><a href="${link.replace(/"/g,'&quot;')}">Buy Now →</a></p>`);
     const content = contentParts.join('\n');
 
     return `    <item>
@@ -10176,6 +10275,7 @@ function exportToWordPressXML(data) {
       <pubDate>${now}</pubDate>
       <dc:creator><![CDATA[${author}]]></dc:creator>
 ${catEls}
+${artistCatEl}
 ${tagEls}
 ${catPathMeta}
       <wp:post_type>post</wp:post_type>
