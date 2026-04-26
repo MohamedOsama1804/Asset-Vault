@@ -4823,7 +4823,7 @@ https://cgtrader.com/3d-models/..."
               Price Scanner
             </div>
             <div class="io-card-body">
-              <div class="io-card-desc">Fetches each asset's source page, extracts current price via JSON-LD / selectors, and updates if changed. Runs via your WordPress site.</div>
+              <div class="io-card-desc">Fetches each asset's source page, extracts current price via JSON-LD / selectors, and flags changes. Review and apply updates individually.</div>
               <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px;">
                 <button class="btn btn-secondary btn-sm" id="wp-scan-start-btn" onclick="_wpStartPriceScan()">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" style="margin-right:4px;vertical-align:-1px"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
@@ -4841,7 +4841,31 @@ https://cgtrader.com/3d-models/..."
                   <div id="wp-scan-bar" style="height:100%;width:0%;background:var(--neon);border-radius:2px;transition:width 0.3s;"></div>
                 </div>
               </div>
-              <div id="wp-scan-stats" style="display:none;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);"></div>
+              <div id="wp-scan-stats" style="display:none;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:12px;"></div>
+              <!-- Changed prices table -->
+              <div id="wp-scan-changes" style="display:none;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                  <div style="font-size:12px;font-weight:600;color:var(--text);">Price Changes Detected</div>
+                  <div style="display:flex;gap:6px;">
+                    <button class="btn btn-primary btn-sm" onclick="_wpScanApplyAll()" style="font-size:11px;">Apply All</button>
+                    <button class="btn btn-ghost btn-sm" onclick="_wpScanDismissAll()" style="font-size:11px;color:var(--muted);">Dismiss All</button>
+                  </div>
+                </div>
+                <div style="overflow-x:auto;">
+                  <table style="width:100%;border-collapse:collapse;font-size:12px;" id="wp-scan-table">
+                    <thead>
+                      <tr style="color:var(--muted);text-align:left;border-bottom:1px solid var(--border);">
+                        <th style="padding:6px 8px;font-weight:600;">Title</th>
+                        <th style="padding:6px 8px;font-weight:600;">Old Price</th>
+                        <th style="padding:6px 8px;font-weight:600;">New Price</th>
+                        <th style="padding:6px 8px;font-weight:600;">Change</th>
+                        <th style="padding:6px 8px;"></th>
+                      </tr>
+                    </thead>
+                    <tbody id="wp-scan-tbody"></tbody>
+                  </table>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -5186,6 +5210,7 @@ async function _wpStartPriceScan() {
 
     // Batch loop
     let updated = 0, unchanged = 0, skipped = 0, errors = 0;
+    let allChanged = []; // accumulate changed items across batches
     while (_wpScanRunning) {
       const batchBody = new FormData();
       batchBody.append('action', 'amt_process_batch');
@@ -5199,6 +5224,12 @@ async function _wpStartPriceScan() {
       unchanged = d.stats?.unchanged || unchanged;
       skipped   = d.stats?.skipped   || skipped;
       errors    = d.stats?.errors    || errors;
+
+      // Accumulate changed items
+      if (Array.isArray(d.changed) && d.changed.length) {
+        allChanged = allChanged.concat(d.changed);
+        _wpScanRenderChanges(allChanged);
+      }
 
       const p = d.pct || 0;
       if (bar)   bar.style.width    = p + '%';
@@ -5229,13 +5260,94 @@ function _wpStopPriceScan() {
   _wpScanRunning = false;
   const status = document.getElementById('wp-scan-status');
   if (status) status.textContent = 'Stopped';
-  // Cancel on server side
   if (_wpReady()) {
     const body = new FormData();
     body.append('action', 'amt_cancel_scan');
     body.append('nonce',  _WP_CONFIG.nonce);
     fetch(_WP_CONFIG.ajax_url, { method: 'POST', body }).catch(() => {});
   }
+}
+
+// ── Price Scanner — changed items table ───────────────────────────────────
+let _scanChangedItems = [];
+
+function _wpScanRenderChanges(items) {
+  _scanChangedItems = items;
+  const wrap  = document.getElementById('wp-scan-changes');
+  const tbody = document.getElementById('wp-scan-tbody');
+  if (!wrap || !tbody) return;
+  tbody.innerHTML = '';
+  items.forEach((item, i) => {
+    const oldP = parseFloat(item.old_price) || 0;
+    const newP = parseFloat(item.new_price) || 0;
+    const diff = newP - oldP;
+    const pct  = oldP > 0 ? ((diff / oldP) * 100).toFixed(1) : '—';
+    const color = diff < 0 ? 'var(--green)' : diff > 0 ? 'var(--red)' : 'var(--muted)';
+    const arrow = diff < 0 ? '▼' : diff > 0 ? '▲' : '—';
+    const tr = document.createElement('tr');
+    tr.dataset.idx = i;
+    tr.style.cssText = 'border-bottom:1px solid rgba(255,255,255,0.06);';
+    tr.innerHTML = `
+      <td style="padding:6px 8px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px" title="${_esc(item.title)}">${_esc(item.title)}</td>
+      <td style="padding:6px 8px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted)">$${oldP.toFixed(2)}</td>
+      <td style="padding:6px 8px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text)">$${newP.toFixed(2)}</td>
+      <td style="padding:6px 8px;font-family:'JetBrains Mono',monospace;font-size:12px;color:${color};font-weight:700">${arrow} ${Math.abs(diff).toFixed(2)} (${pct}%)</td>
+      <td style="padding:6px 8px;white-space:nowrap">
+        <button onclick="_wpScanApplyOne(${i})" style="background:rgba(16,185,129,0.15);color:var(--green);border:1px solid rgba(16,185,129,0.3);border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer;margin-right:4px">Apply</button>
+        <button onclick="_wpScanDismissOne(${i})" style="background:rgba(107,122,141,0.1);color:var(--muted);border:1px solid rgba(107,122,141,0.2);border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer">✕</button>
+      </td>`;
+    tbody.appendChild(tr);
+  });
+  wrap.style.display = items.length ? 'block' : 'none';
+}
+
+function _esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+async function _wpScanApplyOne(idx) {
+  const item = _scanChangedItems[idx];
+  if (!item || !item.id || !_wpReady()) return;
+  const body = new FormData();
+  body.append('action',    'amt_update_post');
+  body.append('nonce',     _WP_CONFIG.nonce);
+  body.append('post_id',   item.id);
+  body.append('price',     '$' + parseFloat(item.new_price).toFixed(2));
+  const res = await fetch(_WP_CONFIG.ajax_url, { method: 'POST', body });
+  const data = await res.json();
+  if (data.success) {
+    _scanChangedItems.splice(idx, 1);
+    _wpScanRenderChanges(_scanChangedItems);
+    toast('Price updated', 'success');
+  } else {
+    toast('Update failed: ' + (data.data?.message || 'unknown error'), 'error');
+  }
+}
+
+function _wpScanDismissOne(idx) {
+  _scanChangedItems.splice(idx, 1);
+  _wpScanRenderChanges(_scanChangedItems);
+}
+
+async function _wpScanApplyAll() {
+  if (!_scanChangedItems.length || !_wpReady()) return;
+  let ok = 0;
+  for (const item of [..._scanChangedItems]) {
+    const body = new FormData();
+    body.append('action',  'amt_update_post');
+    body.append('nonce',   _WP_CONFIG.nonce);
+    body.append('post_id', item.id);
+    body.append('price',   '$' + parseFloat(item.new_price).toFixed(2));
+    const res  = await fetch(_WP_CONFIG.ajax_url, { method: 'POST', body });
+    const data = await res.json();
+    if (data.success) ok++;
+  }
+  _scanChangedItems = [];
+  _wpScanRenderChanges([]);
+  toast(`Applied ${ok} price update${ok !== 1 ? 's' : ''}`, 'success');
+}
+
+function _wpScanDismissAll() {
+  _scanChangedItems = [];
+  _wpScanRenderChanges([]);
 }
 
 let fbApp;
@@ -6072,25 +6184,55 @@ async function mtFixImages() {
   const missing = allGames.filter(g => !g.cover && !g.image);
   if (!missing.length) { status.textContent = '✓ All assets have images'; status.style.color = 'var(--green)'; return; }
   status.textContent = `Fixing ${missing.length}…`; status.style.color = 'var(--muted)';
-  let fixed = 0;
-  const BATCH = 15;
+  let fixed = 0, failed = 0;
+  const BATCH = 5; // smaller batch — WP sideload is slower than placeholder
+
+  const wpReady = _isWpConfigured();
+
   for (let i = 0; i < missing.length; i += BATCH) {
     const chunk = missing.slice(i, i + BATCH);
     await Promise.all(chunk.map(async g => {
       try {
-        const ph = `https://placehold.co/480x270/111820/00d4ff?text=${encodeURIComponent((g.title||'Asset').slice(0,20))}`;
-        await db.collection(COLLECTION).doc(g.id).update({ cover: ph, image: ph, updatedAt: Date.now() });
+        let imageUrl = '';
+
+        // Try to sideload via WordPress if configured and asset has a WP post_id + source image URL
+        if (wpReady && g.wp_post_id && g.image_url) {
+          try {
+            const body = new FormData();
+            body.append('action',   'amt_upload_image_url');
+            body.append('nonce',    _WP_CONFIG.nonce);
+            body.append('post_id',  g.wp_post_id);
+            body.append('image_url', g.image_url);
+            const res = await fetch(_WP_CONFIG.ajax_url, { method: 'POST', body });
+            const data = await res.json();
+            if (data.success && data.data?.url) {
+              imageUrl = data.data.url;
+            }
+          } catch(e) { /* sideload failed — fall through to placeholder */ }
+        }
+
+        // Fallback: generate placeholder (visible in Vault UI only, not pushed to WP)
+        if (!imageUrl) {
+          imageUrl = `https://placehold.co/480x270/111820/00d4ff?text=${encodeURIComponent((g.title||'Asset').slice(0,20))}`;
+        }
+
+        await db.collection(COLLECTION).doc(g.id).update({ cover: imageUrl, image: imageUrl, updatedAt: Date.now() });
         const idx = _gamesIndex.get(g.id);
-        if (idx !== undefined) allGames[idx] = { ...allGames[idx], cover: ph, image: ph };
+        if (idx !== undefined) allGames[idx] = { ...allGames[idx], cover: imageUrl, image: imageUrl };
         fixed++;
-      } catch(e) { console.error('[mtImage]', e); }
+      } catch(e) {
+        console.error('[mtImage]', e);
+        failed++;
+      }
     }));
-    if (i + BATCH < missing.length) await new Promise(r => setTimeout(r, 200));
+    status.textContent = `Fixing… ${Math.min(i + BATCH, missing.length)} / ${missing.length}`;
+    if (i + BATCH < missing.length) await new Promise(r => setTimeout(r, 300));
   }
   invalidateFilterCache();
-  status.textContent = `✓ Fixed ${fixed} image${fixed!==1?'s':''}`;
-  status.style.color = 'var(--green)';
-  toast(`Fixed ${fixed} images`, 'success');
+  const msg = `Fixed ${fixed} image${fixed!==1?'s':''}` + (failed ? ` (${failed} failed)` : '');
+  status.textContent = '✓ ' + msg;
+  status.style.color = fixed > 0 ? 'var(--green)' : 'var(--red)';
+  toast(msg, fixed > 0 ? 'success' : 'error');
 }
 
 let _mtDupToDelete = [];
