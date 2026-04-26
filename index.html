@@ -5373,7 +5373,7 @@ function mapExtensionAsset(parsed, extraTags) {
     Array.isArray(parsed.categories) && parsed.categories.length ? parsed.categories
     : Array.isArray(parsed.category_path) && parsed.category_path.length ? parsed.category_path
     : (parsed.category || '').trim()
-        ? parsed.category.split('>').map(p => p.trim()).filter(Boolean)
+        ? _splitCategoryString(parsed.category)
         : [];
   // Side-effect: register new category paths into taxonomy UI if available
   if (_bc.length && typeof addCategoryPath === 'function') addCategoryPath(_bc);
@@ -6597,7 +6597,7 @@ function loadGameIntoForm(id) {
     // Prefer categories[] array, fall back to splitting old "A > B > C" string
     const _cats = Array.isArray(g.categories) && g.categories.length
       ? g.categories
-      : (g.category ? g.category.split('>').map(p => p.trim()).filter(Boolean) : []);
+      : (g.category ? _splitCategoryString(g.category) : []);
     setCategoryTokens(_cats);
   }
   _showImagePreview(g.cover || g.image || '');
@@ -6823,7 +6823,7 @@ function buildAdminFilterPanel() {
   // Collect all unique category tokens from data
   const allCatTokens = [...new Set(allGames.flatMap(g => {
     const cats = Array.isArray(g.categories) ? g.categories
-      : (g.category ? g.category.split('>').map(s => s.trim()).filter(Boolean) : []);
+      : (g.category ? _splitCategoryString(g.category) : []);
     return cats;
   }))].sort();
 
@@ -7040,7 +7040,7 @@ function renderLibrary() {
         if (key === 'category') {
           // Match any selected token against categories[] or split category string
           const cats = Array.isArray(g.categories) && g.categories.length ? g.categories
-            : (g.category ? g.category.split('>').map(s => s.trim()).filter(Boolean) : []);
+            : (g.category ? _splitCategoryString(g.category) : []);
           return cats.some(c => set.has(c));
         }
         const v = g[key];
@@ -7951,7 +7951,7 @@ function _getAllCategoryLabels() {
   // Also collect from saved games
   allGames.forEach(g => {
     const cats = Array.isArray(g.categories) ? g.categories
-               : (g.category ? g.category.split('>').map(p=>p.trim()).filter(Boolean) : []);
+               : (g.category ? _splitCategoryString(g.category) : []);
     cats.forEach(c => labels.add(c));
   });
   return [...labels].sort();
@@ -8035,6 +8035,23 @@ function _catSuggestKey(event) {
   }
 }
 
+
+// ── Category string → individual terms ──────────────────────────────────────
+// Splits "3D > Characters & Creatures > Creatures & Monsters"
+// → ["3D", "Characters", "Creatures", "Monsters"]  (unique, ordered)
+function _splitCategoryString(catStr) {
+  if (!catStr) return [];
+  const seen = new Set();
+  const terms = [];
+  for (const segment of catStr.split('>')) {
+    // Split each segment on " & " to expand compound terms
+    for (const part of segment.split(/\s+&\s+/)) {
+      const t = part.trim();
+      if (t && t.length > 1 && !seen.has(t)) { seen.add(t); terms.push(t); }
+    }
+  }
+  return terms;
+}
 
 function _calcPriceRange(price) {
   if (!price) return '';
@@ -8558,7 +8575,7 @@ function applyPastedData() {
     } else if (Array.isArray(parsed.category_path) && parsed.category_path.length) {
       _cats = parsed.category_path;
     } else if (parsed.category) {
-      _cats = parsed.category.split('>').map(p => p.trim()).filter(Boolean);
+      _cats = _splitCategoryString(parsed.category);
     }
     if (_cats.length) {
       setCategoryTokens(_cats);
@@ -10390,7 +10407,7 @@ function exportToWordPressXML(data) {
     // ── Categories: content hierarchy ──
     const _rawCats = Array.isArray(g.categories) && g.categories.length ? g.categories
       : Array.isArray(g.category_path) && g.category_path.length ? g.category_path
-      : (category ? category.split('>').map(p => p.trim()).filter(Boolean) : []);
+      : (category ? _splitCategoryString(category) : []);
     const catEls = _rawCats.map((c, i) =>
       `      <category domain="category" nicename="${_x(c.toLowerCase().replace(/\s+/g,'-'))}"><![CDATA[${c}]]></category>`
     ).join('\n');
